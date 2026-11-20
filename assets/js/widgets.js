@@ -3398,6 +3398,380 @@
   };
 
 
+  /* =================================================================
+     10. Caos determinístico
+     Três vistas do mesmo mapa de uma linha. A teia mostra o mecanismo,
+     o diagrama de bifurcação mostra o resultado global e a janela de
+     ampliação revela que ele se parece consigo mesmo, e a terceira
+     junta Lyapunov com a perda de previsibilidade, que é o que o caos
+     custa na prática.
+     ================================================================= */
+  REGISTRO.caos = function (raiz) {
+    /* cada vista tem o seu r: a teia fica mais clara num ciclo de
+       período 2, e a vista de Lyapunov só diz o que tem a dizer no
+       regime caótico */
+    var est = { r: 3.2, rL: 3.9, zoom: 0, x0: 0.300, vista: 'teia' };
+
+    /* as janelas de ampliação do diagrama, cada uma dentro da anterior */
+    var JANELAS = [
+      { a: 2.4, b: 4.0, rot: 'tudo' },
+      { a: 3.4, b: 3.60, rot: 'a cascata' },
+      { a: 3.54, b: 3.575, rot: 'mais fundo' },
+      { a: 3.8275, b: 3.8500, rot: 'a janela de período 3' }
+    ];
+
+    function f(x, r) { return r * x * (1 - x); }
+
+    var corpo = moldura(raiz, 'Uma linha de conta, e todo o caos que cabe nela');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'A teia', v: 'teia' },
+      { rot: 'O diagrama', v: 'diagrama' },
+      { rot: 'Lyapunov e previsão', v: 'lyapunov' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', ',').replace('-', '\u2212');
+    }
+    function fmtm(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', '{,}');
+    }
+
+    /* período da órbita final, ou 0 se não houver */
+    function periodo(r) {
+      var x = 0.3, i, p;
+      for (i = 0; i < 6000; i++) x = f(x, r);
+      var xs = [];
+      for (i = 0; i < 128; i++) { x = f(x, r); xs.push(x); }
+      for (p = 1; p <= 32; p++) {
+        var ok = true;
+        for (i = 0; i + p < xs.length; i++) {
+          if (Math.abs(xs[i + p] - xs[i]) > 1e-7) { ok = false; break; }
+        }
+        if (ok) return p;
+      }
+      return 0;
+    }
+
+    function lyapunov(r) {
+      var x = 0.3, i, soma = 0, n = 0;
+      for (i = 0; i < 2000; i++) x = f(x, r);
+      for (i = 0; i < 20000; i++) {
+        var d = Math.abs(r * (1 - 2 * x));
+        if (d > 1e-300) { soma += Math.log(d); n++; }
+        x = f(x, r);
+      }
+      return soma / n;
+    }
+
+    function montar() {
+      c1.innerHTML = '';
+      if (est.vista === 'diagrama') {
+        opcoes(c1, JANELAS.map(function (j, i) {
+          return { rot: j.rot, v: i };
+        }), est.zoom, function (v) { est.zoom = +v; desenhar(); });
+      } else if (est.vista === 'teia') {
+        deslizante(c1, 'Parâmetro \\(r\\)', 2.4, 4.0, 0.001, est.r,
+          function (v) { est.r = v; desenhar(); },
+          function (v) { return fmt(v, 3); });
+      } else {
+        deslizante(c1, 'Parâmetro \\(r\\)', 2.4, 4.0, 0.001, est.rL,
+          function (v) { est.rL = v; desenhar(); },
+          function (v) { return fmt(v, 3); });
+      }
+      tipografar(c1);
+    }
+
+    /* ---------------- vista 1: a teia ---------------- */
+    function vistaTeia() {
+      var r = est.r;
+      var g = G.eixos(cv, {
+        altura: 330, xmin: 0, xmax: 1, ymin: 0, ymax: 1, divY: 4,
+        marcasX: G.marcasLineares(0, 1, 5, 1),
+        rotX: 'xₙ', rotY: 'xₙ₊₁',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      /* a diagonal e a parábola */
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.3;
+      ct.beginPath(); ct.moveTo(g.X(0), g.Y(0)); ct.lineTo(g.X(1), g.Y(1));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'xₙ₊₁ = xₙ', g.X(0.86), g.Y(0.92), G.COR.suave);
+
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.6;
+      ct.beginPath();
+      for (var i = 0; i <= 400; i++) {
+        var x = i / 400;
+        ct.lineTo(g.X(x), g.Y(Math.min(1, f(x, r))));
+      }
+      ct.stroke(); ct.restore();
+
+      /* a teia: horizontal até a diagonal, vertical até a parábola */
+      var x = est.x0;
+      ct.save();
+      ct.strokeStyle = G.COR.bronze; ct.lineWidth = 1.3;
+      ct.beginPath();
+      ct.moveTo(g.X(x), g.Y(0));
+      for (var k = 0; k < 220; k++) {
+        var y = f(x, r);
+        if (y > 1 || y < 0) break;
+        ct.lineTo(g.X(x), g.Y(y));
+        ct.lineTo(g.X(y), g.Y(y));
+        x = y;
+      }
+      ct.stroke(); ct.restore();
+
+      /* o ciclo final, em destaque */
+      var p = periodo(r);
+      var xf = 0.3, j;
+      for (j = 0; j < 8000; j++) xf = f(xf, r);
+      if (p > 0) {
+        ct.fillStyle = G.COR.vinho;
+        for (j = 0; j < p; j++) {
+          ct.beginPath(); ct.arc(g.X(xf), g.Y(f(xf, r)), 5, 0, 6.2832);
+          ct.fill();
+          xf = f(xf, r);
+        }
+      }
+
+      var fixo = 1 - 1 / r, deriv = r * (1 - 2 * fixo);
+      rotulos(['Ponto fixo 1 − 1/r', 'Inclinação ali', 'Período da órbita',
+               'Expoente de Lyapunov']);
+      painel({
+        a: fmt(fixo, 4),
+        b: fmt(deriv, 3) + (Math.abs(deriv) < 1 ? ' <small>|·|&lt;1</small>'
+                                               : ' <small>|·|&gt;1</small>'),
+        c: p > 0 ? fmt(p, 0) : 'aperiódica',
+        d: fmt(lyapunov(r), 4)
+      });
+
+      texto.innerHTML =
+        '<p>A teia é o mapa feito à mão: suba até a parábola para calcular '
+        + '\\(x_{n+1} = rx_n(1-x_n)\\), ande até a diagonal para transformar '
+        + 'essa saída na entrada seguinte, e repita. Toda a dinâmica está no '
+        + 'encontro dessas duas curvas.</p>'
+        + '<p>O ponto fixo é onde a parábola cruza a diagonal, em '
+        + '\\(x^* = 1-1/r = ' + fmtm(fixo, 4) + '\\), e o que decide o '
+        + 'destino é a <strong>inclinação da parábola ali</strong>: '
+        + '\\(f\'(x^*) = ' + fmtm(deriv, 3) + '\\). Com módulo menor que 1 a '
+        + 'teia espirala para dentro e o ponto fixo atrai; com módulo maior '
+        + 'que 1 ela é expulsa. É o mesmo critério dos autovalores do módulo '
+        + '9, na versão discreta.</p>'
+        + (p > 0
+          ? '<p>Aqui a órbita termina num ciclo de <strong>período '
+            + fmt(p, 0) + '</strong>, marcado em vinho. Experimente passar '
+            + 'de \\(r = 3\\), onde a inclinação cruza \\(-1\\), e ver o '
+            + 'período dobrar.</p>'
+          : '<p>Aqui a órbita <strong>nunca se repete</strong>, e a teia '
+            + 'preenche uma região inteira. Não há ruído nenhum na conta: '
+            + 'cada passo é uma multiplicação, e ainda assim não existe '
+            + 'ciclo. É esse o conteúdo da palavra caos.</p>');
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: o diagrama ---------------- */
+    function vistaDiagrama() {
+      var J = JANELAS[est.zoom];
+      var g = G.eixos(cv, {
+        altura: 330, xmin: J.a, xmax: J.b, ymin: 0, ymax: 1, divY: 4,
+        marcasX: G.marcasLineares(J.a, J.b, 4, est.zoom >= 2 ? 4 : 2),
+        rotX: 'parâmetro r', rotY: 'valores visitados por x',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      var cols = Math.max(400, Math.round(g.x1 - g.x0));
+      ct.save();
+      ct.fillStyle = 'rgba(29,95,126,.55)';
+      for (var c = 0; c <= cols; c++) {
+        var r = J.a + (J.b - J.a) * c / cols;
+        var x = 0.3, i;
+        for (i = 0; i < 400; i++) x = f(x, r);
+        for (i = 0; i < 160; i++) {
+          x = f(x, r);
+          ct.fillRect(g.X(r), g.Y(x), 1, 1);
+        }
+      }
+      ct.restore();
+
+      /* marcas nos valores notáveis que caem dentro da janela */
+      var notaveis = [
+        { v: 3, r: 'r = 3' },
+        { v: 1 + Math.sqrt(6), r: '1+√6' },
+        { v: 3.569945672, r: 'fim da cascata' },
+        { v: 1 + Math.sqrt(8), r: '1+√8' }
+      ];
+      var nivel = 0;
+      notaveis.forEach(function (m) {
+        if (m.v <= J.a || m.v >= J.b) return;
+        nivel++;
+        ct.save();
+        ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.2;
+        ct.setLineDash([4, 4]);
+        ct.beginPath(); ct.moveTo(g.X(m.v), g.y0); ct.lineTo(g.X(m.v), g.y1);
+        ct.stroke(); ct.restore();
+        /* alterna a altura, senão os rótulos vizinhos se sobrepõem */
+        rotulo(ct, m.r, g.X(m.v), g.y0 + (nivel % 2 ? 14 : 32),
+               G.COR.vinho);
+      });
+
+      rotulos(['Janela mostrada', 'Primeira bifurcação',
+               'Fim da cascata', 'Janela de período 3']);
+      painel({
+        a: fmt(J.a, 4) + ' a ' + fmt(J.b, 4),
+        b: 'r = 3 <small>(exato)</small>',
+        c: '3,569946',
+        d: '1+√8 = 3,828427'
+      });
+
+      texto.innerHTML =
+        '<p>Cada coluna vertical mostra os valores que \\(x\\) visita depois '
+        + 'que o transiente morre, para aquele \\(r\\). Uma linha significa '
+        + 'ponto fixo; duas, ciclo de período 2; uma nuvem, caos.</p>'
+        + '<p>A sequência de duplicações se acumula em '
+        + '\\(r_\\infty = 3{,}569946\\), e os intervalos entre bifurcações '
+        + 'encolhem por um fator que tende a '
+        + '\\(\\delta = 4{,}6692\\), a constante de Feigenbaum. O programa '
+        + 'mede esse fator pelos parâmetros superestáveis e chega a 4,6684 '
+        + 'na quinta duplicação.</p>'
+        + '<p>Depois do caos há <strong>janelas de ordem</strong>, e a mais '
+        + 'larga é a de período 3, que começa exatamente em '
+        + '\\(1+\\sqrt8 = 3{,}828427\\). Amplie-a: dentro dela há outra '
+        + 'cascata, 3, 6, 12, que termina em caos outra vez. O diagrama se '
+        + 'parece consigo mesmo em toda escala, e é por isso que ampliar '
+        + 'vale a pena.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: Lyapunov e previsão ---------------- */
+    function vistaLyapunov() {
+      var r = est.rL;
+      var g = G.eixos(cv, {
+        altura: 330, xmin: 0, xmax: 60, ymin: -16, ymax: 1, divY: 4,
+        marcasX: G.marcasLineares(0, 60, 6, 0),
+        rotX: 'iterações', rotY: 'log₁₀ da separação',
+        formataY: function (v) { return fmt(v, 0); }
+      });
+      var ct = g.ct;
+
+      var lam = lyapunov(r);
+
+      /* a previsão: d0 exp(lambda n), em log10 */
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.8; ct.setLineDash([6, 4]);
+      ct.beginPath();
+      for (var i = 0; i <= 60; i++) {
+        var y = -14 + lam * i / Math.LN10;
+        ct.lineTo(g.X(i), g.Y(Math.min(1, y)));
+      }
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'o que o expoente prevê', g.X(31), g.Y(-14 + lam * 31 / Math.LN10) - 14,
+             G.COR.vinho);
+
+      /* oito pares de órbitas, separados por 1e-14 */
+      var sementes = [0.2, 0.3, 0.4, 0.55, 0.62, 0.71, 0.83, 0.91];
+      sementes.forEach(function (x0, k) {
+        var a = x0, b = x0 + 1e-14;
+        ct.save();
+        ct.strokeStyle = k === 1 ? G.COR.mestra : 'rgba(134,180,205,.75)';
+        ct.lineWidth = k === 1 ? 2.4 : 1.2;
+        ct.beginPath();
+        for (var n = 0; n <= 60; n++) {
+          var d = Math.abs(a - b);
+          if (d > 0) ct.lineTo(g.X(n), g.Y(Math.max(-16, Math.log(d) / Math.LN10)));
+          a = f(a, r); b = f(b, r);
+        }
+        ct.stroke(); ct.restore();
+      });
+
+      /* o nível de saturação */
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.2; ct.setLineDash([3, 3]);
+      ct.beginPath(); ct.moveTo(g.x0, g.Y(-1)); ct.lineTo(g.x1, g.Y(-1));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'largura do atrator: fim da previsão', g.x1 - 10, g.Y(-1) - 13,
+             G.COR.suave, 'right');
+
+      var nperda = lam > 0 ? Math.log(0.1 / 1e-14) / lam : Infinity;
+      rotulos(['Expoente de Lyapunov', 'Regime',
+               'Iterações até perder tudo', 'Ganhar 1 casa compra']);
+      painel({
+        a: fmt(lam, 4),
+        b: lam > 1e-3 ? 'caótico' : (lam < -1e-3 ? 'periódico' : 'borda'),
+        c: isFinite(nperda) && lam > 0 ? fmt(nperda, 0) : '—',
+        d: lam > 0 ? fmt(Math.LN10 / lam, 1) + ' iterações' : '—'
+      });
+
+      texto.innerHTML =
+        '<p>Oito pares de órbitas, cada par começando separado por '
+        + '\\(10^{-14}\\), que é a precisão de um número de máquina. A escala '
+        + 'vertical é logarítmica, de modo que crescimento exponencial '
+        + 'aparece como <strong>reta</strong>.</p>'
+        + (lam > 0
+          ? '<p>Com \\(r = ' + fmtm(r, 3) + '\\) o expoente vale '
+            + '\\(\\lambda = ' + fmtm(lam, 4) + '\\), e as curvas sobem com '
+            + 'essa inclinação até <em>saturar</em> na largura do atrator. '
+            + 'Dali em diante as duas órbitas não têm mais relação nenhuma, '
+            + 'e isso acontece em cerca de ' + fmt(nperda, 0)
+            + ' iterações.</p>'
+            + '<p>Repare na dispersão entre os oito pares: a taxa de um par '
+            + 'isolado flutua bastante, porque \\(\\lambda\\) é uma '
+            + '<em>média</em> ao longo da órbita. O programa mostra que a '
+            + 'média sobre quatrocentos pares converge para o expoente, e '
+            + 'que um par só erra 9 %.</p>'
+            + '<p>A conta que vale guardar: ganhar uma casa decimal a mais '
+            + 'na condição inicial compra apenas '
+            + '\\(\\ln 10/\\lambda = ' + fmtm(Math.LN10 / lam, 1) + '\\) '
+            + 'iterações de previsão. Medir dez vezes melhor não prevê dez '
+            + 'vezes mais longe: prevê um pouquinho mais longe. É essa '
+            + 'troca ruim que torna a previsão do tempo difícil, e não a '
+            + 'falta de computador.</p>'
+          : '<p>Com \\(r = ' + fmtm(r, 3) + '\\) o expoente é '
+            + '<strong>negativo</strong>, \\(\\lambda = ' + fmtm(lam, 4)
+            + '\\): as curvas <em>descem</em>. Órbitas vizinhas se juntam, '
+            + 'e o sistema esquece a condição inicial em vez de amplificá-la. '
+            + 'Esse é o regime periódico, e é o que torna possível prever '
+            + 'coisa nenhuma. Mexa em \\(r\\) para passar de 3,57 e ver a '
+            + 'inclinação trocar de sinal.</p>');
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'teia') vistaTeia();
+      else if (est.vista === 'diagrama') vistaDiagrama();
+      else vistaLyapunov();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {

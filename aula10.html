@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caos determinístico: mapa logístico, Lyapunov e atratores | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200911">
+<script src="assets/js/comum.js?v=202611200911"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <a href="aula02.html" class="num" title="Módulo 2: As leis de Newton e os referenciais inerciais">2</a>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <a href="aula04.html" class="num" title="Módulo 4: Trabalho, energia e forças conservativas">4</a>
+      <a href="aula05.html" class="num" title="Módulo 5: Momento linear, impulso e o movimento de foguetes">5</a>
+      <span class="grupo">Oscilações</span>
+      <a href="aula06.html" class="num" title="Módulo 6: O oscilador harmônico simples">6</a>
+      <a href="aula07.html" class="num" title="Módulo 7: Oscilações amortecidas">7</a>
+      <a href="aula08.html" class="num" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer">8</a>
+      <span class="grupo">Caos</span>
+      <a href="aula09.html" class="num" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase">9</a>
+      <a href="aula10.html" class="num ativo" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores">10</a>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. Do que o caos precisa, e como baratear</a></li>
+    <li><a href="#s2">2. A teia, os pontos fixos e a primeira duplicação</a></li>
+    <li><a href="#s3">3. A cascata e a constante de Feigenbaum</a></li>
+    <li><a href="#s4">4. O expoente de Lyapunov, e o preço da previsão</a></li>
+    <li><a href="#s5">5. Ordem dentro do caos, e a volta à mecânica</a></li>
+    <li><a href="#s6">6. No Spyder</a></li>
+    <li><a href="#s7">7. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 10 · Não linear e caos</p>
+  <h1>Caos determinístico: mapa logístico, Lyapunov e atratores</h1>
+  <p class="subtitulo">Caos não é desordem nem ruído: é sensibilidade exponencial às condições iniciais num sistema inteiramente determinístico. Uma linha de conta por iteração basta para produzi-lo, e para medir quanto tempo uma previsão dura.</p>
+  <h2 id="s1">1. Do que o caos precisa, e como baratear</h2>
+
+<p>O módulo 9 terminou com um resultado que fecha uma porta. Pelo teorema de
+Poincaré-Bendixson, uma trajetória presa numa região limitada do
+<strong>plano</strong>, sem ponto fixo pela frente, tem de convergir para uma
+órbita fechada. Não existe terceira opção. Como trajetórias não podem se
+cruzar, não há espaço no plano para uma curva se embolar indefinidamente sem
+se repetir.</p>
+
+<div class="bloco def">
+<p class="rotulo">Do que o caos precisa</p>
+<p>Para haver caos num sistema de equações diferenciais autônomas são
+necessárias <strong>não linearidade</strong> e pelo menos
+<strong>três dimensões</strong> no espaço de fase. Nem uma nem outra é
+suficiente sozinha.</p>
+</div>
+
+<p>Três dimensões aparecem com mais facilidade do que parece. Um oscilador
+forçado, como o do módulo 8, tem duas variáveis de estado, \(x\) e
+\(\dot{x}\), mais a fase da força, que avança sozinha: são três. É por isso
+que o pêndulo amortecido e forçado pode ser caótico enquanto o pêndulo
+livre, por maior que seja a amplitude, nunca é.</p>
+
+<p>Há outro caminho, mais barato ainda, e é o deste módulo: desistir do tempo
+contínuo. Num <strong>mapa</strong>, o estado pula de um valor para o
+seguinte, e a proibição de cruzamento não se aplica, porque não há curva
+contínua ligando os pontos. Uma única variável basta.</p>
+
+\[ x_{n+1} = r\,x_n\left(1-x_n\right). \]
+
+<p>Esse é o <strong>mapa logístico</strong>, e ele tem uma linha de conta por
+iteração. Foi popularizado em 1976 por
+<a href="https://pt.wikipedia.org/wiki/Robert_May,_Bar%C3%A3o_May_de_Oxford">Robert
+May</a>, num artigo com o subtítulo certo: equações muito simples podem ter
+dinâmica muito complicada. Lido como modelo, \(x\) é uma população
+normalizada e o termo \((1-x)\) é a saturação por falta de recursos.</p>
+
+  <h2 id="s2">2. A teia, os pontos fixos e a primeira duplicação</h2>
+
+<p>A primeira vista do componente é a <strong>teia</strong>, que é o mapa
+feito à mão: suba até a parábola para calcular \(x_{n+1}\), ande até a
+diagonal para transformar essa saída na entrada seguinte, repita.</p>
+
+<div data-widget="caos"></div>
+
+<p>Os pontos fixos são os cruzamentos da parábola com a diagonal:
+\(x^* = 0\) e \(x^* = 1 - 1/r\). A estabilidade é decidida pela inclinação da
+parábola ali, pelo mesmo tipo de argumento do módulo 9, agora na versão
+discreta:</p>
+
+\[ \left|f'(x^*)\right| &lt; 1 \quad\Longrightarrow\quad \text{estável},
+   \qquad f'(x^*) = r\left(1-2x^*\right) = 2-r. \]
+
+<p>O programa confere a previsão contra a iteração:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(r\)</th><th>\(x^*=1-1/r\)</th><th>\(f'(x^*)\)</th>
+<th>previsão</th><th>para onde a órbita vai</th></tr></thead>
+<tbody>
+<tr><td>0,8</td><td>\(-0{,}25\)</td><td>\(+1{,}20\)</td><td>instável</td>
+<td>\(x = 0\), extinção</td></tr>
+<tr><td>1,5</td><td>0,333333</td><td>\(+0{,}50\)</td><td>estável</td>
+<td>\(x = 0{,}333333\)</td></tr>
+<tr><td>2,9</td><td>0,655172</td><td>\(-0{,}90\)</td><td>estável</td>
+<td>\(x = 0{,}655172\)</td></tr>
+<tr><td>3,2</td><td>0,687500</td><td>\(-1{,}20\)</td><td>instável</td>
+<td>ciclo de período 2</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Em \(r = 3\) a derivada passa por \(-1\), e aí começa tudo. A perda de
+estabilidade por \(f' = -1\) tem nome, <strong>bifurcação de duplicação de
+período</strong>, e o que nasce dela é um ciclo de período 2. O ponto fixo não
+some: ele continua existindo, agora instável, e a teia simplesmente deixa de
+convergir para ele.</p>
+
+<p>Repare na primeira linha da tabela. Com \(r &lt; 1\) o ponto fixo não
+trivial é negativo, isto é, não está no intervalo que interessa, e a
+população se extingue. É um lembrete de que achar a raiz de uma equação não é
+o mesmo que achar uma solução do problema.</p>
+
+  <h2 id="s3">3. A cascata e a constante de Feigenbaum</h2>
+
+<p>O ciclo de período 2 também perde estabilidade, pelo mesmo mecanismo, e dá
+lugar a um de período 4, depois 8, 16. Os intervalos entre bifurcações
+sucessivas encolhem depressa, e a sequência <em>se acumula</em> num valor
+finito, \(r_\infty = 3{,}569946\). Depois dele, caos.</p>
+
+<p>Medir os pontos de bifurcação diretamente é desconfortável, porque ali o
+ciclo é marginalmente estável e a convergência é lentíssima. O programa usa um
+truque padrão: mede os parâmetros <strong>superestáveis</strong> \(R_n\), em
+que o ciclo de período \(2^n\) contém \(x = 1/2\). Como \(f'(1/2) = 0\), a
+derivada do ciclo inteiro se anula ali, e o \(R_n\) é raiz simples de uma
+equação bem posta, achável por bissecção. Eles estão no meio de cada janela e
+convergem para a mesma constante:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(n\)</th><th>período</th><th>\(R_n\)</th>
+<th>intervalo</th><th>razão</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>1</td><td>2,000000000000</td><td></td><td></td></tr>
+<tr><td>1</td><td>2</td><td>3,236067977500</td><td></td><td></td></tr>
+<tr><td>2</td><td>4</td><td>3,498561699328</td><td>\(2{,}6\times10^{-1}\)</td>
+<td>4,708943</td></tr>
+<tr><td>3</td><td>8</td><td>3,554640862769</td><td>\(5{,}6\times10^{-2}\)</td>
+<td>4,680771</td></tr>
+<tr><td>4</td><td>16</td><td>3,566667379856</td><td>\(1{,}2\times10^{-2}\)</td>
+<td>4,662960</td></tr>
+<tr><td>5</td><td>32</td><td>3,569243531637</td><td>\(2{,}6\times10^{-3}\)</td>
+<td>4,668404</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A razão converge para</p>
+
+\[ \delta = 4{,}669201609\ldots \]
+
+<p>que é a <strong>constante de Feigenbaum</strong>. Repare que
+\(R_1 = 3{,}2360679775\) é exatamente \(1+\sqrt5\), e vale conferir isso à
+mão: a conta cabe em cinco linhas.</p>
+
+<div class="bloco fisica">
+<p class="rotulo">Por que isso é uma constante, e não um resultado</p>
+<p>O número 4,6692 <strong>não depende do mapa</strong>. Qualquer mapa
+unidimensional com um máximo quadrático (o seno, \(r\sen\pi x\), o mapa da
+tenda arredondado, incontáveis outros) produz a mesma cascata com a mesma
+razão. Mitchell Feigenbaum descobriu isso em 1975 numa calculadora de mão, e
+a explicação é uma teoria de renormalização: perto da acumulação, o mapa
+iterado duas vezes, reescalado, <em>é</em> o mapa original. Para a maioria
+dos alunos este é o primeiro encontro com <strong>universalidade</strong>, e é
+um bom lugar para encontrá-la, porque aqui ela pode ser medida numa tarde.</p>
+</div>
+
+<p>A segunda vista do componente é o <strong>diagrama de bifurcação</strong>,
+com janelas de ampliação. Vale percorrê-las na ordem: o diagrama inteiro, a
+cascata, um pedaço da cascata, a janela de período 3. A terceira ampliação
+mostra o ponto principal, que é o diagrama se parecer consigo mesmo em toda
+escala.</p>
+
+  <h2 id="s4">4. O expoente de Lyapunov, e o preço da previsão</h2>
+
+<p>"Caótico" precisa de definição quantitativa, e a definição é esta. Tome
+duas órbitas separadas por \(d_0\) e acompanhe a separação. Num sistema
+caótico ela cresce exponencialmente,</p>
+
+\[ d_n \simeq d_0\,e^{\lambda n}, \]
+
+<p>e \(\lambda\) é o <strong>expoente de Lyapunov</strong>. Para um mapa ele
+sai de uma média:</p>
+
+\[ \lambda = \lim_{N\to\infty}\frac{1}{N}
+   \sum_{n=0}^{N-1}\ln\left|f'(x_n)\right|, \]
+
+<p>que é a taxa média de esticamento ao longo da órbita. O sinal é o que
+importa: \(\lambda &lt; 0\) significa que órbitas vizinhas se juntam, e o
+sistema esquece a condição inicial; \(\lambda &gt; 0\) significa que ele a
+amplifica.</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(r\)</th><th>\(\lambda\)</th><th>regime</th></tr></thead>
+<tbody>
+<tr><td>2,500000</td><td>\(-0{,}693147\)</td><td>periódico</td></tr>
+<tr><td>3,500000</td><td>\(-0{,}872507\)</td><td>periódico (ciclo 4)</td></tr>
+<tr><td>3,569946</td><td>\(+0{,}000986\)</td><td>a acumulação: \(\lambda=0\)</td></tr>
+<tr><td>3,700000</td><td>\(+0{,}354775\)</td><td>caótico</td></tr>
+<tr><td>3,840000</td><td>\(-0{,}044410\)</td><td>janela de período 3</td></tr>
+<tr><td>3,900000</td><td>\(+0{,}495505\)</td><td>caótico</td></tr>
+<tr><td>4,000000</td><td>\(+0{,}693153\)</td><td>caótico</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A última linha é um dos poucos casos em que o expoente sai em forma
+fechada. Em \(r = 4\) o mapa é conjugado a \(x \mapsto 2x \bmod 1\), que dobra
+a distância a cada passo, de modo que</p>
+
+\[ \lambda(4) = \ln 2 = 0{,}693147\ldots \]
+
+<p>e a medida numérica dá 0,693153, com a diferença vindo do número finito de
+iterações. Note também que \(\lambda(2{,}5)\) deu exatamente \(-\ln 2\), por
+um motivo completamente diferente: ali a órbita é o ponto fixo, e
+\(|f'| = 1/2\).</p>
+
+<h3>Quanto tempo a previsão dura</h3>
+
+<p>A terceira vista do componente traz a consequência prática, que é o que o
+caos custa. Oito pares de órbitas começam separados por \(10^{-14}\), que é a
+precisão de um número de máquina, e a escala vertical é logarítmica, de modo
+que crescimento exponencial vira reta.</p>
+
+<p>As curvas sobem com a inclinação dada por \(\lambda\) até
+<strong>saturar</strong> na largura do atrator. Dali em diante as duas órbitas
+não têm mais relação nenhuma: a previsão acabou. Com \(r = 3{,}9\) e
+\(\lambda = 0{,}4955\), isso leva 60 iterações.</p>
+
+<div class="bloco alerta">
+<p class="rotulo">A troca que não compensa</p>
+<p>Para prever mais longe é preciso medir melhor o começo. Quanto melhor?
+Ganhar <strong>uma casa decimal</strong> na condição inicial compra apenas
+\(\ln 10/\lambda = 4{,}6\) iterações a mais de previsão. Medir dez vezes
+melhor não prevê dez vezes mais longe: prevê um pouquinho mais longe, e o
+custo da medida cresce muito mais depressa que o ganho. É essa troca ruim, e
+não a falta de computador, que limita a previsão do tempo a cerca de duas
+semanas.</p>
+</div>
+
+<p>Um cuidado de medida, que o programa documenta. A taxa observada num
+<em>único</em> par de órbitas fica 9 % acima do expoente, porque \(\lambda\) é
+uma média ao longo da órbita e trechos curtos esticam mais ou menos que ela. A
+média sobre quatrocentos pares com inícios ao acaso dá 0,4929 contra
+\(\lambda = 0{,}4955\). Confundir a flutuação de uma amostra com erro de conta
+é um engano comum aqui.</p>
+
+  <h2 id="s5">5. Ordem dentro do caos, e a volta à mecânica</h2>
+
+<p>Depois da acumulação o diagrama não é caos uniforme: há <strong>janelas de
+ordem</strong> espalhadas por toda parte, e a mais larga é a de período 3, que
+começa exatamente em</p>
+
+\[ r = 1+\sqrt8 = 3{,}828427\ldots \]
+
+<p>O programa atravessa esse valor e mede dos dois lados:</p>
+
+<div class="saida">
+r = 3,828327&nbsp;&nbsp;&nbsp;aperiodica&nbsp;&nbsp;&nbsp;lambda = <b>+0,208864</b><br>
+r = 3,828527&nbsp;&nbsp;&nbsp;periodo <b>3</b>&nbsp;&nbsp;&nbsp;lambda = <b>&minus;0,060942</b>
+</div>
+
+<p>Dois décimos de milésimo de diferença em \(r\), e o sistema passa de
+caótico a periódico. Dentro da janela há uma cascata própria (3, 6, 12,
+&hellip;) que termina em caos de novo, perto de 3,8495, e dentro dela outras
+janelas, indefinidamente.</p>
+
+<div class="bloco fisica">
+<p class="rotulo">Período três implica caos</p>
+<p>O teorema de Sarkovskii, de 1964, diz algo surpreendentemente forte: num
+mapa contínuo do intervalo em si mesmo, a existência de uma órbita de período
+3 implica a existência de órbitas de <strong>todos</strong> os períodos. Li e
+Yorke redescobriram o resultado em 1975 num artigo cujo título,
+<em>Period three implies chaos</em>, introduziu a palavra na literatura
+matemática. Quando a janela de período 3 aparece, os outros ciclos todos
+também estão lá; são apenas instáveis, e por isso não se veem.</p>
+</div>
+
+<h3>E a mecânica?</h3>
+
+<p>O mapa logístico não é um sistema mecânico, e é justo perguntar o que ele
+tem a ver com este curso. Duas coisas.</p>
+
+<p>Primeiro, a cascata de duplicação e a constante \(\delta\) aparecem
+<em>iguais</em> no pêndulo amortecido e forçado, que é mecânico e tem as três
+dimensões necessárias. A universalidade de Feigenbaum não é uma propriedade de
+parábolas: é uma propriedade de como sistemas dissipativos perdem
+estabilidade, e o exercício 10.6 pede para encontrá-la ali.</p>
+
+<p>Segundo, mapas aparecem naturalmente em mecânica quando se amostra um
+sistema contínuo uma vez por período: é o que se faz com um oscilador forçado,
+tomando \((x,\dot{x})\) a cada ciclo da força. O fluxo contínuo em três
+dimensões vira um mapa em duas, e o módulo inteiro passa a valer. O lado
+<em>conservativo</em> dessa construção, com toros invariantes e o teorema KAM,
+é a unidade final de <strong>Mecânica Clássica III</strong>, onde ela tem o
+espaço que merece.</p>
+
+  <h2 id="s6">6. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/caos.py">
+    <span class="numero">Programa</span>
+    <h3>caos.py</h3>
+    <p>Decide estabilidade por \(|f'|&lt;1\), localiza as bifurcações pelos
+    parâmetros superestáveis, mede Feigenbaum e o expoente de Lyapunov, e
+    mostra a separação exponencial de duas órbitas vizinhas.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>A previsão de \(|f'| &lt; 1\) bate com o que a iteração faz, nos cinco
+casos.</li>
+<li>As bifurcações estão em \(r = 3\) e \(r = 1+\sqrt6 = 3{,}449490\),
+conferidas por iteração dos dois lados.</li>
+<li>A razão entre intervalos sucessivos vai a 4,6684 na quinta duplicação,
+contra \(\delta = 4{,}669202\).</li>
+<li>\(\lambda(4) = 0{,}693153\) contra \(\ln2 = 0{,}693147\).</li>
+<li>A média da taxa de separação sobre 400 pares dá 0,4929 contra
+\(\lambda = 0{,}4955\), ao passo que um par isolado erra 9 %.</li>
+<li>A janela de período 3 começa entre 3,828327 e 3,828527, contendo
+\(1+\sqrt8\).</li>
+</ul>
+
+<div class="bloco ex">
+<p><strong>Para mexer.</strong> Troque \(rx(1-x)\) por \(r\sen(\pi x)\) e
+refaça a medida de Feigenbaum: os \(R_n\) serão outros, e a razão será a
+mesma 4,6692. É a maneira mais barata de ver universalidade com as próprias
+mãos. Depois tente \(x \mapsto r x(1-x^2)\), cujo máximo também é quadrático,
+e por fim um mapa com máximo <em>quártico</em>, que dá outra constante: a
+universalidade tem classes, e a classe é fixada pela ordem do máximo.</p>
+</div>
+
+  <h2 id="s7">7. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">10.1  Os pontos fixos, e por que r = 3</span>
+  <p>Encontre os pontos fixos do mapa logístico, mostre que
+     \(f'(x^*) = 2-r\) no ponto fixo não trivial e obtenha o intervalo de
+     \(r\) em que ele é estável. Explique por que a instabilidade aparece com
+     \(f' = -1\) e não com \(f' = +1\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Os pontos fixos.</b> \(x^* = rx^*(1-x^*)\) dá
+     \(x^*\left[1-r(1-x^*)\right] = 0\), de onde</p>
+     <p>\[ x^* = 0 \qquad\text{e}\qquad x^* = 1-\frac{1}{r}. \]</p>
+     <p>O segundo só está em \([0,1]\) se \(r \ge 1\): abaixo disso a
+     população se extingue, e o ponto fixo não trivial é negativo, isto é,
+     não descreve nada.</p>
+     <p><b>A derivada.</b> \(f'(x) = r(1-2x)\), de modo que</p>
+     <p>\[ f'(x^*) = r\left[1-2\left(1-\frac1r\right)\right]
+        = r\left(\frac2r - 1\right) = 2-r. \]</p>
+     <p>Note que a conta não depende de \(x^*\) explicitamente: a inclinação
+     no ponto fixo é função só de \(r\). Isso é particularidade da
+     parábola.</p>
+     <p><b>O intervalo.</b> \(\left|2-r\right| &lt; 1\) dá
+     \(1 &lt; r &lt; 3\). Em \(r = 1\) a derivada vale \(+1\) e em \(r = 3\)
+     vale \(-1\), que são os dois jeitos de perder estabilidade.</p>
+     <p><b>Os dois jeitos, e por que são diferentes.</b> Escreva
+     \(x_n = x^* + \delta_n\). Linearizando, \(\delta_{n+1} = f'\delta_n\),
+     de modo que \(\delta_n = (f')^n\delta_0\):</p>
+     <ul>
+     <li>\(f' \to +1\): a perturbação cresce <em>sem trocar de sinal</em>. O
+     ponto fixo colide com outro ponto fixo e os dois trocam de
+     estabilidade. É o que acontece em \(r = 1\), onde \(x^*=0\) e
+     \(x^*=1-1/r\) se cruzam, e chama-se bifurcação transcrítica.</li>
+     <li>\(f' \to -1\): a perturbação cresce <em>alternando de sinal</em>, e
+     a órbita passa a pular de um lado para o outro do ponto fixo. Essa
+     alternância é um ciclo de período 2 nascendo, e é por isso que esta é a
+     bifurcação de duplicação de período. Um mapa só duplica período por
+     \(-1\), nunca por \(+1\).</li>
+     </ul>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">10.2  O ciclo de período 2 e o valor 1 + √6</span>
+  <p>Resolve \(f(f(x)) = x\), elimine os pontos fixos do mapa simples e
+     obtenha os dois pontos do ciclo de período 2. Mostre que a estabilidade
+     do ciclo é governada por \(-r^2+2r+4\) e deduza que ele perde
+     estabilidade em \(r = 1+\sqrt6\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Os pontos do ciclo.</b> Qualquer ponto fixo de \(f\) também é
+     ponto fixo de \(f\circ f\), de modo que \(x\) e \(x-(1-1/r)\) dividem o
+     polinômio \(f(f(x))-x\). Feita a divisão, sobra</p>
+     <p>\[ r^2x^2 - r(r+1)x + (r+1) = 0
+        \quad\Longrightarrow\quad
+        x_{\pm} = \frac{r+1 \pm \sqrt{(r-3)(r+1)}}{2r}. \]</p>
+     <p>O discriminante é negativo para \(r &lt; 3\): o ciclo de período 2
+     <b>não existe</b> abaixo de 3, e nasce exatamente onde o ponto fixo perde
+     estabilidade. Em \(r = 3\) as duas raízes coincidem em \(x = 2/3\), que é
+     o próprio ponto fixo.</p>
+     <p><b>A estabilidade.</b> Pela regra da cadeia,</p>
+     <p>\[ \left(f\circ f\right)'(x_\pm) = f'(x_+)\,f'(x_-)
+        = r^2\left(1-2x_+\right)\left(1-2x_-\right), \]</p>
+     <p>e repare que o produto é o <em>mesmo</em> nos dois pontos: um ciclo é
+     estável ou instável por inteiro, nunca pela metade. Usando
+     \(x_++x_- = (r+1)/r\) e \(x_+x_- = (r+1)/r^2\):</p>
+     <p>\[ \left(1-2x_+\right)\left(1-2x_-\right)
+        = 1 - \frac{2(r+1)}{r} + \frac{4(r+1)}{r^2}, \]</p>
+     <p>\[ \left(f\circ f\right)' = r^2 - 2r(r+1) + 4(r+1)
+        = -r^2+2r+4. \]</p>
+     <p><b>Os dois extremos.</b> Em \(r = 3\) isso vale \(+1\), confirmando o
+     nascimento marginal. A perda de estabilidade acontece quando passa por
+     \(-1\):</p>
+     <p>\[ -r^2+2r+4 = -1 \quad\Longrightarrow\quad r^2-2r-5 = 0
+        \quad\Longrightarrow\quad r = 1+\sqrt6 = 3{,}449490. \]</p>
+     <p>O programa confirma por iteração: em \(r = 3{,}4494\) o período é 2 e
+     em \(r = 3{,}4496\) já é 4.</p>
+     <p><b>O que vem depois.</b> O mesmo cálculo para o ciclo de período 4
+     exigiria um polinômio de grau 16, e a partir daí não há forma fechada.
+     Essa é a razão prática de a cascata inteira ser estudada numericamente, e
+     de os dois primeiros valores (3 e \(1+\sqrt6\)) serem os únicos que
+     aparecem com raiz quadrada nos livros.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">10.3  O primeiro parâmetro superestável, à mão</span>
+  <p>O programa usa os parâmetros em que \(x = 1/2\) pertence ao ciclo.
+     Mostre que, para o ciclo de período 2, esse parâmetro é
+     \(R_1 = 1+\sqrt5\), e explique por que esses parâmetros são melhores que
+     os pontos de bifurcação para medir a constante de Feigenbaum.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A condição.</b> Se \(x=1/2\) está num ciclo de período 2, então
+     \(f(f(1/2)) = 1/2\). Com \(f(1/2) = r/4\):</p>
+     <p>\[ r\cdot\frac{r}{4}\left(1-\frac{r}{4}\right) = \frac12
+        \quad\Longrightarrow\quad
+        r^2\left(4-r\right) = 8
+        \quad\Longrightarrow\quad
+        r^3 - 4r^2 + 8 = 0. \]</p>
+     <p><b>A fatoração.</b> \(r = 2\) é raiz, por inspeção
+     (\(8-16+8=0\)), e corresponde ao caso de período 1, em que \(x=1/2\) é o
+     próprio ponto fixo. Dividindo:</p>
+     <p>\[ r^3-4r^2+8 = (r-2)\left(r^2-2r-4\right), \]</p>
+     <p>e a raiz positiva do fator quadrático é</p>
+     <p>\[ R_1 = 1+\sqrt5 = 3{,}2360679775, \]</p>
+     <p>exatamente o valor que a bissecção encontra. (A outra raiz,
+     \(1-\sqrt5\), é negativa e não interessa.)</p>
+     <p><b>Por que superestável.</b> Como \(f'(1/2) = 0\), a derivada do ciclo
+     inteiro, que é o produto das derivadas nos seus pontos, também se anula.
+     Perturbações morrem mais rápido que exponencialmente: a convergência é
+     quadrática. Daí o nome.</p>
+     <p><b>Por que servem melhor.</b> Três motivos práticos:</p>
+     <ul>
+     <li>Nos pontos de <em>bifurcação</em> a derivada do ciclo vale
+     \(\pm1\), de modo que a convergência é lentíssima e a medida numérica
+     fica imprecisa. Nos superestáveis ela é a mais rápida possível.</li>
+     <li>Os \(R_n\) são raízes <em>simples</em> de
+     \(f^{2^n}(1/2) = 1/2\), uma equação bem posta, achável por bissecção com
+     todas as casas. Os pontos de bifurcação são raízes de uma condição de
+     tangência, numericamente pior.</li>
+     <li>Os \(R_n\) ficam no meio de cada janela, e a razão
+     \(\left(R_{n-1}-R_{n-2}\right)/\left(R_n-R_{n-1}\right)\) converge para a
+     <em>mesma</em> \(\delta\), porque a constante descreve a geometria da
+     cascata, e não um ponto particular dela.</li>
+     </ul>
+     <p>Essa escolha é um exemplo de uma coisa que vale além deste módulo:
+     quando uma medida numérica fica ruim, às vezes a solução não é melhorar o
+     método e sim medir outra coisa, que dê a mesma resposta.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">10.4  λ = ln 2 em r = 4, sem medir</span>
+  <p>Mostre que a substituição \(x_n = \sen^2\left(\pi\theta_n\right)\)
+     transforma o mapa logístico com \(r = 4\) no mapa de dobramento
+     \(\theta_{n+1} = 2\theta_n \bmod 1\). Conclua que \(\lambda = \ln 2\) e
+     explique por que o expoente não muda numa mudança de variável.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A conjugação.</b> Com \(x = \sen^2(\pi\theta)\) e \(r = 4\):</p>
+     <p>\[ x_{n+1} = 4\sen^2(\pi\theta_n)\left[1-\sen^2(\pi\theta_n)\right]
+        = 4\sen^2(\pi\theta_n)\cos^2(\pi\theta_n), \]</p>
+     <p>e usando \(2\sen\alpha\cos\alpha = \sen2\alpha\),</p>
+     <p>\[ x_{n+1} = \sen^2\left(2\pi\theta_n\right)
+        = \sen^2\left[\pi\left(2\theta_n\right)\right]. \]</p>
+     <p>Isto é, \(\theta_{n+1} = 2\theta_n\), módulo 1 porque
+     \(\sen^2(\pi\theta)\) tem período 1 em \(\theta\).</p>
+     <p><b>O expoente do mapa de dobramento.</b> Ali a derivada é 2 em todo
+     ponto, de modo que a média de \(\ln|f'|\) é trivialmente \(\ln 2\). Duas
+     condições iniciais vizinhas têm a distância <em>exatamente</em> dobrada a
+     cada passo, até que a operação módulo as separe de vez.</p>
+     <p><b>Por que vale para o logístico.</b> O expoente de Lyapunov é
+     invariante sob mudanças de variável suaves e invertíveis. Se
+     \(x = h(\theta)\), a distância entre órbitas vizinhas em \(x\) é
+     \(\left|h'\right|\) vezes a distância em \(\theta\), e esse fator
+     aparece uma vez no começo e uma vez no fim do cálculo da média: na média
+     de \(\ln\), ele contribui com
+     \(\left[\ln|h'(\theta_N)| - \ln|h'(\theta_0)|\right]/N\), que vai a zero.
+     O esticamento acumulado é o mesmo; só a régua mudou.</p>
+     <p>\[ \lambda_{\text{logístico}}(r=4) = \ln 2 = 0{,}693147\ldots \]</p>
+     <p>contra 0,693153 medido com duzentas mil iterações.</p>
+     <p><b>Um bônus.</b> A conjugação também explica <em>por que</em> o mapa
+     é caótico em \(r=4\): no dobramento, escrever \(\theta\) em binário
+     mostra que iterar é apenas deslocar a vírgula uma casa para a direita. O
+     futuro da órbita é lido nos dígitos que já estavam lá, cada vez mais
+     à direita. Uma incerteza na décima casa binária vira incerteza de ordem
+     1 depois de dez iterações, e é isso o caos: não criação de informação, e
+     sim revelação de informação que estava em dígitos que ninguém mediu.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">10.5  Quanto tempo a previsão dura, com números</span>
+  <p>Um sistema tem \(\lambda = 0{,}50\) por iteração e um atrator de
+     largura 1. Começando com incerteza \(10^{-6}\), quantas iterações a
+     previsão dura? E se a incerteza cair para \(10^{-12}\)? Quanto custaria
+     dobrar o horizonte de previsão?</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A conta.</b> A previsão acaba quando
+     \(d_0e^{\lambda n} \simeq L\), com \(L\) a largura do atrator:</p>
+     <p>\[ n_{\max} = \frac{1}{\lambda}\ln\frac{L}{d_0}. \]</p>
+     <p><b>Os dois casos.</b></p>
+     <p>\[ n_{\max} = \frac{\ln 10^{6}}{0{,}5} = 27{,}6
+        \qquad\text{e}\qquad
+        n_{\max} = \frac{\ln 10^{12}}{0{,}5} = 55{,}3. \]</p>
+     <p>Um milhão de vezes mais precisão <b>dobrou</b> o horizonte. É esse o
+     recado: o horizonte cresce com o <em>logaritmo</em> da precisão.</p>
+     <p><b>Dobrar de novo.</b> De 55 para 110 iterações exigiria
+     \(d_0 = 10^{-24}\), o que está abaixo da precisão dupla de máquina
+     (\(10^{-16}\)) e, em qualquer medida física, abaixo do comprimento de
+     Planck comparado a um metro. Em sistemas caóticos, o horizonte de
+     previsão é praticamente um teto.</p>
+     <p><b>Em números do mundo.</b> Para a atmosfera, estimativas dão
+     \(\lambda \sim 1/(1{,}5\ \text{dia})\). Com incerteza inicial de
+     \(10^{-3}\) do tamanho típico das estruturas,
+     \(n_{\max} \simeq 1{,}5\ln(10^3) = 10\) dias. Melhorar a rede de medidas
+     em mil vezes, que é um esforço gigantesco, levaria isso para 20 dias, e
+     não para dez mil. É por isso que a previsão do tempo melhorou muito em
+     <em>qualidade</em> nos últimos quarenta anos e quase nada em
+     <em>alcance</em>.</p>
+     <p><b>O que não decorre disso.</b> Que previsão nenhuma é possível. O
+     <em>clima</em> (a estatística do atrator: média, variância, frequência de
+     extremos) é perfeitamente previsível, e não depende de saber onde a
+     órbita está. Confundir a imprevisibilidade da trajetória com
+     imprevisibilidade da estatística é o erro mais comum que se comete com a
+     palavra caos fora da física.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">10.6  A mesma cascata, agora num pêndulo</span>
+  <p>O pêndulo amortecido e forçado,
+     \(\ddot\theta + 2\gamma\dot\theta + \sen\theta = A\cos\omega t\), tem as
+     três dimensões necessárias. Explique quais são, descreva como amostrá-lo
+     para obter um mapa, e proponha o procedimento numérico para encontrar
+     nele a cascata de duplicação e medir \(\delta\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>As três dimensões.</b> O estado instantâneo precisa de
+     \(\theta\) e \(\dot\theta\), e a equação <em>não</em> é autônoma, porque
+     \(t\) aparece do lado direito. O remédio padrão é promover a fase da
+     força a variável:</p>
+     <p>\[ \dot\theta = \omega_\theta, \qquad
+        \dot\omega_\theta = -2\gamma\omega_\theta - \sen\theta + A\cos\phi,
+        \qquad \dot\phi = \omega. \]</p>
+     <p>Três equações, autônomas, e portanto espaço de fase tridimensional
+     (com \(\phi\) periódico, isto é, um cilindro). O pêndulo <em>livre</em>
+     tem só duas, e é por isso que ele nunca é caótico, por maior que seja a
+     amplitude.</p>
+     <p><b>Como virar mapa.</b> Registre \((\theta,\dot\theta)\) uma vez por
+     período da força, sempre na mesma fase: em
+     \(t_n = 2\pi n/\omega\). O fluxo contínuo em três dimensões vira um mapa
+     bidimensional, e tudo o que este módulo discute passa a valer. (É a
+     mesma construção que, no caso <em>conservativo</em>, produz as seções de
+     Poincaré da unidade final de Mecânica Clássica III; aqui o sistema é
+     dissipativo e o resultado é um atrator, não um toro.)</p>
+     <p><b>O procedimento.</b></p>
+     <ul>
+     <li>Fixe \(\gamma\) e \(\omega\), e use \(A\) como parâmetro de
+     controle, no papel do \(r\).</li>
+     <li>Para cada \(A\), integre por Runge-Kutta, descarte alguns milhares de
+     períodos de transiente e registre \(\theta\) amostrado uma vez por
+     período, por mais algumas centenas.</li>
+     <li>Desenhe esses valores contra \(A\): é o diagrama de bifurcação, com a
+     mesma leitura (um ponto, dois pontos, nuvem).</li>
+     <li>Localize os \(A_n\) em que o período dobra e meça
+     \(\left(A_{n-1}-A_{n-2}\right)/\left(A_n-A_{n-1}\right)\).</li>
+     </ul>
+     <p><b>O que se espera encontrar.</b> A razão converge para os mesmos
+     \(4{,}6692\). Esse é o ponto do exercício: a constante de Feigenbaum não
+     é uma propriedade de parábolas, e sim de como sistemas dissipativos
+     perdem estabilidade. Um pêndulo de metal e um mapa de uma linha pertencem
+     à mesma classe de universalidade, e isso é verificável numa tarde.</p>
+     <p><b>Dois cuidados numéricos.</b> O transiente aqui é muito mais longo
+     que no mapa, e cortá-lo curto demais produz um diagrama borrado que
+     parece caos sem ser. E a amostragem tem de ser na <em>mesma</em> fase da
+     força sempre: usar o passo do integrador, que não divide o período
+     exatamente, introduz um batimento lento que também parece
+     estrutura.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="aula09.html"><small>Módulo anterior</small>← 9. Além do linear</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611200911"></script>
+</body>
+</html>
