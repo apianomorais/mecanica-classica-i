@@ -342,8 +342,9 @@ angular no 12, momento total aqui.</p>
 <p>Mecânica Clássica II vira esse padrão do avesso. Em vez de procurar as
 constantes depois de escrever as forças, parte-se de uma única função
 escalar e as constantes aparecem como consequência das simetrias que ela
-tem. A órbita de Kepler, que custou uma aula inteira aqui, sai lá em uma
-página; o pêndulo duplo, que é impensável com forças de vínculo, fica
+tem. A órbita de Kepler, que custou o módulo 12 inteiro aqui, sai
+<a href="https://apianomorais.github.io/mecanica-classica-ii/aula11.html">lá em
+meia página</a>; o pêndulo duplo, que é impensável com forças de vínculo, fica
 tratável. Vale ter este curso perto quando aquele começar: o formalismo
 novo só convence quem já sabe quanto trabalho ele está poupando.</p>
 </div>
