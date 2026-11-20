@@ -301,8 +301,8 @@ var G = (function () {
      as cores de série dos gráficos, escolhidas para se distinguirem
      também em preto e branco e para quem não enxerga cor vermelha. */
   var COR = {
-    tinta: '#1b1f24', suave: '#5b6773', grade: '#e5ebe9',
-    mestra: '#176b5d', clara: '#7bb8ab', vinho: '#8c2f39',
+    tinta: '#1b1f24', suave: '#5b6773', grade: '#e5eaee',
+    mestra: '#1d5f7e', clara: '#86b4cd', vinho: '#8c2f39',
     bronze: '#a8601f', ambar: '#b5831f', roxo: '#6b4e8f',
     azul: '#2c5f8d', fundo: '#ffffff'
   };

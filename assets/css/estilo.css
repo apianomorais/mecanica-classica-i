@@ -25,17 +25,17 @@
    =================================================================== */
 
 :root{
-  --azul:#10403a;
-  --azul-claro:#176b5d;
-  --azul-pastel:#e6f2ef;
+  --azul:#123a52;
+  --azul-claro:#1d5f7e;
+  --azul-pastel:#e8f0f5;
   --vinho:#8c2f39;
   --verde:#2c5f8d;
   --ambar:#b5831f;
   --tinta:#1b1f24;
   --tinta-suave:#4a5560;
   --papel:#ffffff;
-  --papel-alt:#f5f8f7;
-  --borda:#d7e0dd;
+  --papel-alt:#f5f8fa;
+  --borda:#d7e1e8;
   --raio:10px;
   --sombra:0 1px 3px rgba(16,64,58,.10), 0 6px 20px rgba(16,64,58,.06);
   --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
@@ -562,3 +562,29 @@ h3.unidade:first-of-type{margin-top:1.2rem}
   font-size:.82rem;color:var(--tinta-suave);text-align:center;
   margin-top:.35rem;line-height:1.35}
 @media (max-width:620px){.figuras{gap:1.4rem}.figuras figure{flex:1 1 100%}}
+
+/* ---- faixa da sequência de Mecânica Clássica (ferramentas/sequencia.py) ---- */
+.sequencia{
+  background:var(--azul-pastel);
+  border-bottom:1px solid var(--borda);
+  font-family:var(--sans);
+  font-size:.82rem;
+}
+.sequencia-interno{
+  max-width:1180px;margin:0 auto;padding:.38rem 1.1rem;
+  display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;
+}
+.sequencia .rot{
+  color:var(--tinta-suave);text-transform:uppercase;
+  letter-spacing:.05em;font-size:.7rem;
+}
+.sequencia a{
+  color:var(--azul-claro);text-decoration:none;
+  border-bottom:1px solid transparent;padding-bottom:1px;
+}
+.sequencia a:hover{border-bottom-color:currentColor}
+.sequencia .aqui{color:var(--azul);font-weight:700}
+@media (max-width:620px){
+  .sequencia-interno{padding:.35rem .8rem;gap:.6rem}
+  .sequencia .rot{width:100%}
+}

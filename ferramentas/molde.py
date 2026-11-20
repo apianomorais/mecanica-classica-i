@@ -149,6 +149,8 @@ CABECA = '''<!DOCTYPE html>
   </div>
 </header>
 
+{sequencia}
+
 <div class="envoltorio">
 {lateral}
 <main class="conteudo">
@@ -202,8 +204,10 @@ def escreve(arquivo, corpo, secoes=None, chapeu=None, titulo=None,
         lateral = ('\n<aside class="lateral">\n  <h4>Neste módulo</h4>\n'
                    '  <ol>\n%s\n  </ol>\n</aside>\n' % itens)
 
+    import sequencia as _seq
     pag = CABECA.format(
         titulo=titulo, h1=titulo, versao=VERSAO, menu=menu(arquivo),
+        sequencia=_seq.faixa(aqui='mecanica-classica-i'),
         lateral=lateral,
         chapeu='  <p class="chapeu">%s</p>\n' % chapeu if chapeu else '',
         subtitulo='  <p class="subtitulo">%s</p>' % subtitulo if subtitulo else '',
