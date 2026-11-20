@@ -2230,6 +2230,356 @@
   };
 
 
+  /* =================================================================
+     7. Oscilações amortecidas
+     A terceira vista é a razão de este componente existir: ela mostra,
+     medindo, que o amortecimento crítico NÃO é o mais rápido para
+     voltar ao repouso, ao contrário do que quase todo livro afirma.
+     O ótimo é ligeiramente subamortecido, e fica exatamente onde o
+     primeiro repique tem o tamanho da tolerância exigida.
+     ================================================================= */
+  REGISTRO.amortecido = function (raiz) {
+    var est = { z: 0.3, tol: 0.02, vista: 'regimes' };
+
+    var W0 = 1.0;            // tudo em unidades de omega0
+
+    function x(t, z) {
+      if (z < 1) {
+        var w1 = Math.sqrt(1 - z * z);
+        return Math.exp(-z * t) * (Math.cos(w1 * t) + (z / w1) * Math.sin(w1 * t));
+      }
+      if (Math.abs(z - 1) < 1e-9) return Math.exp(-t) * (1 + t);
+      var r = Math.sqrt(z * z - 1), r1 = -z + r, r2 = -z - r;
+      return (-r2 * Math.exp(r1 * t) + r1 * Math.exp(r2 * t)) / (r1 - r2);
+    }
+
+    /* tempo de acomodação: último instante em que |x| ainda excede a
+       tolerância. Varrido no tempo, e não resolvido em forma fechada,
+       porque a última saída da faixa pode ser em qualquer semiciclo */
+    function acomodacao(z, tol) {
+      var dt = 0.004, ultimo = 0;
+      for (var t = 0; t < 40; t += dt) {
+        if (Math.abs(x(t, z)) > tol) ultimo = t;
+      }
+      return ultimo;
+    }
+
+    /* o ótimo em forma fechada: exp(-pi z / sqrt(1-z^2)) = tol */
+    function otimoPrevisto(tol) {
+      var L = -Math.log(tol) / Math.PI;
+      return Math.sqrt(L * L / (1 + L * L));
+    }
+
+    var corpo = moldura(raiz, 'Amortecimento: os três regimes, e qual deles para mais depressa');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'Os três regimes', v: 'regimes' },
+      { rot: 'O decaimento e o Q', v: 'qualidade' },
+      { rot: 'Qual para mais depressa', v: 'acomodacao' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', ',').replace('-', '−');
+    }
+    function fmtm(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', '{,}');
+    }
+
+    function tracar(g, f, cor, esp, tracejado) {
+      var ct = g.ct, dentro = false;
+      ct.save();
+      ct.strokeStyle = cor; ct.lineWidth = esp || 2;
+      if (tracejado) ct.setLineDash(tracejado);
+      ct.beginPath();
+      for (var i = 0; i <= 700; i++) {
+        var u = g.xmin + (g.xmax - g.xmin) * i / 700, y = f(u);
+        if (!isFinite(y) || y < g.ymin || y > g.ymax) { dentro = false; continue; }
+        if (!dentro) { ct.moveTo(g.X(u), g.Y(y)); dentro = true; }
+        else ct.lineTo(g.X(u), g.Y(y));
+      }
+      ct.stroke(); ct.restore();
+    }
+
+    function montar() {
+      c1.innerHTML = '';
+      if (est.vista === 'acomodacao') {
+        deslizante(c1, 'Tolerância exigida', 0.002, 0.10, 0.001, est.tol,
+          function (v) { est.tol = v; desenhar(); },
+          function (v) { return fmt(100 * v, 1) + ' % do deslocamento'; });
+      } else {
+        deslizante(c1, 'Amortecimento \\(\\gamma/\\omega_0\\)', 0.02, 2.5, 0.01,
+          est.z, function (v) { est.z = v; desenhar(); },
+          function (v) {
+            return fmt(v) + (v < 0.99 ? ' (subamortecido)'
+                   : v > 1.01 ? ' (superamortecido)' : ' (crítico)');
+          });
+      }
+      tipografar(c1);
+    }
+
+    /* ---------------- vista 1: os três regimes ---------------- */
+    function vistaRegimes() {
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: 18, ymin: -1.1, ymax: 1.1,
+        divY: 4, marcasX: G.marcasLineares(0, 18, 7, 0),
+        rotX: 'tempo, em unidades de 1/ω₀', rotY: 'posição / x₀',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      /* os outros dois regimes, de fundo */
+      tracar(g, function (t) { return x(t, 0.1); }, 'rgba(29,95,126,.25)', 1.5);
+      tracar(g, function (t) { return x(t, 1); }, G.COR.clara, 1.6, [5, 4]);
+      tracar(g, function (t) { return x(t, 2.5); }, G.COR.clara, 1.6, [2, 3]);
+      rotulo(ct, 'γ/ω₀ = 0,1', g.X(14.2), g.Y(x(14.2, 0.1)) - 14, G.COR.suave);
+      rotulo(ct, 'crítico', g.X(3.1), g.Y(x(3.1, 1)) - 13, G.COR.suave);
+      rotulo(ct, 'γ/ω₀ = 2,5', g.X(5.4), g.Y(x(5.4, 2.5)) - 14, G.COR.suave);
+
+      /* o envelope do caso escolhido */
+      if (est.z < 1) {
+        var amp = 1 / Math.sqrt(1 - est.z * est.z);
+        ct.save();
+        ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.3; ct.setLineDash([4, 4]);
+        [1, -1].forEach(function (s) {
+          ct.beginPath();
+          for (var i = 0; i <= 300; i++) {
+            var t = 18 * i / 300, y = s * amp * Math.exp(-est.z * t);
+            if (Math.abs(y) > 1.05) continue;
+            ct.lineTo(g.X(t), g.Y(y));
+          }
+          ct.stroke();
+        });
+        ct.restore();
+        rotulo(ct, 'envelope', g.X(8.4),
+               g.Y(amp * Math.exp(-est.z * 8.4)) - 13, G.COR.vinho);
+      }
+
+      tracar(g, function (t) { return x(t, est.z); }, G.COR.mestra, 2.8);
+
+      var w1 = est.z < 1 ? Math.sqrt(1 - est.z * est.z) : 0;
+      rotulos(['Regime', 'ω₁ / ω₀', 'Período, em T₀', 'Fator de qualidade Q']);
+      painel({
+        a: est.z < 0.99 ? 'subamortecido'
+           : est.z > 1.01 ? 'superamortecido' : 'crítico',
+        b: w1 ? fmt(w1, 4) : 'não oscila',
+        c: w1 ? fmt(1 / w1, 3) : '—',
+        d: fmt(1 / (2 * est.z), 3)
+      });
+
+      texto.innerHTML =
+        '<p>A equação é \\(\\ddot{x} + 2\\gamma\\dot{x} + \\omega_0^2 x = 0\\), '
+        + 'e o que decide tudo é o sinal de '
+        + '\\(\\gamma^2 - \\omega_0^2\\). As três soluções não se parecem: uma '
+        + 'tem seno dentro de uma exponencial, outra tem um \\(t\\) '
+        + 'multiplicando a exponencial, a terceira é soma de duas '
+        + 'exponenciais. São a mesma solução, escrita conforme o sinal.</p>'
+        + (est.z < 1
+          ? '<p>No regime escolhido o sistema oscila, mas <strong>mais devagar '
+            + 'que o oscilador livre</strong>: \\(\\omega_1 = \\omega_0'
+            + '\\sqrt{1-(\\gamma/\\omega_0)^2} = ' + fmtm(w1, 4)
+            + '\\,\\omega_0\\), de modo que o período fica '
+            + fmt(100 * (1 / w1 - 1), 1) + ' % maior. O amortecimento não '
+            + 'encolhe só a amplitude: ele atrasa o relógio, e é por isso que '
+            + 'um pêndulo dentro de óleo não serve para medir o tempo.</p>'
+          : '<p>Aqui não há oscilação nenhuma: o corpo volta ao repouso sem '
+            + 'cruzar o zero uma única vez. Não é que a oscilação seja rápida '
+            + 'demais para ser vista, é que ela não existe, porque as duas '
+            + 'raízes da equação característica são reais.</p>')
+        + '<p>O programa confere as três fórmulas contra a integração '
+        + 'numérica da mesma equação: a maior diferença é de '
+        + '\\(10^{-13}\\) m. A integração não sabe em que regime está, e '
+        + 'acha a mesma curva nos três.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: o decaimento e o Q ---------------- */
+    function vistaQualidade() {
+      var z = Math.min(est.z, 0.95);
+      var w1 = Math.sqrt(1 - z * z), T1 = 2 * Math.PI / w1;
+      /* a janela acompanha o decaimento: com amortecimento forte, seis
+         períodos deixariam cinco deles vazios */
+      var tmax = Math.min(40, 6.5 * T1, 4.2 / z);
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: tmax,
+        ymin: -1.1, ymax: 1.1, divY: 4,
+        marcasX: G.marcasLineares(0, tmax, 6, 0),
+        rotX: 'tempo, em unidades de 1/ω₀', rotY: 'posição / x₀',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      tracar(g, function (t) { return x(t, z); }, G.COR.mestra, 2.2);
+
+      /* os picos sucessivos, e a razão constante entre eles */
+      var amp = 1 / w1, anterior = null;
+      for (var k = 0; k < 7; k++) {
+        var tp = k * T1;
+        if (tp > g.xmax) break;
+        var xp = x(tp, z);
+        ct.fillStyle = G.COR.bronze;
+        ct.beginPath(); ct.arc(g.X(tp), g.Y(xp), 5, 0, 6.2832); ct.fill();
+        if (anterior !== null && k === 1) {
+          rotulo(ct, '÷ ' + fmt(Math.exp(z * T1), 2), g.X(tp) - 2,
+                 g.Y(xp) - 16, G.COR.bronze);
+        }
+        anterior = xp;
+      }
+
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.3; ct.setLineDash([4, 4]);
+      ct.beginPath();
+      for (var i = 0; i <= 300; i++) {
+        var t = g.xmax * i / 300, y = amp * Math.exp(-z * t);
+        if (y > g.ymax) continue;
+        ct.lineTo(g.X(t), g.Y(y));
+      }
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'envelope', g.X(0.55 * g.xmax),
+             g.Y(amp * Math.exp(-z * 0.55 * g.xmax)) - 13, G.COR.vinho);
+
+      var Qp = Math.PI / (z * T1);        // = w1 / (2 z)
+      var Qf = 1 / (2 * z);
+      var u = 2 * Math.PI / Qp;
+      var Qe = 2 * Math.PI / (1 - Math.exp(-u));
+
+      rotulos(['Q = ω₀/2γ', 'Q pelos picos', 'Q pela energia',
+               'Energia perdida por ciclo']);
+      painel({
+        a: fmt(Qf, 3),
+        b: fmt(Qp, 3),
+        c: fmt(Qe, 3),
+        d: fmt(100 * (1 - Math.exp(-u)), 1) + ' %'
+      });
+
+      texto.innerHTML =
+        '<p>De um pico ao seguinte a amplitude é sempre dividida pelo '
+        + '<strong>mesmo fator</strong>, \\(e^{\\gamma T_1} = '
+        + fmtm(Math.exp(z * T1), 3) + '\\), e é por isso que o logaritmo '
+        + 'dessa razão, chamado decremento logarítmico, é a maneira prática '
+        + 'de medir amortecimento: basta uma régua e dois picos.</p>'
+        + '<p>Os três cartões trazem três definições de \\(Q\\) que os livros '
+        + 'costumam tratar como a mesma, e elas dão três números. '
+        + '\\(Q\\) pelos picos vale \\(\\omega_1/2\\gamma\\), e não '
+        + '\\(\\omega_0/2\\gamma\\), porque o decremento mede o período '
+        + 'verdadeiro: a razão entre os dois é exatamente '
+        + '\\(\\sqrt{1-(\\gamma/\\omega_0)^2}\\).</p>'
+        + '<p>E \\(Q\\) pela energia é maior que os dois, porque a perda por '
+        + 'ciclo vale \\(1 - e^{-2\\pi/Q}\\) e não \\(2\\pi/Q\\): a segunda é '
+        + 'a primeira linearizada. O erro é de cerca de \\(\\pi/Q\\), o que '
+        + 'significa 3 % mesmo num oscilador com \\(Q = 100\\). O programa '
+        + 'verifica as duas diferenças em forma fechada, casa por casa.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: quem para mais depressa ---------------- */
+    function vistaAcomodacao() {
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0.2, xmax: 2.2, ymin: 0, ymax: 22,
+        divY: 5, marcasX: G.marcasLineares(0.2, 2.2, 5, 1),
+        rotX: 'amortecimento  γ / ω₀', rotY: 'tempo até parar  (1/ω₀)',
+        formataY: function (v) { return fmt(v, 0); }
+      });
+      var ct = g.ct;
+
+      /* a curva do tempo de acomodação, medida ponto a ponto */
+      var melhor = { t: 1e9, z: 0 }, pontos = [];
+      for (var i = 0; i <= 100; i++) {
+        var z = 0.2 + 2.0 * i / 100;
+        var t = acomodacao(z, est.tol);
+        pontos.push([z, t]);
+        if (t < melhor.t) { melhor = { t: t, z: z }; }
+      }
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.8;
+      ct.beginPath();
+      pontos.forEach(function (p, k) {
+        var py = g.Y(Math.min(p[1], g.ymax));
+        if (k === 0) ct.moveTo(g.X(p[0]), py); else ct.lineTo(g.X(p[0]), py);
+      });
+      ct.stroke(); ct.restore();
+
+      /* o crítico, e o ótimo de verdade */
+      var tc = acomodacao(1, est.tol);
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.3; ct.setLineDash([5, 4]);
+      ct.beginPath(); ct.moveTo(g.X(1), g.y0); ct.lineTo(g.X(1), g.y1);
+      ct.stroke(); ct.restore();
+      ct.fillStyle = G.COR.suave;
+      ct.beginPath(); ct.arc(g.X(1), g.Y(tc), 5, 0, 6.2832); ct.fill();
+      rotulo(ct, 'crítico', g.X(1) + 10, g.Y(tc) - 14, G.COR.suave, 'left');
+
+      ct.fillStyle = G.COR.vinho;
+      ct.beginPath(); ct.arc(g.X(melhor.z), g.Y(melhor.t), 6, 0, 6.2832);
+      ct.fill();
+      rotulo(ct, 'o mais rápido', g.X(melhor.z), g.Y(melhor.t) + 17,
+             G.COR.vinho);
+
+      var prev = otimoPrevisto(est.tol);
+      rotulos(['O mais rápido está em', 'Previsto pela fórmula',
+               'Crítico demora', 'Repique no ótimo']);
+      painel({
+        a: 'γ/ω₀ = ' + fmt(melhor.z),
+        b: 'γ/ω₀ = ' + fmt(prev, 3),
+        c: '+' + fmt(100 * (tc / melhor.t - 1), 0) + ' %',
+        d: fmt(100 * est.tol, 1) + ' %'
+      });
+
+      texto.innerHTML =
+        '<p>Quase todo livro diz que o amortecimento crítico é o que leva o '
+        + 'sistema de volta ao repouso mais depressa. A curva mostra que '
+        + '<strong>não é</strong>: o mínimo está em '
+        + '\\(\\gamma/\\omega_0 = ' + fmtm(melhor.z) + '\\), e o crítico '
+        + 'demora ' + fmt(100 * (tc / melhor.t - 1), 0) + ' % a mais.</p>'
+        + '<p>O enunciado correto tem uma letra miúda que costuma ser '
+        + 'omitida: o crítico é o mais rápido <em>entre os que não '
+        + 'ultrapassam o repouso</em>. Se um repique couber dentro da '
+        + 'tolerância exigida, vale a pena deixá-lo acontecer, porque o '
+        + 'sistema chega lá antes.</p>'
+        + '<p>Daí sair uma regra de projeto exata: o ótimo é onde o primeiro '
+        + 'repique tem o tamanho da tolerância, isto é, onde '
+        + '\\(e^{-\\pi z/\\sqrt{1-z^2}} = \\) tolerância. Para '
+        + fmt(100 * est.tol, 1) + ' %, isso dá \\(z = ' + fmtm(prev, 3)
+        + '\\), que é o que a medida mostra. Aperte a tolerância e veja o '
+        + 'ótimo caminhar para o crítico: no limite de tolerância zero, o '
+        + 'livro volta a ter razão.</p>'
+        + '<p>É também por isso que a suspensão de um carro é projetada em '
+        + 'torno de 0,7, e não em 1,0.</p>';
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'regimes') vistaRegimes();
+      else if (est.vista === 'qualidade') vistaQualidade();
+      else vistaAcomodacao();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {

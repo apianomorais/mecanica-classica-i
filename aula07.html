@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oscilações amortecidas | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200555">
+<script src="assets/js/comum.js?v=202611200555"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <a href="aula02.html" class="num" title="Módulo 2: As leis de Newton e os referenciais inerciais">2</a>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <a href="aula04.html" class="num" title="Módulo 4: Trabalho, energia e forças conservativas">4</a>
+      <a href="aula05.html" class="num" title="Módulo 5: Momento linear, impulso e o movimento de foguetes">5</a>
+      <span class="grupo">Oscilações</span>
+      <a href="aula06.html" class="num" title="Módulo 6: O oscilador harmônico simples">6</a>
+      <a href="aula07.html" class="num ativo" title="Módulo 7: Oscilações amortecidas">7</a>
+      <span class="num pendente" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer · em preparação">8</span>
+      <span class="grupo">Caos</span>
+      <span class="num pendente" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase · em preparação">9</span>
+      <span class="num pendente" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores · em preparação">10</span>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. A equação, e os três regimes</a></li>
+    <li><a href="#s2">2. O amortecimento atrasa o relógio</a></li>
+    <li><a href="#s3">3. Decremento, Q, e três definições que discordam</a></li>
+    <li><a href="#s4">4. O amortecimento crítico não é o mais rápido</a></li>
+    <li><a href="#s5">5. Que amortecimento se quer, e onde o modelo falha</a></li>
+    <li><a href="#s6">6. No Spyder</a></li>
+    <li><a href="#s7">7. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 7 · Oscilações</p>
+  <h1>Oscilações amortecidas</h1>
+  <p class="subtitulo">Acrescentar arrasto à mola produz três regimes que não se parecem e são a mesma solução. E permite medir uma afirmação que quase todo livro faz sem qualificação: a de que o amortecimento crítico é o mais rápido para voltar ao repouso.</p>
+  <h2 id="s1">1. A equação, e os três regimes</h2>
+
+<p>O oscilador do módulo 6 nunca para, e isso não existe. Qualquer oscilador
+real perde energia: para o ar, para o atrito interno do material, para o
+suporte, para o som que emite. O modelo mais simples dessa perda é a força de
+arrasto linear do módulo 3, \(-b\dot{x}\), e com ela a equação fica</p>
+
+\[ m\ddot{x} = -kx - b\dot{x} \qquad\Longleftrightarrow\qquad
+   \ddot{x} + 2\gamma\dot{x} + \omega_0^2 x = 0, \]
+
+<p>com \(\gamma = b/2m\) e \(\omega_0 = \sqrt{k/m}\). O fator 2 na definição
+de \(\gamma\) é convenção, e é escolhido justamente para deixar as fórmulas
+que virão sem fatores 2 espalhados.</p>
+
+<p>Procurando soluções da forma \(x = e^{rt}\), que é o chute padrão para
+equações lineares de coeficientes constantes, sai a equação característica</p>
+
+\[ r^2 + 2\gamma r + \omega_0^2 = 0
+   \qquad\Longrightarrow\qquad
+   r = -\gamma \pm \sqrt{\gamma^2 - \omega_0^2}. \]
+
+<p>Tudo o que acontece neste módulo está no sinal do que está dentro da raiz.
+São três casos, e eles não se parecem nem um pouco:</p>
+
+<div class="cartoes">
+  <div class="cartao">
+    <span class="numero">γ &lt; ω₀</span>
+    <h3>Subamortecido</h3>
+    <p>Raízes complexas. \(x = Ce^{-\gamma t}\cos(\omega_1 t - \varphi)\), com
+    \(\omega_1 = \sqrt{\omega_0^2-\gamma^2}\). Oscila, com amplitude
+    minguando.</p>
+  </div>
+  <div class="cartao">
+    <span class="numero">γ = ω₀</span>
+    <h3>Crítico</h3>
+    <p>Raiz dupla. \(x = (A + Bt)e^{-\gamma t}\). O \(t\) solto aparece
+    porque uma raiz dupla só fornece uma solução, e faltava a segunda.</p>
+  </div>
+  <div class="cartao">
+    <span class="numero">γ &gt; ω₀</span>
+    <h3>Superamortecido</h3>
+    <p>Duas raízes reais negativas. \(x = C_1e^{r_1t} + C_2e^{r_2t}\). Não
+    oscila: volta devagar, arrastado.</p>
+  </div>
+</div>
+
+<p>O programa confere as três fórmulas contra a integração numérica da mesma
+equação, e a maior diferença é de \(10^{-13}\) m. Vale reparar no que isso
+significa: o integrador não sabe em que regime está, nem consulta o sinal de
+\(\gamma^2-\omega_0^2\). Ele resolve a mesma equação nos três casos e encontra
+a mesma curva que a fórmula correspondente. As três formas são uma só.</p>
+
+<div class="destaque">
+<p><strong>Um aviso numérico.</strong> O método de Verlet, que serviu tão bem
+nos módulos 4 e 6, <em>não serve aqui</em>. Ele supõe que a aceleração dependa
+apenas da posição, e a força de arrasto depende da velocidade. Usá-lo assim
+mesmo produz um amortecimento errado, sem erro visível, sem aviso, sem
+divergência: apenas um número plausível. O programa usa Runge-Kutta de quarta
+ordem, que não faz essa suposição.</p>
+</div>
+
+  <h2 id="s2">2. O amortecimento atrasa o relógio</h2>
+
+<p>No regime subamortecido, a frequência não é \(\omega_0\):</p>
+
+\[ \omega_1 = \omega_0\sqrt{1 - \left(\frac{\gamma}{\omega_0}\right)^2}. \]
+
+<p>O amortecimento <strong>atrasa</strong> a oscilação, e o programa mede isso
+nos cruzamentos de zero:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(\gamma\)</th><th>\(\omega_1\) medido</th>
+<th>\(\sqrt{\omega_0^2-\gamma^2}\)</th><th>diferença</th>
+<th>\(T/T_0\)</th></tr></thead>
+<tbody>
+<tr><td>0,20</td><td>3,99499687</td><td>3,99499687</td>
+<td>\(4\times10^{-11}\)</td><td>1,0013</td></tr>
+<tr><td>0,80</td><td>3,91918359</td><td>3,91918359</td>
+<td>\(3\times10^{-11}\)</td><td>1,0206</td></tr>
+<tr><td>2,00</td><td>3,46410161</td><td>3,46410162</td>
+<td>\(2\times10^{-10}\)</td><td>1,1547</td></tr>
+<tr><td>3,80</td><td>1,24899960</td><td>1,24899960</td>
+<td>\(1\times10^{-10}\)</td><td>3,2026</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Com \(\gamma = 3{,}8\), que é 95 % de \(\omega_0\), o período fica 3,2
+vezes maior. É um efeito grande, e tem consequência prática: um pêndulo dentro
+de óleo não serve para medir tempo, e um relógio cujo mecanismo esteja sujo
+atrasa, não adianta.</p>
+
+<div data-widget="amortecido"></div>
+
+<p>Repare na primeira vista que, para \(\gamma\) pequeno, a curva quase não se
+distingue da senoide do módulo 6 nos primeiros ciclos. O amortecimento fraco
+é invisível no curto prazo e decisivo no longo: é exatamente o caso do
+oscilador de alto \(Q\), de que trata a seção seguinte.</p>
+
+  <h2 id="s3">3. Decremento, Q, e três definições que discordam</h2>
+
+<p>Entre um pico e o seguinte, a amplitude é dividida sempre pelo mesmo fator
+\(e^{\gamma T_1}\). O logaritmo dessa razão chama-se
+<strong>decremento logarítmico</strong>:</p>
+
+\[ \delta = \ln\frac{x_n}{x_{n+1}} = \gamma T_1 = \frac{2\pi\gamma}{\omega_1}. \]
+
+<p>Ele é a maneira prática de medir amortecimento: bastam uma régua e dois
+picos de um registro, sem precisar conhecer \(m\), \(k\) ou \(b\).</p>
+
+<p>Daí se define o <strong>fator de qualidade</strong> \(Q\), que mede quantos
+ciclos o oscilador sustenta antes de perder a energia. E aqui o módulo precisa
+dizer uma coisa que os livros costumam esconder: existem três definições de
+\(Q\), elas são tratadas como se fossem a mesma, e <em>não são</em>.</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>definição</th><th>fórmula</th><th>vale exatamente</th></tr></thead>
+<tbody>
+<tr><td>pela razão massa-amortecimento</td><td>\(\omega_0/2\gamma\)</td>
+<td>por definição</td></tr>
+<tr><td>pelo decremento logarítmico</td><td>\(\pi/\delta\)</td>
+<td>\(\omega_1/2\gamma\)</td></tr>
+<tr><td>pela energia perdida por ciclo</td>
+<td>\(2\pi E/\left|\Delta E\right|\)</td>
+<td>\(2\pi/\left(1-e^{-2\pi/Q}\right)\)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>O programa mede as três e verifica as diferenças em forma fechada. A
+primeira discrepância é exatamente o fator \(\omega_1/\omega_0\):</p>
+
+<div class="saida">
+gama&nbsp;&nbsp;&nbsp;Q_formula&nbsp;&nbsp;&nbsp;Q_picos&nbsp;&nbsp;&nbsp;razao medida&nbsp;&nbsp;&nbsp;sqrt(1-(g/w0)^2)<br>
+&nbsp;0,40&nbsp;&nbsp;&nbsp;&nbsp;5,00000&nbsp;&nbsp;&nbsp;4,97494&nbsp;&nbsp;&nbsp;<b>0,99498744</b>&nbsp;&nbsp;&nbsp;<b>0,99498744</b><br>
+&nbsp;2,00&nbsp;&nbsp;&nbsp;&nbsp;1,00000&nbsp;&nbsp;&nbsp;0,86603&nbsp;&nbsp;&nbsp;<b>0,86602540</b>&nbsp;&nbsp;&nbsp;<b>0,86602540</b><br>
+&nbsp;3,00&nbsp;&nbsp;&nbsp;&nbsp;0,66667&nbsp;&nbsp;&nbsp;0,44096&nbsp;&nbsp;&nbsp;<b>0,66143783</b>&nbsp;&nbsp;&nbsp;<b>0,66143783</b>
+</div>
+
+<p>A segunda é mais interessante, porque sobrevive mesmo com amortecimento
+fraco. A energia decai como \(e^{-2\gamma t}\), de modo que a fração perdida
+num ciclo vale \(1 - e^{-2\pi/Q}\), e não \(2\pi/Q\): a segunda expressão é a
+primeira linearizada. O erro relativo é de cerca de \(\pi/Q\), o que significa
+<strong>3 % mesmo num oscilador com \(Q = 100\)</strong>, que já é pouco
+amortecido. O programa confirma a previsão fechada em todas as casas.</p>
+
+<p>Nada disso é erro numérico nem preciosismo. São três grandezas diferentes
+com o mesmo nome, e qual delas um experimento mede depende de como ele é
+feito. Quem compara um \(Q\) medido por decaimento com um \(Q\) tabelado por
+largura de banda precisa saber disso.</p>
+
+<div class="destaque">
+<p><strong>A regra de bolso que funciona.</strong> A amplitude cai a \(1/e\) em
+\(\tau = 1/\gamma = Q/(\pi f_0)\), isto é, em cerca de \(Q/\pi\) ciclos. Uma
+corda de violão com \(Q = 1000\) em 330 Hz leva 0,96 s para cair a \(1/e\), e
+o som fica audível por alguns segundos depois. Um cristal de quartzo de
+relógio, com \(Q \simeq 10^5\) em 32 768 Hz, leva quase um segundo também, só
+que em 32 mil ciclos em vez de 320.</p>
+</div>
+
+  <h2 id="s4">4. O amortecimento crítico não é o mais rápido</h2>
+
+<p>Chegamos ao ponto em que este módulo discorda da bibliografia. Quase todo
+livro de mecânica afirma, sem qualificação, que o amortecimento crítico é o
+que leva o sistema de volta ao repouso mais depressa. É o tipo de frase que se
+repete por décadas sem que ninguém meça.</p>
+
+<p>Medindo, ela é falsa. O programa desloca o oscilador de 1 m, solta, e
+cronometra quanto tempo ele leva para entrar e permanecer dentro de 2 % do
+repouso:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(\gamma/\omega_0\)</th><th>regime</th>
+<th>tempo de acomodação (s)</th></tr></thead>
+<tbody>
+<tr><td>0,30</td><td>subamortecido</td><td>2,8075</td></tr>
+<tr><td>0,60</td><td>subamortecido</td><td>1,4857</td></tr>
+<tr><td><strong>0,78</strong></td><td>subamortecido</td>
+<td><strong>0,9011</strong></td></tr>
+<tr><td>0,90</td><td>subamortecido</td><td>1,1748</td></tr>
+<tr><td>1,00</td><td>crítico</td><td>1,4584</td></tr>
+<tr><td>1,10</td><td>superamortecido</td><td>1,7304</td></tr>
+<tr><td>1,50</td><td>superamortecido</td><td>2,6636</td></tr>
+<tr><td>3,00</td><td>superamortecido</td><td>5,7437</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>O mínimo está em 0,78, e o crítico demora <strong>62 % a mais</strong>. A
+diferença não é sutil nem é artefato de medida.</p>
+
+<p>O enunciado correto tem uma letra miúda que costuma ser omitida: o crítico
+é o mais rápido <em>entre os que não ultrapassam o repouso</em>. Se um pequeno
+repique couber dentro da tolerância exigida, vale a pena deixá-lo acontecer,
+porque o sistema chega lá antes.</p>
+
+<h3>A regra de projeto, em forma fechada</h3>
+
+<p>Isso dá um critério exato, e não uma recomendação vaga. Escrevendo
+\(z = \gamma/\omega_0\), o primeiro repique de um sistema subamortecido solto
+do repouso vale</p>
+
+\[ \text{repique} = \exp\!\left(-\frac{\pi z}{\sqrt{1-z^2}}\right), \]
+
+<p>e o ótimo é onde esse repique tem exatamente o tamanho da tolerância.
+Igualando e resolvendo para \(z\), com \(\Lambda = -\ln(\text{tol})/\pi\):</p>
+
+\[ z_{\text{ótimo}} = \sqrt{\frac{\Lambda^2}{1+\Lambda^2}}. \]
+
+<p>O programa compara essa previsão com a busca numérica:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>tolerância</th><th>ótimo medido</th><th>ótimo previsto</th>
+<th>crítico demora</th></tr></thead>
+<tbody>
+<tr><td>5 %</td><td>0,70</td><td>0,690</td><td>+64 %</td></tr>
+<tr><td>2 %</td><td>0,78</td><td>0,780</td><td>+62 %</td></tr>
+<tr><td>1 %</td><td>0,83</td><td>0,826</td><td>+57 %</td></tr>
+<tr><td>0,2 %</td><td>0,90</td><td>0,892</td><td>+46 %</td></tr>
+<tr><td>0,01 %</td><td>0,95</td><td>0,946</td><td>+36 %</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A fórmula acerta o ótimo medido em todos os casos, e a tabela mostra o
+caminho de volta: quanto mais apertada a tolerância, mais o ótimo se aproxima
+do crítico. No limite de tolerância zero, o livro volta a ter razão, e é
+exatamente esse limite que ele está descrevendo sem dizer.</p>
+
+<p>É por isso que a suspensão de um automóvel é projetada em torno de
+\(z \simeq 0{,}7\), e não em 1,0: ninguém exige que o carro volte ao repouso
+com precisão infinita, exige que ele pare de balançar antes do próximo buraco.
+Amortecedor gasto, com \(z\) baixo, faz o carro quicar; amortecedor duro
+demais, com \(z\) alto, transmite cada buraco à carroceria, porque não tem
+tempo de ceder.</p>
+
+  <h2 id="s5">5. Que amortecimento se quer, e onde o modelo falha</h2>
+
+<p>Não existe \(Q\) bom ou ruim: existe \(Q\) adequado ao que se quer. Metade
+dos sistemas da lista abaixo foi projetada para perder energia o mais depressa
+possível, e a outra metade para não perder:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>sistema</th><th>\(z\) ou \(Q\)</th><th>o que se quer</th></tr></thead>
+<tbody>
+<tr><td>suspensão de automóvel</td><td>\(z \simeq 0{,}7\)</td>
+<td>voltar rápido sem quicar</td></tr>
+<tr><td>porta com mola</td><td>\(z \simeq 0{,}7\)</td><td>fechar sem bater</td></tr>
+<tr><td>galvanômetro analógico</td><td>\(z \simeq 0{,}7\)</td>
+<td>ponteiro parar sem oscilar</td></tr>
+<tr><td>corda de violão (mi)</td><td>\(Q \sim 10^3\)</td>
+<td>o som tem de durar</td></tr>
+<tr><td>diapasão</td><td>\(Q \sim 10^4\)</td><td>referência de frequência</td></tr>
+<tr><td>cristal de quartzo</td><td>\(Q \sim 10^5\)</td><td>relógio</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>O amortecimento linear \(-b\dot{x}\) é um modelo, e convém saber onde ele
+falha. Ele descreve bem o arrasto viscoso de um fluido em regime laminar, que
+é o caso do módulo 3, e descreve razoavelmente a perda interna de muitos
+materiais. Não descreve o atrito seco, em que a força tem módulo constante e
+só muda de sinal: ali a amplitude decai <em>linearmente</em>, e não
+exponencialmente, e o movimento para em tempo finito, num ponto que em geral
+não é o equilíbrio. Esse é o exercício 7.5, e ele tem uma assinatura
+experimental inconfundível: picos em progressão aritmética em vez de
+geométrica.</p>
+
+  <h2 id="s6">6. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/amortecido.py">
+    <span class="numero">Programa</span>
+    <h3>amortecido.py</h3>
+    <p>Confere as três soluções contra a integração, mede \(\omega_1\) nos
+    cruzamentos, compara as três definições de \(Q\) com as previsões
+    fechadas e localiza o amortecimento que minimiza o tempo de
+    acomodação.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>As três fórmulas e a integração numérica concordam em \(10^{-13}\) m nos
+quatro casos.</li>
+<li>\(\omega_1\) medido nos cruzamentos bate com \(\sqrt{\omega_0^2-\gamma^2}\)
+em \(10^{-10}\).</li>
+<li>A razão entre \(Q\) pelos picos e \(Q = \omega_0/2\gamma\) reproduz
+\(\sqrt{1-(\gamma/\omega_0)^2}\) em oito casas.</li>
+<li>A razão entre \(Q\) pela energia e \(Q\) pelos picos reproduz
+\((2\pi/Q)/(1-e^{-2\pi/Q})\) em seis casas.</li>
+<li>O ótimo medido do tempo de acomodação coincide com
+\(z = \sqrt{\Lambda^2/(1+\Lambda^2)}\) nas cinco tolerâncias testadas.</li>
+</ul>
+
+<div class="bloco ex">
+<p><strong>Para mexer.</strong> Troque o Runge-Kutta pelo Verlet do módulo 6,
+tratando \(-2\gamma\dot{x}\) como se fosse força de posição, e meça o
+amortecimento que sai: ele estará errado, e o programa não dará erro nenhum.
+Depois acrescente atrito seco, \(-\mu mg\,\mathrm{sinal}(\dot{x})\), no lugar
+do arrasto linear, e confira que os picos passam a cair em progressão
+aritmética e que o corpo para fora do equilíbrio.</p>
+</div>
+
+  <h2 id="s7">7. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">7.1  Identificar o regime e escrever a solução</span>
+  <p>Um bloco de 250 g preso a uma mola de 16 N/m move-se num meio que
+     exerce \(-b\dot{x}\) com \(b = 2{,}0\) N·s/m. Diga em que regime está,
+     escreva \(x(t)\) para o bloco solto do repouso a 5,0 cm, e calcule o
+     período, o fator de qualidade e o tamanho do primeiro repique.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Os dois parâmetros.</b></p>
+     <p>\[ \omega_0 = \sqrt{\frac{k}{m}} = \sqrt{\frac{16}{0{,}25}}
+        = 8{,}00\ \mathrm{rad/s}, \qquad
+        \gamma = \frac{b}{2m} = \frac{2{,}0}{0{,}50}
+        = 4{,}00\ \mathrm{rad/s}. \]</p>
+     <p>Como \(\gamma &lt; \omega_0\), o regime é <b>subamortecido</b>, com
+     \(\gamma/\omega_0 = 0{,}5\). O amortecimento é forte: o sistema oscila,
+     mas pouco.</p>
+     <p><b>A frequência e o período.</b></p>
+     <p>\[ \omega_1 = \sqrt{\omega_0^2-\gamma^2} = \sqrt{64-16}
+        = 6{,}928\ \mathrm{rad/s}, \qquad T_1 = 0{,}9069\ \mathrm{s}, \]</p>
+     <p>contra \(T_0 = 0{,}7854\) s do oscilador sem amortecimento: 15 % mais
+     devagar.</p>
+     <p><b>A solução.</b> Com \(x_0 = 0{,}050\) m e \(v_0 = 0\), a forma
+     compacta é \(x = Ce^{-\gamma t}\cos(\omega_1 t - \varphi)\) com</p>
+     <p>\[ C = x_0\frac{\omega_0}{\omega_1} = 0{,}05774\ \mathrm{m},
+        \qquad \varphi = \arctg\frac{\gamma}{\omega_1} = 30{,}0^\circ. \]</p>
+     <p>\[ x(t) = 0{,}05774\,e^{-4t}\cos\left(6{,}928\,t - 0{,}5236\right)
+        \ \mathrm{m}. \]</p>
+     <p>Note que \(C &gt; x_0\): a amplitude da senoide de dentro é maior que
+     o deslocamento inicial, porque em \(t=0\) a exponencial ainda vale 1 e o
+     cosseno não está no máximo. O corpo nunca chega a 5,77 cm.</p>
+     <p><b>Qualidade e repique.</b> \(Q = \omega_0/2\gamma = 1{,}00\), o que já
+     avisa que quase não haverá oscilação visível. De fato, o primeiro repique
+     acontece em \(t = \pi/\omega_1 = 0{,}453\) s, em
+     \(x = -0{,}94\) cm: menos de um quinto do deslocamento inicial. De um
+     pico ao seguinte a amplitude é dividida por
+     \(e^{\gamma T_1} = 37{,}6\).</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">7.2  Medir o amortecimento com uma régua</span>
+  <p>Um registro de oscilação mostra picos sucessivos de 12,00 cm,
+     10,33 cm, 8,89 cm e 7,65 cm, espaçados de 2,00 s. A massa é 500 g.
+     Obtenha o decremento logarítmico, \(\gamma\), \(Q\), a constante \(b\), o
+     tempo para a amplitude cair a \(1/e\) e a fração de energia perdida por
+     ciclo. Depois diga quanto \(\omega_0\) difere de \(\omega_1\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O decremento.</b> A razão entre picos vizinhos é constante, o
+     que já confirma que o amortecimento é viscoso:</p>
+     <p>\[ \frac{12{,}00}{10{,}33} = \frac{10{,}33}{8{,}89}
+        = \frac{8{,}89}{7{,}65} = 1{,}162
+        \quad\Longrightarrow\quad \delta = \ln 1{,}162 = 0{,}150. \]</p>
+     <p><b>As grandezas derivadas.</b></p>
+     <p>\[ \gamma = \frac{\delta}{T_1} = \frac{0{,}150}{2{,}00}
+        = 0{,}0750\ \mathrm{s^{-1}}, \qquad
+        Q = \frac{\pi}{\delta} = 20{,}9, \]</p>
+     <p>\[ b = 2m\gamma = 0{,}0750\ \mathrm{N\,s/m}, \qquad
+        \tau = \frac{1}{\gamma} = 13{,}3\ \mathrm{s} = 6{,}7\ \text{ciclos}. \]</p>
+     <p>A regra de bolso confere: a amplitude cai a \(1/e\) em \(Q/\pi\)
+     ciclos, e \(20{,}9/\pi = 6{,}7\).</p>
+     <p><b>A energia.</b> Ela cai com o quadrado da amplitude, de modo que por
+     ciclo resta \(e^{-2\delta}\):</p>
+     <p>\[ \frac{|\Delta E|}{E} = 1 - e^{-2\times0{,}150} = 25{,}9\ \%. \]</p>
+     <p>Cuidado com o atalho: \(2\pi/Q = 30{,}0\) %, que erra em 16 % por
+     linearizar a exponencial. É a mesma discrepância da seção 3, aqui com
+     \(Q\) pequeno o bastante para ela doer.</p>
+     <p><b>\(\omega_0\) contra \(\omega_1\).</b></p>
+     <p>\[ \omega_1 = \frac{2\pi}{2{,}00} = 3{,}1416\ \mathrm{rad/s}, \qquad
+        \omega_0 = \sqrt{\omega_1^2+\gamma^2} = 3{,}14249\ \mathrm{rad/s}. \]</p>
+     <p>Diferem em \(9\times10^{-4}\) rad/s, ou 0,03 %. Com \(Q = 21\), medir
+     \(\omega_1\) e chamar de \(\omega_0\) é inofensivo, e o exercício 7.1
+     mostra o caso oposto. A correção é de segunda ordem em
+     \(\gamma/\omega_0\), e por isso some tão depressa.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">7.3  De onde vem o t solto do caso crítico</span>
+  <p>No amortecimento crítico a equação característica tem raiz dupla
+     \(r = -\gamma\), e \(e^{-\gamma t}\) é apenas <em>uma</em> solução.
+     Mostre que \((A+Bt)e^{-\gamma t}\) resolve a equação, e explique de duas
+     maneiras por que a segunda solução tem de ser essa: tomando o limite do
+     caso subamortecido e por redução de ordem.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Verificação direta.</b> Com \(x = te^{-\gamma t}\):</p>
+     <p>\[ \dot{x} = (1-\gamma t)e^{-\gamma t}, \qquad
+        \ddot{x} = (\gamma^2 t - 2\gamma)e^{-\gamma t}. \]</p>
+     <p>Substituindo em \(\ddot{x} + 2\gamma\dot{x} + \gamma^2 x\), já que
+     \(\omega_0 = \gamma\) no caso crítico:</p>
+     <p>\[ \left[(\gamma^2t - 2\gamma) + 2\gamma(1-\gamma t)
+        + \gamma^2 t\right]e^{-\gamma t}
+        = \left[\gamma^2t - 2\gamma + 2\gamma - 2\gamma^2t
+        + \gamma^2t\right]e^{-\gamma t} = 0. \]</p>
+     <p>Resolve mesmo, e nada no cálculo explica <em>por quê</em>.</p>
+     <p><b>Pelo limite.</b> No caso subamortecido,</p>
+     <p>\[ x = e^{-\gamma t}\left(A\cos\omega_1 t
+        + B\sen\omega_1 t\right). \]</p>
+     <p>Faça \(\omega_1 \to 0\) mantendo \(B\omega_1 = \beta\) fixo. O
+     cosseno tende a 1 e \(B\sen\omega_1 t = \beta\,
+     \frac{\sen\omega_1t}{\omega_1} \to \beta t\). O \(t\) aparece como o
+     limite de um seno cuja frequência vai a zero mas cuja amplitude cresce na
+     mesma proporção: a oscilação que sobrou é o primeiro quarto dela,
+     esticado até virar reta. A mesma coisa acontece no superamortecido,
+     vindo do outro lado com senos hiperbólicos.</p>
+     <p><b>Por redução de ordem.</b> Sabendo uma solução \(x_1\), procure a
+     segunda na forma \(x = u(t)x_1\). Substituindo na equação, os termos em
+     \(u\) cancelam (porque \(x_1\) já é solução) e sobra, para a raiz dupla,
+     \(\ddot{u} = 0\), cuja solução geral é \(u = A + Bt\). O \(t\) não é
+     truque de livro: é o que resta quando a equação para \(u\) degenera.</p>
+     <p><b>O que isso significa fisicamente.</b> O termo \(Bt\) permite que o
+     sistema crítico ainda <em>ultrapasse</em> o equilíbrio uma vez, se for
+     lançado em direção a ele com velocidade suficiente. Solto do repouso, ele
+     não ultrapassa nunca: a condição \(v_0 = 0\) faz \(B = \gamma x_0\), que
+     tem o sinal errado para produzir cruzamento. Vale conferir isso no
+     programa antes de acreditar.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">7.4  Projetar o amortecedor de um instrumento</span>
+  <p>O ponteiro de um instrumento tem \(\omega_0 = 20\) rad/s e precisa se
+     acomodar dentro de 1 % da leitura final o mais rápido possível. Encontre
+     o amortecimento ótimo, compare com o crítico e explique por que a
+     resposta muda se a exigência passar para 0,01 %.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A regra.</b> O ótimo é onde o primeiro repique tem exatamente o
+     tamanho da tolerância:</p>
+     <p>\[ \exp\!\left(\frac{-\pi z}{\sqrt{1-z^2}}\right) = \text{tol},
+        \qquad
+        \Lambda = \frac{-\ln(\text{tol})}{\pi},
+        \qquad z = \sqrt{\frac{\Lambda^2}{1+\Lambda^2}}. \]</p>
+     <p><b>Para 1 %.</b> \(\Lambda = 4{,}605/\pi = 1{,}466\), de onde
+     \(z = 0{,}826\) e \(\gamma = 16{,}5\) rad/s. O programa mede o ótimo em
+     0,83, e o crítico demora <b>57 % a mais</b> para a mesma tolerância.</p>
+     <p><b>Para 0,01 %.</b> \(\Lambda = 2{,}932\), \(z = 0{,}946\),
+     \(\gamma = 18{,}9\) rad/s, e a vantagem sobre o crítico cai para 36 %. A
+     exigência mais apertada empurra o projeto para perto do crítico, porque
+     o repique permitido encolheu.</p>
+     <p><b>Por que a resposta depende da tolerância.</b> Porque o tempo de
+     acomodação não é uma função suave de \(z\): ele dá <em>saltos</em>.
+     Enquanto o primeiro repique couber na faixa, o relógio para ali; quando
+     ele não cabe, é preciso esperar o repique seguinte, um semiciclo inteiro
+     depois. O ótimo fica exatamente no limiar entre as duas situações, e por
+     isso é definido pela tolerância e não pelo sistema.</p>
+     <p><b>A moral.</b> "Amortecimento crítico" não é um objetivo de projeto, é
+     um ponto matemático. O objetivo é o tempo de acomodação, e ele depende do
+     que se aceita como "acomodado". Instrumentos analógicos e servomecanismos
+     são de fato projetados em \(z\) entre 0,6 e 0,8, e não em 1,0, por esse
+     motivo.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">7.5  Atrito seco: a amplitude cai em linha reta</span>
+  <p>Um bloco de 500 g preso a uma mola de 20 N/m desliza sobre uma mesa
+     com \(\mu_c = 0{,}05\), e é solto de 15 cm. Mostre que a amplitude cai de
+     \(2\mu mg/k\) a cada <em>meio</em> ciclo, que o período não muda, e
+     encontre onde e quando o bloco para.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A equação.</b> A força de atrito tem módulo constante e muda de
+     sinal com a velocidade:</p>
+     <p>\[ m\ddot{x} = -kx - \mu m g\,\mathrm{sinal}(\dot{x}). \]</p>
+     <p>Em cada semiciclo o sinal é fixo, de modo que o movimento é um
+     oscilador harmônico comum <em>deslocado</em>: o centro de oscilação sai
+     de zero para \(\mp\mu mg/k\). Daí duas consequências imediatas.</p>
+     <p><b>O período não muda.</b> Deslocar o centro não altera a equação
+     homogênea, e portanto \(\omega = \omega_0 = \sqrt{k/m} = 6{,}325\) rad/s
+     em todos os semiciclos. É a diferença mais visível em relação ao arrasto
+     viscoso, que atrasa a oscilação. A simulação dá meio período de
+     0,49673 s em todos eles, contra \(\pi/\omega_0 = 0{,}49673\) s.</p>
+     <p><b>A amplitude cai em progressão aritmética.</b> Em cada semiciclo o
+     corpo descreve meia volta em torno do centro deslocado, de modo que a
+     amplitude medida a partir do zero verdadeiro perde duas vezes o
+     deslocamento do centro:</p>
+     <p>\[ \Delta A = \frac{2\mu mg}{k}
+        = \frac{2\times0{,}05\times0{,}5\times9{,}81}{20}
+        = 2{,}45\ \mathrm{cm}. \]</p>
+     <p>Os picos previstos são 15,00, 12,55, 10,10, 7,64, 5,19, 2,74 e
+     0,29 cm, e a simulação reproduz exatamente esses valores. Compare com o
+     caso viscoso, em que eles cairiam em progressão <em>geométrica</em>: é
+     uma assinatura experimental que distingue os dois tipos de perda sem
+     precisar de instrumento nenhum.</p>
+     <p><b>Onde para.</b> Existe uma zona morta: se o corpo chega ao repouso
+     com \(|x| \le \mu mg/k = 1{,}23\) cm, a mola não vence o atrito estático e
+     ele fica. A simulação para em \(x = +0{,}29\) cm depois de
+     <b>2,98 s</b> e seis reversões, isto é, o bloco morre fora do
+     equilíbrio.</p>
+     <p><b>Por que isso importa.</b> O oscilador viscoso leva tempo infinito
+     para parar e para no lugar certo; o de atrito seco para em tempo finito e
+     no lugar errado. Um instrumento de ponteiro com atrito seco no eixo tem
+     erro de leitura irredutível do tamanho da zona morta, e nenhuma
+     calibração o corrige: por isso instrumentos bons usam amortecimento
+     viscoso ou eletromagnético, e não atrito mecânico.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">7.6  A suspensão de um carro, com números</span>
+  <p>Um quarto de automóvel tem 400 kg sobre a roda, e a suspensão é
+     projetada para frequência natural de 1,0 Hz. Encontre \(k\), a flecha
+     estática e a constante \(b\) para \(z = 0{,}7\). Depois explique o
+     resultado desconcertante da medição: para uma tolerância de 2 %, o
+     projeto em \(z = 0{,}7\) acomoda em 0,95 s e o crítico em 0,93 s, mas
+     \(z = 0{,}78\) acomoda em 0,57 s.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Os números do projeto.</b> Com \(f_0 = 1{,}0\) Hz,
+     \(\omega_0 = 6{,}283\) rad/s:</p>
+     <p>\[ k = m\omega_0^2 = 400\times39{,}48
+        = 15{,}8\ \mathrm{kN/m}, \qquad
+        b = 2zm\omega_0 = 3519\ \mathrm{N\,s/m}. \]</p>
+     <p>A flecha estática é um jeito rápido de conferir:</p>
+     <p>\[ \delta_{\text{est}} = \frac{mg}{k} = \frac{g}{\omega_0^2}
+        = 24{,}8\ \mathrm{cm}, \]</p>
+     <p>que não depende da massa e é da ordem do curso real de uma suspensão.
+     Repare que escolher a frequência natural <em>é</em> escolher a flecha:
+     \(f_0 = \frac{1}{2\pi}\sqrt{g/\delta_{\text{est}}}\). Carros de passeio
+     ficam em torno de 1 Hz, e carros de corrida, com flecha de 3 cm, em
+     torno de 3 Hz, o que explica o desconforto.</p>
+     <p><b>O resultado desconcertante.</b> Ele é consequência do salto
+     discutido no exercício 7.4. O primeiro repique vale</p>
+     <p>\[ \exp\!\left(\frac{-\pi z}{\sqrt{1-z^2}}\right)
+        = \begin{cases}
+        4{,}6\ \% & \text{para } z = 0{,}70,\\
+        2{,}0\ \% & \text{para } z = 0{,}78.
+        \end{cases} \]</p>
+     <p>Com \(z = 0{,}70\), o repique de 4,6 % <b>estoura</b> a faixa de 2 %,
+     de modo que o cronômetro só para no repique seguinte, meio período
+     depois: daí os 0,95 s. Com \(z = 0{,}78\), o repique cabe raspando, e o
+     relógio para já na primeira passagem: 0,57 s. O crítico, sem repique
+     nenhum, chega aos 2 % por decaimento puro, em 0,93 s.</p>
+     <p><b>A leitura correta.</b> O tempo de acomodação não é função suave do
+     amortecimento, e perto do limiar um ajuste de 10 % em \(b\) pode cortar o
+     tempo pela metade ou dobrá-lo. É por isso que suspensão se ajusta em
+     bancada e não em planilha.</p>
+     <p><b>Uma honestidade final.</b> O modelo de um grau de liberdade ignora
+     a massa da roda e a rigidez do pneu, que formam um segundo oscilador em
+     torno de 10 Hz. A suspensão real é projetada para amortecer os dois, e o
+     compromisso entre conforto (a massa de cima) e aderência (a roda) é o que
+     torna o problema interessante. O módulo 8 dá a ferramenta que falta aqui:
+     a resposta a uma excitação contínua, que é o que a estrada é.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="aula06.html"><small>Módulo anterior</small>← 6. Oscilador harmônico</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611200555"></script>
+</body>
+</html>
