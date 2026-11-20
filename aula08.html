@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oscilações forçadas, ressonância e a resposta a uma força qualquer | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200627">
+<script src="assets/js/comum.js?v=202611200627"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <a href="aula02.html" class="num" title="Módulo 2: As leis de Newton e os referenciais inerciais">2</a>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <a href="aula04.html" class="num" title="Módulo 4: Trabalho, energia e forças conservativas">4</a>
+      <a href="aula05.html" class="num" title="Módulo 5: Momento linear, impulso e o movimento de foguetes">5</a>
+      <span class="grupo">Oscilações</span>
+      <a href="aula06.html" class="num" title="Módulo 6: O oscilador harmônico simples">6</a>
+      <a href="aula07.html" class="num" title="Módulo 7: Oscilações amortecidas">7</a>
+      <a href="aula08.html" class="num ativo" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer">8</a>
+      <span class="grupo">Caos</span>
+      <span class="num pendente" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase · em preparação">9</span>
+      <span class="num pendente" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores · em preparação">10</span>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. A força externa, e as duas partes da resposta</a></li>
+    <li><a href="#s2">2. Três ressonâncias que não coincidem</a></li>
+    <li><a href="#s3">3. O transiente, o batimento e a armadilha de projeto</a></li>
+    <li><a href="#s4">4. A resposta a uma força qualquer</a></li>
+    <li><a href="#s5">5. No Spyder</a></li>
+    <li><a href="#s6">6. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 8 · Oscilações</p>
+  <h1>Oscilações forçadas, ressonância e a resposta a uma força qualquer</h1>
+  <p class="subtitulo">Empurrar o oscilador periodicamente produz três ressonâncias em frequências diferentes, e um transiente que pode ultrapassar o regime permanente ao dobro. E resolver o caso do impulso resolve, de uma vez, o caso de qualquer força.</p>
+  <h2 id="s1">1. A força externa, e as duas partes da resposta</h2>
+
+<p>Os módulos 6 e 7 descreveram osciladores entregues a si mesmos. Agora
+chega alguém de fora e empurra, periodicamente:</p>
+
+\[ \ddot{x} + 2\gamma\dot{x} + \omega_0^2 x = \frac{F_0}{m}\cos\omega t. \]
+
+<p>A equação continua linear, e é dessa única propriedade que decorre tudo o
+que vem a seguir. A solução geral de uma equação linear não homogênea é a
+solução geral da homogênea mais <em>uma</em> solução particular:</p>
+
+\[ x(t) = \underbrace{x_{\text{tr}}(t)}_{\text{morre como }e^{-\gamma t}}
+        + \underbrace{x_{\text{est}}(t)}_{\text{dura}}. \]
+
+<p>O primeiro termo é o transiente, e é exatamente o problema do módulo 7,
+intacto: ele oscila em \(\omega_1\) e não sabe nada sobre a força. O segundo
+é o estacionário, e oscila na frequência da <strong>força</strong>, não na do
+sistema. Essa é a diferença que organiza o módulo inteiro.</p>
+
+<p>Procurando o estacionário na forma \(x = A\cos(\omega t - \varphi)\),
+substituindo e separando os termos em seno e cosseno, sai</p>
+
+\[ A(\omega) = \frac{F_0/m}
+   {\sqrt{\left(\omega_0^2-\omega^2\right)^2 + \left(2\gamma\omega\right)^2}},
+   \qquad
+   \tg\varphi = \frac{2\gamma\omega}{\omega_0^2-\omega^2}. \]
+
+<p>O programa mede \(A\) e \(\varphi\) na integração numérica, depois de
+esperar dez constantes de tempo para o transiente morrer, e ajusta a senoide
+por mínimos quadrados. As fórmulas e a medida concordam em \(10^{-6}\).</p>
+
+<h3>A fase, que diz mais que a amplitude</h3>
+
+<p>Vale olhar a fase antes da amplitude, porque ela é mais informativa e
+menos lembrada:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>regime</th><th>\(\varphi\)</th><th>o que o corpo faz</th></tr></thead>
+<tbody>
+<tr><td>\(\omega \ll \omega_0\)</td><td>\(\to 0\)</td>
+<td>acompanha a força, em fase; a mola manda</td></tr>
+<tr><td>\(\omega = \omega_0\)</td><td>exatamente \(\pi/2\)</td>
+<td>atrasado um quarto de ciclo; a força empurra sempre a favor da
+velocidade</td></tr>
+<tr><td>\(\omega \gg \omega_0\)</td><td>\(\to \pi\)</td>
+<td>em oposição à força; a inércia manda</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A passagem de 0 a \(\pi\) acontece numa faixa de largura \(2\gamma\) em
+torno de \(\omega_0\), e é tanto mais brusca quanto menor o amortecimento. O
+valor \(\pi/2\) em \(\omega_0\) não é aproximação: é exato, em qualquer
+\(\gamma\), e é ele que explica por que a potência absorvida tem máximo ali,
+como a seção seguinte mostra.</p>
+
+  <h2 id="s2">2. Três ressonâncias que não coincidem</h2>
+
+<p>Pergunte a alguém qual é a frequência de ressonância de um oscilador
+amortecido e a resposta virá: \(\omega_0\). A resposta está certa pela metade,
+e saber qual metade é o conteúdo desta seção.</p>
+
+<p>A amplitude do <em>deslocamento</em> tem máximo onde o denominador de
+\(A(\omega)\) é mínimo. Derivando:</p>
+
+\[ \omega_A = \sqrt{\omega_0^2 - 2\gamma^2}, \]
+
+<p>que é <strong>menor</strong> que \(\omega_0\), e que deixa de existir
+quando \(\gamma &gt; \omega_0/\sqrt{2}\): a partir daí a curva só decresce, e
+não há ressonância de amplitude nenhuma.</p>
+
+<p>A amplitude da <em>velocidade</em> é \(\omega A(\omega)\), e o seu máximo
+está exatamente em \(\omega_0\), em qualquer amortecimento. E a
+<em>potência média absorvida</em>, que é o que de fato se transfere da força
+para o oscilador,</p>
+
+\[ \med{P} = \med{F\dot{x}} = \gamma\left[\omega A(\omega)\right]^2 m, \]
+
+<p>tem máximo exatamente em \(\omega_0\) também. O programa faz a busca fina
+dos três máximos:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(\gamma\)</th><th>pico de \(x\)</th>
+<th>\(\sqrt{\omega_0^2-2\gamma^2}\)</th><th>pico de \(v\)</th>
+<th>pico de \(P\)</th></tr></thead>
+<tbody>
+<tr><td>0,10</td><td>3,99750</td><td>3,99750</td><td>3,99999</td><td>3,99999</td></tr>
+<tr><td>0,40</td><td>3,95980</td><td>3,95980</td><td>3,99999</td><td>3,99999</td></tr>
+<tr><td>1,00</td><td>3,74166</td><td>3,74166</td><td>3,99999</td><td>3,99999</td></tr>
+<tr><td>2,00</td><td>2,82842</td><td>2,82843</td><td>3,99999</td><td>3,99999</td></tr>
+<tr><td>2,80</td><td>0,56569</td><td>0,56569</td><td>3,99999</td><td>3,99999</td></tr>
+<tr><td>3,00</td><td>0,10000</td><td>não há pico</td><td>3,99999</td><td>3,99999</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Os 3,99999 das duas últimas colunas são o ponto da grade mais próximo de
+4: a busca varre 400 mil frequências entre 0,1 e 8, de modo que o espaçamento
+é \(2\times10^{-5}\). E o 0,10000 da última linha é a borda da busca, porque
+ali a curva já não tem máximo nenhum: ela só decresce.</p>
+
+<p>São três ressonâncias, em duas frequências diferentes, e a pergunta "qual é
+a frequência de ressonância" só tem resposta depois de dizer ressonância
+<em>de quê</em>. A distinção não é escolástica: quem projeta para a estrutura
+não quebrar olha o pico do deslocamento, e quem projeta para transferir
+energia, como uma antena, um forno de micro-ondas ou um sintonizador, olha o
+da potência.</p>
+
+<div data-widget="forcado"></div>
+
+<h3>A largura da curva, e o Q de laboratório</h3>
+
+<p>A curva de potência é uma lorentziana, e a sua largura a meia altura tem
+forma fechada: os pontos de meia potência estão em</p>
+
+\[ \omega_{\pm} = \sqrt{\omega_0^2+\gamma^2} \pm \gamma
+   \qquad\Longrightarrow\qquad
+   \Delta\omega = \omega_+ - \omega_- = 2\gamma. \]
+
+<p>A largura vale \(2\gamma\) <strong>exatamente</strong>, em qualquer
+amortecimento, e não apenas no limite de \(Q\) alto. O programa confirma em
+cinco casas. Daí a definição operacional</p>
+
+\[ Q = \frac{\omega_0}{\Delta\omega}, \]
+
+<p>que é como \(Q\) se mede num laboratório de verdade: varre-se a frequência
+e divide-se. Não é preciso desligar nada, nem cronometrar decaimento, nem
+conhecer \(m\), \(k\) ou \(b\). Compare com o módulo 7, onde \(Q\) saiu de
+picos sucessivos: são medidas independentes da mesma grandeza, e a
+concordância entre elas é um teste do modelo.</p>
+
+  <h2 id="s3">3. O transiente, o batimento e a armadilha de projeto</h2>
+
+<p>O estacionário é o que sobra; o transiente é o que acontece primeiro. E há
+uma armadilha de projeto escondida aí.</p>
+
+<p>Quando \(\omega\) está perto de \(\omega_0\), o transiente e o estacionário
+têm frequências parecidas, e a soma de duas senoides de frequências parecidas
+produz <strong>batimento</strong>, com período \(2\pi/|\omega_0-\omega|\).
+Durante os primeiros batimentos, a amplitude pode ultrapassar bastante a do
+regime permanente:</p>
+
+<div class="saida">
+omega = 3,60&nbsp;&nbsp;&nbsp;estacionaria <b>0,32666</b>&nbsp;&nbsp;&nbsp;pico do transiente <b>0,54923</b>&nbsp;&nbsp;(+68 %)<br>
+omega = 3,95&nbsp;&nbsp;&nbsp;estacionaria <b>1,78449</b>&nbsp;&nbsp;&nbsp;pico do transiente <b>1,90651</b>&nbsp;&nbsp;(+7 %)
+</div>
+
+<p>E o excesso cresce quando o amortecimento diminui. Medindo em
+\(\omega = 3{,}95\) com \(\gamma\) cada vez menor, a razão entre o pico e o
+estacionário vai a 1,07, depois 1,55, depois 1,88: no limite
+\(\gamma \to 0\) ela tende a <strong>2</strong>.</p>
+
+<div class="destaque">
+<p><strong>A armadilha.</strong> Quem dimensiona uma estrutura pela resposta
+de regime permanente pode errar por um fator 2. O primeiro minuto de uma
+máquina ligando é mais perigoso que a hora seguinte inteira, e é por isso que
+turbinas e motores grandes são acelerados <em>depressa</em> através das
+frequências críticas, em vez de devagar: o que machuca é passar tempo
+perto.</p>
+</div>
+
+<p>Já o tempo até estabilizar é teimoso: deu \(3{,}6/\gamma\) e
+\(3{,}7/\gamma\) nos dois casos, com frequências de força bem diferentes. A
+razão é que quem precisa morrer é o transiente, que é o problema do módulo 7 e
+não sabe nada sobre a força. Cair a 2 % de uma exponencial leva
+\(\ln(1/0{,}02) = 3{,}9\) constantes de tempo, e é disso que se trata.</p>
+
+<div class="destaque">
+<p><strong>A ponte de Tacoma não caiu por ressonância.</strong> A fotografia da
+ponte se contorcendo, em 1940, ilustra o capítulo de ressonância de quase todo
+livro de física básica, e a atribuição é incorreta. Não havia força externa
+periódica: o vento soprava de modo aproximadamente constante. O que houve foi
+<em>flutter</em> aeroelástico, uma instabilidade autoexcitada em que o próprio
+movimento da estrutura modula a força do ar, criando amortecimento
+<strong>negativo</strong>. A diferença é de fundo: na ressonância a amplitude
+satura em \(F_0/2m\gamma\omega_0\), e no flutter ela cresce exponencialmente
+até a ruína, sem precisar de frequência externa nenhuma. A correção está em
+K. Y. Billah e R. H. Scanlan,
+<a href="https://doi.org/10.1119/1.16590"><em>Resonance, Tacoma Narrows bridge
+failure, and undergraduate physics textbooks</em></a>, Am. J. Phys.
+<strong>59</strong>, 118 (1991).</p>
+</div>
+
+  <h2 id="s4">4. A resposta a uma força qualquer</h2>
+
+<p>Até aqui a força foi uma senoide, o que é cômodo e pouco realista. Um
+terremoto não é senoidal, nem uma martelada, nem uma rajada de vento, nem um
+buraco na estrada. A pergunta geral é: dada uma força qualquer \(f(t)\), qual
+é \(x(t)\)?</p>
+
+<p>A linearidade responde de graça, e a resposta é uma das ideias mais
+reaproveitadas da física. Comece resolvendo um caso só: a resposta a um
+<strong>impulso</strong> aplicado em \(t = 0\), que é o mesmo que soltar o
+oscilador em repouso com velocidade unitária. Essa é a
+<strong>função de Green</strong>:</p>
+
+\[ G(t) = \begin{cases}
+   \dfrac{e^{-\gamma t}\sen\omega_1 t}{\omega_1}, & t \ge 0,\\[6pt]
+   0, & t &lt; 0. \end{cases} \]
+
+<p>Agora olhe uma força qualquer como uma fila de impulsos, um em cada
+instante \(s\), de tamanho \(f(s)\,ds\). Cada um produz a sua resposta,
+deslocada no tempo, e como a equação é linear as respostas simplesmente se
+somam:</p>
+
+\[ x(t) = \int_{-\infty}^{t} G(t-s)\,f(s)\,ds. \]
+
+<p>Isso resolve o problema <em>inteiro</em>, para sempre, sem nunca mais
+resolver equação diferencial nenhuma. O programa testa com três forças que não
+têm nada de senoidal, comparando a convolução com a integração direta da
+equação:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>força</th><th>diferença com \(\Delta t\)</th>
+<th>com \(\Delta t/2\)</th><th>razão</th><th>ordem</th></tr></thead>
+<tbody>
+<tr><td>pulso retangular</td><td>\(2{,}98\times10^{-5}\)</td>
+<td>\(1{,}49\times10^{-5}\)</td><td>2,00</td><td>primeira</td></tr>
+<tr><td>dente de serra</td><td>\(6{,}04\times10^{-5}\)</td>
+<td>\(3{,}01\times10^{-5}\)</td><td>2,00</td><td>primeira</td></tr>
+<tr><td>três marteladas</td><td>\(3{,}33\times10^{-9}\)</td>
+<td>\(8{,}33\times10^{-10}\)</td><td>4,00</td><td>segunda</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A diferença que sobra não é discordância entre os dois métodos: é o erro de
+quadratura da soma usada na convolução, e ele some com o passo. A razão entre
+as colunas diz de que ordem: 2 quando a força tem salto, 4 quando ela é suave.
+Reconhecer a ordem do próprio erro é o que separa uma verificação de uma
+coincidência.</p>
+
+<h3>Causalidade, memória e o resto da física</h3>
+
+<p>Repare no limite superior da integral. A resposta em \(t\) depende apenas
+da força <em>antes</em> de \(t\), porque \(G\) é nula para argumento negativo.
+É a causalidade escrita como propriedade de uma função, e é por isso que ela
+é imposta à mão na definição.</p>
+
+<p>E repare no \(e^{-\gamma t}\): o peso de uma força antiga decai, de modo que
+o oscilador tem <strong>memória</strong> de cerca de \(1/\gamma\). O que
+aconteceu muito antes disso já não importa, e é essa perda de memória que
+torna o regime permanente possível.</p>
+
+<p>A ideia não fica na mecânica. A função de Green é a mesma ferramenta que
+resolve circuitos elétricos, propagação de ondas, difusão de calor, campos
+eletromagnéticos de fontes arbitrárias e, com outro nome, o propagador da
+teoria quântica de campos. Em todos esses casos a receita é a mesma: resolva
+para o impulso e some. O oscilador amortecido é o exemplo mais barato que
+existe dela, e por isso vale a pena entendê-lo aqui, onde a conta cabe numa
+linha.</p>
+
+  <h2 id="s5">5. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/forcado.py">
+    <span class="numero">Programa</span>
+    <h3>forcado.py</h3>
+    <p>Mede amplitude e fase do estacionário, localiza os três picos de
+    ressonância, mede a largura da curva de potência, acompanha o batimento
+    do transiente e resolve a resposta a três forças quaisquer por
+    convolução.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>Amplitude e fase medidas na integração batem com as fórmulas em
+\(10^{-6}\), em seis frequências.</li>
+<li>O pico do deslocamento cai em \(\sqrt{\omega_0^2-2\gamma^2}\) nos cinco
+amortecimentos em que ele existe, e some no sexto.</li>
+<li>Os picos da velocidade e da potência ficam em \(\omega_0\) com cinco casas,
+em qualquer \(\gamma\).</li>
+<li>A largura a meia altura da curva de potência dá \(2\gamma\) em cinco
+casas.</li>
+<li>A convolução reproduz a integração direta, com erro de primeira ordem para
+forças com salto e de segunda para forças suaves.</li>
+</ul>
+
+<div class="bloco ex">
+<p><strong>Para mexer.</strong> Troque a força senoidal por uma onda quadrada
+de mesma frequência e compare a resposta com a soma das respostas aos
+harmônicos ímpares, que é a série de Fourier da onda quadrada: o resultado
+deve coincidir, e é a demonstração de que resolver para senoides também
+resolve o caso geral, por outro caminho. Depois diminua \(\gamma\) e verifique
+que o fator de ultrapassagem do transiente tende a 2.</p>
+</div>
+
+  <h2 id="s6">6. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">8.1  Um oscilador forçado, com números</span>
+  <p>Uma massa de 500 g numa mola de 50 N/m sofre arrasto com
+     \(b = 0{,}50\) N·s/m e é forçada por \(F_0 = 2{,}0\) N. Calcule
+     \(\omega_0\), \(\gamma\) e \(Q\); a amplitude em frequência muito baixa,
+     em \(\omega_0\) e no pico; e a potência média absorvida na
+     ressonância.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Os parâmetros.</b></p>
+     <p>\[ \omega_0 = \sqrt{\frac{50}{0{,}5}} = 10{,}0\ \mathrm{rad/s},
+        \qquad \gamma = \frac{b}{2m} = 0{,}50\ \mathrm{rad/s},
+        \qquad Q = \frac{\omega_0}{2\gamma} = 10{,}0. \]</p>
+     <p><b>As três amplitudes.</b> Em frequência muito baixa a mola sozinha
+     responde, e a amplitude é a deformação estática:</p>
+     <p>\[ A(0) = \frac{F_0}{m\omega_0^2} = \frac{F_0}{k}
+        = 4{,}00\ \mathrm{cm}. \]</p>
+     <p>Em \(\omega = \omega_0\) o primeiro termo do denominador se anula e
+     sobra só o amortecimento:</p>
+     <p>\[ A(\omega_0) = \frac{F_0}{2m\gamma\omega_0} = 40{,}0\ \mathrm{cm}
+        = Q\,A(0). \]</p>
+     <p>Essa igualdade é geral e merece ser guardada: <b>em \(\omega_0\) a
+     amplitude é \(Q\) vezes a estática</b>. É a leitura física de \(Q\) que
+     mais serve na prática, e ela diz por que um \(Q\) alto é perigoso quando
+     não é desejado.</p>
+     <p>No pico verdadeiro, \(\omega_A = \sqrt{100-0{,}5} = 9{,}975\) rad/s, a
+     amplitude é 40,05 cm: apenas <b>0,125 %</b> maior que em \(\omega_0\).
+     Com \(Q = 10\) a distinção entre as duas ressonâncias já é invisível em
+     laboratório, e é por isso que ela some dos livros. Ela volta a importar
+     quando \(Q\) é da ordem de 1.</p>
+     <p><b>A potência.</b> Na ressonância,</p>
+     <p>\[ \med{P} = \frac{F_0^2}{4m\gamma} = \frac{4{,}0}{4\times0{,}5\times0{,}5}
+        = 4{,}0\ \mathrm{W}. \]</p>
+     <p>Repare no que isso significa: a potência absorvida em regime
+     permanente é exatamente a potência <em>dissipada</em> pelo arrasto, porque
+     a energia média do oscilador não muda. A força externa não está
+     acumulando energia no sistema; está pagando a conta do atrito.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">8.2  Onde cada coisa tem pico</span>
+  <p>Mostre que a amplitude do deslocamento tem máximo em
+     \(\omega_A = \sqrt{\omega_0^2-2\gamma^2}\), que a amplitude da velocidade
+     tem máximo exatamente em \(\omega_0\), e que o mesmo vale para a potência
+     média. Diga o que acontece quando \(\gamma &gt; \omega_0/\sqrt2\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O deslocamento.</b> Maximizar \(A\) é minimizar o radicando</p>
+     <p>\[ D(\omega) = \left(\omega_0^2-\omega^2\right)^2
+        + 4\gamma^2\omega^2. \]</p>
+     <p>Derivando em relação a \(\omega^2\), que é mais limpo que em
+     \(\omega\):</p>
+     <p>\[ \der{D}{(\omega^2)} = -2\left(\omega_0^2-\omega^2\right)
+        + 4\gamma^2 = 0
+        \quad\Longrightarrow\quad
+        \omega_A^2 = \omega_0^2 - 2\gamma^2. \]</p>
+     <p><b>A velocidade.</b> A amplitude da velocidade é \(\omega A\), de modo
+     que maximizá-la é minimizar \(D/\omega^2\):</p>
+     <p>\[ \frac{D}{\omega^2}
+        = \left(\frac{\omega_0^2}{\omega}-\omega\right)^2 + 4\gamma^2. \]</p>
+     <p>O segundo termo é constante, e o primeiro é um quadrado que
+     <em>se anula</em> quando \(\omega = \omega_0\). Não é preciso derivar
+     nada: um quadrado atinge o mínimo possível quando pode ser zerado. O
+     amortecimento não entra, e é por isso que esse pico não se move.</p>
+     <p><b>A potência.</b> \(\med{P} = m\gamma(\omega A)^2\) é uma função
+     crescente de \(\omega A\), de modo que ela tem máximo exatamente onde a
+     velocidade tem: em \(\omega_0\). Faz sentido físico, e o sentido está na
+     fase: em \(\omega_0\) a fase vale \(\pi/2\), o que põe a velocidade
+     <em>em fase</em> com a força, e \(\med{F v}\) é máxima quando os dois
+     andam juntos.</p>
+     <p><b>Quando o pico some.</b> Se \(\gamma &gt; \omega_0/\sqrt2\), então
+     \(\omega_A^2 &lt; 0\) e não há solução real: a curva de amplitude passa a
+     decrescer monotonicamente desde \(\omega = 0\). Note que isso acontece
+     <em>antes</em> do amortecimento crítico, em
+     \(\gamma = \omega_0/\sqrt2 \simeq 0{,}707\,\omega_0\). Existe, portanto,
+     uma faixa de amortecimento em que o sistema ainda oscila livremente mas
+     já não tem ressonância de amplitude.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">8.3  A largura vale 2γ, e não aproximadamente</span>
+  <p>Encontre as frequências de meia potência resolvendo
+     \(\med{P}(\omega) = \med{P}_{\max}/2\) e mostre que a largura é
+     exatamente \(2\gamma\), sem aproximação. Verifique com os números do
+     exercício 8.1.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A condição.</b> Com
+     \(\med{P} \propto \omega^2A^2 = \omega^2(F_0/m)^2/D(\omega)\) e
+     \(\med{P}_{\max} = (F_0/m)^2/4\gamma^2\) em \(\omega_0\), a condição de
+     meia potência é</p>
+     <p>\[ \frac{\omega^2}{\left(\omega_0^2-\omega^2\right)^2+4\gamma^2\omega^2}
+        = \frac{1}{8\gamma^2}
+        \quad\Longrightarrow\quad
+        \left(\omega_0^2-\omega^2\right)^2 = 4\gamma^2\omega^2. \]</p>
+     <p>Tirando a raiz dos dois lados, com os dois sinais:</p>
+     <p>\[ \omega_0^2-\omega^2 = \pm 2\gamma\omega
+        \quad\Longrightarrow\quad
+        \omega^2 \pm 2\gamma\omega - \omega_0^2 = 0. \]</p>
+     <p><b>As raízes.</b> Ficando apenas com as positivas,</p>
+     <p>\[ \omega_{\pm} = \sqrt{\omega_0^2+\gamma^2} \pm \gamma, \]</p>
+     <p>e a diferença é</p>
+     <p>\[ \Delta\omega = \omega_+-\omega_- = 2\gamma, \]</p>
+     <p>porque a raiz, que é a parte complicada, é a <em>mesma</em> nas duas e
+     se cancela na subtração. O resultado é exato: não houve nenhuma
+     aproximação de \(Q\) alto em lugar nenhum.</p>
+     <p><b>Com os números de 8.1.</b> \(\sqrt{100+0{,}25} = 10{,}0125\), de
+     onde \(\omega_- = 9{,}5125\) e \(\omega_+ = 10{,}5125\) rad/s, com
+     largura 1,0000 rad/s \(= 2\gamma\). E
+     \(Q = \omega_0/\Delta\omega = 10{,}0\), o mesmo valor obtido de
+     \(\omega_0/2\gamma\).</p>
+     <p><b>Por que importa.</b> Note que o <em>centro</em> da faixa,
+     \(\sqrt{\omega_0^2+\gamma^2}\), não é \(\omega_0\) nem o pico da
+     amplitude: é uma terceira frequência. O que é exato é a largura, e é por
+     isso que a medida de laboratório usa a largura e não o centro.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">8.4  O que a fase tem a dizer sobre a energia</span>
+  <p>Mostre que a potência média absorvida vale
+     \(\med{P} = \frac12 F_0 \omega A \sen\varphi\) e use isso para explicar,
+     sem derivar nada, por que a transferência de energia é máxima em
+     \(\omega_0\) e nula nos dois extremos de frequência.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A conta.</b> Com \(F = F_0\cos\omega t\) e
+     \(\dot{x} = -\omega A\sen(\omega t-\varphi)\),</p>
+     <p>\[ \med{P} = \med{F\dot{x}}
+        = -F_0\omega A\med{\cos\omega t\,\sen(\omega t-\varphi)}. \]</p>
+     <p>Abrindo o seno da diferença e usando
+     \(\med{\cos^2} = \frac12\), \(\med{\sen\cos} = 0\):</p>
+     <p>\[ \med{\cos\omega t\,\sen(\omega t-\varphi)}
+        = -\frac{\sen\varphi}{2}
+        \quad\Longrightarrow\quad
+        \med{P} = \frac{F_0\,\omega A\,\sen\varphi}{2}. \]</p>
+     <p><b>A leitura.</b> Só a <em>componente da velocidade em fase com a
+     força</em> transporta energia em média, e \(\sen\varphi\) é exatamente a
+     fração dela. Daí os três regimes saem sem conta nenhuma:</p>
+     <ul>
+     <li>\(\omega \ll \omega_0\): \(\varphi \to 0\), o deslocamento acompanha a
+     força, a velocidade fica 90° adiantada em relação a ela, e
+     \(\med{Fv} \to 0\). A força faz trabalho positivo meio ciclo e negativo no
+     outro: empurra e devolve, como numa mola ideal.</li>
+     <li>\(\omega = \omega_0\): \(\varphi = \pi/2\) exatamente, a velocidade
+     fica <em>em fase</em> com a força, e \(\sen\varphi = 1\). Todo empurrão é
+     a favor do movimento, o tempo todo. É o que uma criança faz num balanço,
+     e o que ela faz é ajustar a fase, não a amplitude.</li>
+     <li>\(\omega \gg \omega_0\): \(\varphi \to \pi\), e \(\sen\varphi \to 0\)
+     de novo. A inércia domina e a massa mal se move.</li>
+     </ul>
+     <p><b>Uma consequência de projeto.</b> Em regime permanente, a potência
+     absorvida é igual à dissipada, de modo que a conta acima <em>também</em>
+     dá o calor gerado. É assim que se calcula o aquecimento de um material
+     submetido a um campo oscilante, e é por isso que o forno de micro-ondas
+     opera perto de uma ressonância das moléculas de água e não em qualquer
+     frequência.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">8.5  A função de Green e o degrau</span>
+  <p>Verifique que \(G(t) = e^{-\gamma t}\sen(\omega_1t)/\omega_1\) para
+     \(t\ge0\) é a resposta a um impulso unitário, isto é, que satisfaz a
+     equação homogênea com \(G(0)=0\) e \(\dot G(0)=1\). Use a convolução para
+     obter a resposta a uma força que liga de repente e permanece,
+     \(f(t) = f_0\) para \(t\ge0\), no caso sem amortecimento, e interprete o
+     resultado.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Por que essas condições iniciais.</b> Integre a equação de
+     \(-\epsilon\) a \(+\epsilon\) em torno do impulso. O termo
+     \(\ddot{x}\) dá o salto de \(\dot{x}\), os termos em \(\dot{x}\) e \(x\)
+     dão contribuição nula no limite por serem finitos, e o impulso unitário dá
+     1. Logo a velocidade salta de 0 para 1 e a posição não salta. Um impulso é
+     uma martelada: muda o momento, não a posição.</p>
+     <p>Com \(G = e^{-\gamma t}\sen(\omega_1t)/\omega_1\) tem-se
+     \(G(0)=0\) e</p>
+     <p>\[ \dot G = e^{-\gamma t}\left[\cos\omega_1 t
+        - \frac{\gamma}{\omega_1}\sen\omega_1 t\right]
+        \quad\Longrightarrow\quad \dot G(0) = 1. \]</p>
+     <p>E a função é solução da homogênea, porque é exatamente a forma
+     subamortecida do módulo 7. As três exigências são atendidas.</p>
+     <p><b>O degrau, sem amortecimento.</b> Com \(\gamma = 0\),
+     \(\omega_1 = \omega_0\) e \(f(s) = f_0\) para \(s \ge 0\):</p>
+     <p>\[ x(t) = \int_0^t \frac{\sen\omega_0(t-s)}{\omega_0}f_0\,ds
+        = \frac{f_0}{\omega_0^2}\left(1-\cos\omega_0 t\right). \]</p>
+     <p><b>A interpretação.</b> Chamando \(x_{\text{est}} = f_0/\omega_0^2 =
+     F_0/k\) a deformação estática, o resultado é</p>
+     <p>\[ x(t) = x_{\text{est}}\left(1-\cos\omega_0 t\right), \]</p>
+     <p>que oscila entre 0 e <b>duas vezes</b> a deformação estática. Aplicar
+     uma carga de repente deforma a estrutura o dobro do que a mesma carga
+     deformaria se fosse depositada devagar.</p>
+     <p>Esse fator 2 é a versão mais limpa da armadilha da seção 3, e é o
+     mesmo que aparece no transiente perto da ressonância. Com amortecimento, a
+     oscilação decai e sobra \(x_{\text{est}}\), mas o <em>pico</em> continua
+     próximo do dobro se \(Q\) for alto. Engenharia estrutural chama isso de
+     fator de amplificação dinâmica, e projeta com ele.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">8.6  Tacoma: ressonância ou outra coisa?</span>
+  <p>A queda da ponte de Tacoma Narrows, em 1940, ilustra o capítulo de
+     ressonância de quase todo livro de física básica. Explique por que a
+     atribuição é incorreta, e mostre, modelando o efeito do vento como um
+     amortecimento <em>negativo</em>, que o crescimento resultante é
+     qualitativamente diferente do de uma ressonância.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O que falta para ser ressonância.</b> Ressonância exige uma
+     força externa <em>periódica</em>, com frequência própria, perto de uma
+     frequência natural da estrutura. No dia do colapso o vento soprava de modo
+     aproximadamente constante, a cerca de 68 km/h. Não havia frequência
+     externa alguma para coincidir com coisa nenhuma.</p>
+     <p>A explicação aceita é <em>flutter</em> aeroelástico: o próprio
+     movimento de torção do tabuleiro altera o ângulo com que o ar o encontra,
+     e o ar devolve uma força que reforça o movimento. A força não é imposta de
+     fora com uma frequência sua; ela é <b>criada pelo movimento</b>, e herda a
+     frequência dele.</p>
+     <p><b>O modelo.</b> Isso se escreve trocando o sinal do termo de
+     arrasto:</p>
+     <p>\[ \ddot{x} - 2\left|\gamma\right|\dot{x} + \omega_0^2 x = 0
+        \quad\Longrightarrow\quad
+        x = Ce^{+|\gamma|t}\cos(\omega_1 t - \varphi). \]</p>
+     <p>A mesma equação do módulo 7, com \(\gamma &lt; 0\). A amplitude cresce
+     <b>exponencialmente</b>, dobrando a cada \(\ln 2/|\gamma|\), sem precisar
+     de força externa nenhuma e sem limite superior enquanto o modelo linear
+     valer.</p>
+     <p><b>A diferença que importa.</b></p>
+     <div class="tabela-rolavel">
+     <table>
+     <thead><tr><th></th><th>ressonância</th><th>flutter</th></tr></thead>
+     <tbody>
+     <tr><td>origem da frequência</td><td>externa, da força</td>
+     <td>interna, da estrutura</td></tr>
+     <tr><td>crescimento</td><td>satura em \(F_0/2m\gamma\omega_0\)</td>
+     <td>exponencial, sem saturação linear</td></tr>
+     <tr><td>efeito de amortecer mais</td><td>reduz o pico</td>
+     <td>pode estabilizar completamente</td></tr>
+     <tr><td>depende da velocidade do vento</td><td>não</td>
+     <td>sim: há uma velocidade crítica</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p>A última linha é a assinatura prática: flutter tem velocidade crítica,
+     abaixo da qual simplesmente não acontece. Pontes modernas são testadas em
+     túnel de vento exatamente para localizá-la, e o tabuleiro recebe forma
+     aerodinâmica e aberturas para empurrá-la para longe.</p>
+     <p><b>A fonte.</b> A correção foi publicada por K. Y. Billah e
+     R. H. Scanlan em
+     <a href="https://doi.org/10.1119/1.16590"><em>Resonance, Tacoma Narrows
+     bridge failure, and undergraduate physics textbooks</em></a>, Am. J. Phys.
+     <b>59</b>, 118 (1991), e vale a leitura: o artigo rastreia como o erro
+     entrou nos livros e por que se perpetuou. É um bom estudo de caso de uma
+     coisa que acontece com frequência na física de ensino, que é uma imagem
+     boa demais para ser abandonada.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="aula07.html"><small>Módulo anterior</small>← 7. Oscilações amortecidas</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611200627"></script>
+</body>
+</html>

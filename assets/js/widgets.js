@@ -2580,6 +2580,386 @@
   };
 
 
+  /* =================================================================
+     8. Oscilações forçadas
+     Três coisas que só ficam claras mexendo: que os picos da amplitude,
+     da velocidade e da potência estão em frequências DIFERENTES, que o
+     transiente pode ultrapassar o estacionário quase ao dobro, e que a
+     resposta a uma força qualquer sai de uma convolução com a função de
+     Green, sem resolver nada de novo.
+     ================================================================= */
+  REGISTRO.forcado = function (raiz) {
+    var est = { gama: 0.15, w: 3.6, forca: 'pulso', vista: 'curva' };
+
+    var W0 = 4.0, F0 = 1.0;
+
+    function amp(w, g) {
+      var a = W0 * W0 - w * w, b = 2 * g * w;
+      return F0 / Math.sqrt(a * a + b * b);
+    }
+    function faseDe(w, g) {
+      return Math.atan2(2 * g * w, W0 * W0 - w * w);
+    }
+
+    var corpo = moldura(raiz, 'Forçar o oscilador: a ressonância, o transiente e a força qualquer');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'A curva de ressonância', v: 'curva' },
+      { rot: 'O transiente', v: 'transiente' },
+      { rot: 'Uma força qualquer', v: 'green' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', ',').replace('-', '\u2212');
+    }
+    function fmtm(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', '{,}');
+    }
+
+    function tracar(g, f, cor, esp, tracejado) {
+      var ct = g.ct, dentro = false;
+      ct.save();
+      ct.strokeStyle = cor; ct.lineWidth = esp || 2;
+      if (tracejado) ct.setLineDash(tracejado);
+      ct.beginPath();
+      for (var i = 0; i <= 700; i++) {
+        var u = g.xmin + (g.xmax - g.xmin) * i / 700, y = f(u);
+        if (!isFinite(y) || y < g.ymin || y > g.ymax) { dentro = false; continue; }
+        if (!dentro) { ct.moveTo(g.X(u), g.Y(y)); dentro = true; }
+        else ct.lineTo(g.X(u), g.Y(y));
+      }
+      ct.stroke(); ct.restore();
+    }
+
+    function montar() {
+      c1.innerHTML = '';
+      deslizante(c1, 'Amortecimento \\(\\gamma\\)', 0.05, 2.9, 0.05, est.gama,
+        function (v) { est.gama = v; desenhar(); },
+        function (v) { return fmt(v) + '  (Q = ' + fmt(W0 / (2 * v), 1) + ')'; });
+      if (est.vista === 'transiente') {
+        deslizante(c1, 'Frequência da força \\(\\omega\\)', 2.0, 6.0, 0.01,
+          est.w, function (v) { est.w = v; desenhar(); },
+          function (v) { return fmt(v) + ' rad/s'; });
+      }
+      if (est.vista === 'green') {
+        opcoes(c1, [
+          { rot: 'Pulso', v: 'pulso' },
+          { rot: 'Dente de serra', v: 'dente' },
+          { rot: 'Marteladas', v: 'martelo' }
+        ], ['pulso', 'dente', 'martelo'].indexOf(est.forca),
+          function (v) { est.forca = v; desenhar(); });
+      }
+      tipografar(c1);
+    }
+
+    /* ---------------- vista 1: a curva de ressonância ---------------- */
+    function vistaCurva() {
+      var g = est.gama;
+      var wa = W0 * W0 > 2 * g * g ? Math.sqrt(W0 * W0 - 2 * g * g) : null;
+
+      /* cada curva normalizada pelo próprio máximo: o que interessa aqui
+         é ONDE está o pico, e não quanto ele vale */
+      var maxA = wa ? amp(wa, g) : amp(0.001, g);
+      var maxV = W0 * amp(W0, g);
+      var maxP = g * Math.pow(W0 * amp(W0, g), 2);
+
+      var gr = G.eixos(cv, {
+        altura: 300, xmin: 1.5, xmax: 7.0, ymin: 0, ymax: 1.15,
+        divY: 4, marcasX: G.marcasLineares(1.5, 7.0, 6, 1),
+        rotX: 'frequência da força  ω  (rad/s)',
+        rotY: 'cada curva no seu máximo',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = gr.ct;
+
+      tracar(gr, function (w) { return amp(w, g) / maxA; }, G.COR.mestra, 2.8);
+      tracar(gr, function (w) { return w * amp(w, g) / maxV; },
+             G.COR.bronze, 2.2);
+      tracar(gr, function (w) {
+        return g * Math.pow(w * amp(w, g), 2) / maxP;
+      }, G.COR.vinho, 2.2, [6, 4]);
+
+      /* os picos, marcados */
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.1; ct.setLineDash([3, 3]);
+      ct.beginPath(); ct.moveTo(gr.X(W0), gr.y0); ct.lineTo(gr.X(W0), gr.y1);
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'ω₀', gr.X(W0), gr.y1 - 14, G.COR.suave);
+
+      if (wa) {
+        ct.fillStyle = G.COR.mestra;
+        ct.beginPath(); ct.arc(gr.X(wa), gr.Y(1), 6, 0, 6.2832); ct.fill();
+        rotulo(ct, 'pico de x', gr.X(wa) - 10, gr.Y(1) - 15, G.COR.mestra,
+               'right');
+      }
+      ct.fillStyle = G.COR.bronze;
+      ct.beginPath(); ct.arc(gr.X(W0), gr.Y(1), 5, 0, 6.2832); ct.fill();
+      rotulo(ct, 'pico de v e de P', gr.X(W0) + 12, gr.Y(1) - 15,
+             G.COR.bronze, 'left');
+
+      /* a largura a meia altura da curva de potência */
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.4;
+      ct.beginPath();
+      ct.moveTo(gr.X(Math.sqrt(W0 * W0 + g * g) - g), gr.Y(0.5));
+      ct.lineTo(gr.X(Math.sqrt(W0 * W0 + g * g) + g), gr.Y(0.5));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'largura = 2γ', gr.X(W0), gr.Y(0.5) + 16, G.COR.vinho);
+
+      rotulos(['Pico da amplitude', 'Pico da velocidade e da potência',
+               'Largura a meia altura', 'Fator de qualidade']);
+      painel({
+        a: wa ? fmt(wa, 4) : 'não há pico',
+        b: fmt(W0, 4),
+        c: fmt(2 * g, 3),
+        d: fmt(W0 / (2 * g), 2)
+      });
+
+      texto.innerHTML =
+        '<p>As três curvas são do mesmo oscilador, cada uma normalizada pelo '
+        + 'próprio máximo, porque aqui o que importa é <em>onde</em> está o '
+        + 'pico. A amplitude tem máximo em '
+        + (wa
+            ? '\\(\\sqrt{\\omega_0^2-2\\gamma^2} = ' + fmtm(wa, 3) + '\\)'
+            : '\\(\\sqrt{\\omega_0^2-2\\gamma^2}\\)')
+        + ', abaixo de \\(\\omega_0\\). A velocidade e a potência absorvida '
+        + 'têm máximo <strong>exatamente</strong> em \\(\\omega_0 = 4\\), em '
+        + 'qualquer amortecimento.</p>'
+        + '<p>São três ressonâncias diferentes, e a pergunta "qual é a '
+        + 'frequência de ressonância" só tem resposta depois de dizer '
+        + 'ressonância <em>de quê</em>. Quem projeta para não quebrar olha o '
+        + 'pico da amplitude; quem projeta para transferir energia, como uma '
+        + 'antena ou um forno de micro-ondas, olha o da potência.</p>'
+        + (wa
+          ? '<p>Aumente \\(\\gamma\\) e veja o pico da amplitude caminhar '
+            + 'para a esquerda até sumir em \\(\\gamma = \\omega_0/\\sqrt2 = '
+            + fmtm(W0 / Math.SQRT2, 3) + '\\), onde a curva passa a só '
+            + 'decrescer. Os outros dois picos não se mexem.</p>'
+          : '<p>Com este amortecimento a amplitude <strong>não tem mais '
+            + 'pico</strong>: passou de \\(\\omega_0/\\sqrt2 = '
+            + fmtm(W0 / Math.SQRT2, 3) + '\\) e a curva só decresce. Os picos '
+            + 'da velocidade e da potência continuam em \\(\\omega_0\\), '
+            + 'imperturbáveis.</p>')
+        + '<p>A barra vinho é a largura a meia altura da curva de potência, e '
+        + 'ela vale \\(2\\gamma\\) exatamente, de onde '
+        + '\\(Q = \\omega_0/\\text{largura}\\). É assim que se mede \\(Q\\) '
+        + 'em laboratório: varrendo a frequência, sem desligar nada nem '
+        + 'cronometrar decaimento.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: o transiente ---------------- */
+    function vistaTransiente() {
+      var g = est.gama, w = est.w;
+      var A = amp(w, g), ph = faseDe(w, g);
+      var w1 = g < W0 ? Math.sqrt(W0 * W0 - g * g) : 0;
+
+      /* solução exata: estacionário mais transiente, com x(0)=0, v(0)=0 */
+      var Ax = A * Math.cos(ph), Av = A * w * Math.sin(ph);
+      var B1 = -Ax, B2 = w1 ? (-Av - g * B1) / w1 : 0;
+      function x(t) {
+        var trans = Math.exp(-g * t) * (B1 * Math.cos(w1 * t)
+                                        + B2 * Math.sin(w1 * t));
+        return A * Math.cos(w * t - ph) + trans;
+      }
+
+      var tmax = Math.min(140, 7 / g);
+      var pico = 0;
+      for (var i = 0; i <= 4000; i++) pico = Math.max(pico, Math.abs(x(tmax * i / 4000)));
+      var lim = 1.15 * Math.max(pico, A);
+
+      var gr = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: tmax, ymin: -lim, ymax: lim,
+        divY: 4, marcasX: G.marcasLineares(0, tmax, 6, 0),
+        rotX: 'tempo (s)', rotY: 'posição (m)',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = gr.ct;
+
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.2; ct.setLineDash([5, 4]);
+      [A, -A].forEach(function (y) {
+        ct.beginPath(); ct.moveTo(gr.x0, gr.Y(y)); ct.lineTo(gr.x1, gr.Y(y));
+        ct.stroke();
+      });
+      ct.restore();
+      rotulo(ct, 'amplitude estacionária', gr.x1 - 10, gr.Y(A) - 13,
+             G.COR.suave, 'right');
+
+      tracar(gr, x, G.COR.mestra, 2);
+
+      rotulos(['Amplitude estacionária', 'Maior amplitude do transiente',
+               'Quanto ultrapassa', 'Período do batimento']);
+      painel({
+        a: fmt(A, 4) + ' m',
+        b: fmt(pico, 4) + ' m',
+        c: '+' + fmt(100 * (pico / A - 1), 1) + ' %',
+        d: Math.abs(w - W0) > 1e-9
+          ? fmt(2 * Math.PI / Math.abs(W0 - w), 1) + ' s' : '—'
+      });
+
+      texto.innerHTML =
+        '<p>O oscilador parte do repouso, e o que se vê é a soma de duas '
+        + 'coisas: o <strong>estacionário</strong>, que oscila na frequência '
+        + 'da força e dura para sempre, e o <strong>transiente</strong>, que '
+        + 'oscila em \\(\\omega_1\\) e morre como \\(e^{-\\gamma t}\\). O '
+        + 'transiente é o problema do módulo 7, intacto: ele não sabe nada '
+        + 'sobre a força, só sobre o sistema.</p>'
+        + '<p>Duas senoides de frequências parecidas produzem '
+        + '<strong>batimento</strong>, e por isso o começo ultrapassa o '
+        + 'regime permanente: aqui, '
+        + fmt(100 * (pico / A - 1), 1) + ' % acima. Quanto menor o '
+        + 'amortecimento, maior o excesso, e no limite \\(\\gamma \\to 0\\) '
+        + 'ele tende ao <em>dobro</em> da amplitude final.</p>'
+        + '<p>Essa é uma armadilha de projeto real: quem dimensiona uma '
+        + 'estrutura pela resposta de regime permanente subestima o pico, e '
+        + 'pode errar por um fator 2. O primeiro minuto de uma máquina '
+        + 'ligando é mais perigoso que a hora seguinte inteira.</p>'
+        + '<p>Repare também que o tempo até estabilizar quase não muda quando '
+        + 'se mexe em \\(\\omega\\): ele vale cerca de '
+        + '\\(\\ln(1/0{,}02) = 3{,}9\\) constantes \\(1/\\gamma\\), '
+        + 'porque quem precisa morrer é o transiente.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: uma força qualquer ---------------- */
+    function vistaGreen() {
+      var g = Math.min(est.gama, 2.0);
+      var w1 = Math.sqrt(W0 * W0 - g * g);
+      var tmax = 20, n = 2400, dt = tmax / n;
+
+      function f(t) {
+        if (est.forca === 'pulso') return (t >= 1 && t <= 2) ? 1 : 0;
+        if (est.forca === 'dente') return (t % 2) - 1;
+        var s = 0.06, soma = 0;
+        [2.0, 5.5, 6.2].forEach(function (t0) {
+          soma += Math.exp(-Math.pow((t - t0) / s, 2));
+        });
+        return soma;
+      }
+
+      /* convolução discreta: x_i = dt * soma_j G(t_i - t_j) f(t_j) */
+      var fs = [], gs = [], i, j;
+      for (i = 0; i <= n; i++) {
+        fs.push(f(i * dt));
+        gs.push(Math.exp(-g * i * dt) * Math.sin(w1 * i * dt) / w1);
+      }
+      var xs = [], maxx = 1e-9;
+      for (i = 0; i <= n; i++) {
+        var soma = 0;
+        for (j = 0; j <= i; j++) soma += gs[i - j] * fs[j];
+        xs.push(soma * dt);
+        maxx = Math.max(maxx, Math.abs(xs[i]));
+      }
+
+      var gr = G.eixos(cv, {
+        altura: 310, xmin: 0, xmax: tmax, ymin: -1.3, ymax: 1.3,
+        divY: 4, marcasX: G.marcasLineares(0, tmax, 6, 0),
+        rotX: 'tempo (s)', rotY: 'normalizados',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = gr.ct;
+
+      /* a força, em escala própria */
+      var maxf = 1e-9;
+      fs.forEach(function (v) { maxf = Math.max(maxf, Math.abs(v)); });
+      ct.save();
+      ct.strokeStyle = G.COR.ambar; ct.lineWidth = 1.8;
+      ct.beginPath();
+      for (i = 0; i <= n; i++) ct.lineTo(gr.X(i * dt), gr.Y(fs[i] / maxf));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'a força', gr.X(0.3 * tmax), gr.Y(1.12), G.COR.ambar, 'left');
+
+      /* a função de Green, de fundo */
+      ct.save();
+      ct.strokeStyle = G.COR.clara; ct.lineWidth = 1.4; ct.setLineDash([4, 4]);
+      ct.beginPath();
+      for (i = 0; i <= n; i++) ct.lineTo(gr.X(i * dt), gr.Y(gs[i] * w1 * 0.5));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'G(t), a resposta a um impulso', gr.X(0.06 * tmax),
+             gr.Y(-1.14), G.COR.suave, 'left');
+
+      /* a resposta */
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.6;
+      ct.beginPath();
+      for (i = 0; i <= n; i++) ct.lineTo(gr.X(i * dt), gr.Y(xs[i] / maxx));
+      ct.stroke(); ct.restore();
+      /* o rótulo vai no maior pico da resposta, onde não há mais nada */
+      var ipico = 0;
+      for (i = 0; i <= n; i++) if (Math.abs(xs[i]) > Math.abs(xs[ipico])) ipico = i;
+      rotulo(ct, 'a resposta', gr.X(ipico * dt) + 12,
+             gr.Y(xs[ipico] / maxx) - 6, G.COR.mestra, 'left');
+
+      rotulos(['Força escolhida', 'Maior deslocamento',
+               'Tempo de memória', 'Quantos ciclos de memória']);
+      painel({
+        a: est.forca === 'pulso' ? 'pulso retangular'
+           : est.forca === 'dente' ? 'dente de serra' : 'três marteladas',
+        b: fmt(maxx, 4) + ' m',
+        c: fmt(1 / g, 2) + ' s',
+        d: fmt(w1 / (2 * Math.PI * g), 2)
+      });
+
+      texto.innerHTML =
+        '<p>A equação é linear, e isso dá de graça o caso geral. Se a resposta '
+        + 'a um <em>impulso</em> em \\(t=0\\) é conhecida, chamada função de '
+        + 'Green, então qualquer força é uma fila de impulsos e a resposta é '
+        + 'a soma das respostas:</p>'
+        + '<p>\\[ G(t) = \\frac{e^{-\\gamma t}\\sen\\omega_1 t}{\\omega_1}, '
+        + '\\qquad x(t) = \\int_{-\\infty}^{t} G(t-s)\\,f(s)\\,ds. \\]</p>'
+        + '<p>A curva cheia é essa integral, calculada aqui mesmo. Nenhuma das '
+        + 'três forças tem qualquer parentesco com uma senoide, e nenhuma '
+        + 'precisou de solução nova: a conta é sempre a mesma convolução. O '
+        + 'programa confere o resultado contra a integração direta da equação '
+        + 'e mede o erro caindo com o passo, de primeira ordem para as forças '
+        + 'com salto e de segunda para as suaves.</p>'
+        + '<p>Repare no limite inferior da integral: a resposta em \\(t\\) só '
+        + 'depende da força <em>antes</em> de \\(t\\), porque \\(G\\) é nula '
+        + 'para argumento negativo. É a causalidade escrita como propriedade '
+        + 'de uma função, e o oscilador tem memória de cerca de '
+        + '\\(1/\\gamma = ' + fmtm(1 / g, 2) + '\\) s: o que aconteceu antes '
+        + 'disso já não importa.</p>'
+        + '<p>Essa ideia não fica na mecânica. A função de Green é a mesma '
+        + 'ferramenta de circuitos, de propagação de ondas, de difusão de '
+        + 'calor e, com outro nome, do propagador da teoria quântica de '
+        + 'campos. O oscilador amortecido é o exemplo mais barato dela.</p>';
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'curva') vistaCurva();
+      else if (est.vista === 'transiente') vistaTransiente();
+      else vistaGreen();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {
