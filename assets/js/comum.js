@@ -40,6 +40,12 @@ window.MathJax = {
       kB: 'k_B',
       Tr: '\\operatorname{Tr}',
       cruz: '\\times',
+      /* operadores de campo, usados a partir do módulo 1. As mesmas
+         definições do site de Eletromagnetismo, para que a notação
+         seja a mesma nas duas disciplinas. */
+      divg: ['\\nabla\\cdot #1', 1],
+      rot: ['\\nabla\\times #1', 1],
+      lap: ['\\nabla^2 #1', 1],
       R: '\\mathbb{R}',
       N: '\\mathbb{N}'
     }
