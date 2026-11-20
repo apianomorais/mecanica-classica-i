@@ -130,17 +130,53 @@
      em cada passo, e quanto o resultado erra.
      ================================================================= */
   REGISTRO.projetil = function (raiz) {
-    var est = { v0: 50, ang: 45, k: 0.004, dt: 0.2, vista: 'traj' };
+    var est = { v0: 50, ang: 45, k: 0.004, dt: 0.2, vista: 'traj',
+                tipo: 'quad' };
     var g = 9.81;
 
     /* ---- o sistema de equações ----
        O estado é u = [x, y, vx, vy] e a derivada é f(u). Escrever
        assim, como vetor, é o que permite usar o MESMO passo de Euler
        para qualquer número de equações. */
+    /* tau é escolhido de modo que os dois regimes tenham a MESMA
+       velocidade terminal, e portanto sejam comparáveis: vt = g*tau no
+       linear e vt = sqrt(g/k) no quadrático. */
+    function tau() { return Math.sqrt(1 / (g * est.k)); }
+
     function f(u, k) {
       var vx = u[2], vy = u[3];
+      if (est.tipo === 'lin') {
+        if (k <= 0) return [vx, vy, 0, -g];
+        var it = 1 / tau();
+        return [vx, vy, -it * vx, -g - it * vy];
+      }
       var v = Math.sqrt(vx * vx + vy * vy);
       return [vx, vy, -k * v * vx, -g - k * v * vy];
+    }
+
+    /* ---- a solução fechada do caso linear ----
+       x(t) = vx0 tau (1 - e^{-t/tau})
+       y(t) = (vy0 + vt) tau (1 - e^{-t/tau}) - vt t
+       Ela existe porque, com arrasto linear, as componentes não se
+       acoplam. No caso quadrático nada disso vale. */
+    function exatoLinear(t) {
+      var th = est.ang * Math.PI / 180;
+      var vx0 = est.v0 * Math.cos(th), vy0 = est.v0 * Math.sin(th);
+      if (est.k <= 0) {
+        return [vx0 * t, vy0 * t - 0.5 * g * t * t];
+      }
+      var T = tau(), vt = g * T, e = Math.exp(-t / T);
+      return [vx0 * T * (1 - e), (vy0 + vt) * T * (1 - e) - vt * t];
+    }
+
+    function pousoExatoLinear() {
+      var a = 1e-6, b = 1, i;
+      for (i = 0; i < 80 && exatoLinear(b)[1] > 0; i++) b *= 2;
+      for (i = 0; i < 200; i++) {
+        var m = 0.5 * (a + b);
+        if (exatoLinear(m)[1] > 0) a = m; else b = m;
+      }
+      return exatoLinear(0.5 * (a + b))[0];
     }
 
     function passoEuler(u, dt, k) {
@@ -228,6 +264,13 @@
       { rot: 'Erro × Δt', v: 'erro' }
     ], 0, function (v) { est.vista = v; desenhar(); });
 
+    var cT = el('div', { class: 'controles' });
+    corpo.appendChild(cT);
+    opcoes(cT, [
+      { rot: 'Arrasto quadrático', v: 'quad' },
+      { rot: 'Arrasto linear (tem solução exata)', v: 'lin' }
+    ], 0, function (v) { est.tipo = v; desenhar(); });
+
     var c1 = el('div', { class: 'controles' });
     corpo.appendChild(c1);
     deslizante(c1, 'Velocidade inicial \\(v_0\\)', 10, 90, 1, est.v0,
@@ -308,8 +351,27 @@
         });
         ct.stroke(); ct.restore();
       }
-      traco(ref.pts, G.COR.mestra, 2.4);
+      /* No regime linear a solução fechada substitui a referência
+         numérica: as duas coincidem, e desenhar ambas só esconderia uma
+         sob a outra. */
+      if (est.tipo !== 'lin') traco(ref.pts, G.COR.mestra, 2.4);
       traco(eu.pts, G.COR.bronze, 2);
+
+      if (est.tipo === 'lin') {
+        var tf = 0, pe;
+        for (tf = 0.05; tf < 400; tf += 0.05) {
+          if (exatoLinear(tf)[1] < 0) break;
+        }
+        ct.save();
+        ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.4;
+        ct.beginPath();
+        for (var ti = 0; ti <= 300; ti++) {
+          pe = exatoLinear(tf * ti / 300);
+          var pxe = gr.X(pe[0]), pye = gr.Y(Math.max(0, Math.min(ymax, pe[1])));
+          if (ti === 0) ct.moveTo(pxe, pye); else ct.lineTo(pxe, pye);
+        }
+        ct.stroke(); ct.restore();
+      }
 
       /* os pontos que Euler realmente calcula, quando são poucos */
       if (eu.pts.length <= 60) {
@@ -323,28 +385,47 @@
       }
 
       G.legenda(gr, [
-        { texto: 'referência (RK4, Δt = 0,5 ms)', cor: G.COR.mestra },
+        { texto: est.tipo === 'lin' ? 'solução exata (fechada)'
+                                    : 'referência (RK4, Δt = 0,5 ms)',
+          cor: G.COR.mestra },
         { texto: 'Euler, Δt escolhido', cor: G.COR.bronze },
         { texto: 'parábola sem arrasto', cor: '#b9c6c2' }
       ]);
 
-      var err = Math.abs(eu.alcance - ref.alcance);
-      rotulos(['Alcance (Euler)', 'Alcance (referência)', 'Erro', 'Passos']);
+      var verdade = est.tipo === 'lin' ? pousoExatoLinear() : ref.alcance;
+      var err = Math.abs(eu.alcance - verdade);
+      rotulos(['Alcance (Euler)',
+               est.tipo === 'lin' ? 'Alcance exato' : 'Alcance (referência)',
+               'Erro', 'Passos']);
       painel({
         ae: fmt(eu.alcance, 2) + ' m',
-        ar: fmt(ref.alcance, 2) + ' m',
-        er: fmt(err, 2) + ' m (' + fmt(100 * err / ref.alcance, 1) + '%)',
+        ar: fmt(verdade, 2) + ' m',
+        er: fmt(err, 2) + ' m (' + fmt(100 * err / verdade, 1) + '%)',
         np: String(eu.passos)
       });
 
-      texto.innerHTML =
+      var extra = est.tipo === 'lin'
+        ? '<p>Neste regime a equação <em>tem</em> solução fechada, e é ela que '
+          + 'está desenhada em verde, no lugar da referência numérica: '
+          + '\\(x(t) = v_{x0}\\tau(1-e^{-t/\\tau})\\) e '
+          + '\\(y(t) = (v_{y0}+v_t)\\tau(1-e^{-t/\\tau}) - v_tt\\). O erro '
+          + 'mostrado acima é medido contra ela, isto é, contra a verdade, e '
+          + 'não contra outra aproximação. Repare também que o alcance '
+          + 'horizontal é limitado por \\(v_{x0}\\tau\\), de modo que a queda '
+          + 'termina praticamente vertical.</p>'
+        : '<p>Neste regime não existe solução fechada: o módulo da velocidade '
+          + 'acopla as duas componentes. A curva verde é apenas uma referência '
+          + 'numérica fina, e é o melhor que se tem. Troque para o arrasto '
+          + 'linear para ver o caso em que a verdade está disponível.</p>';
+      texto.innerHTML = extra +
         '<p>A curva tracejada é a parábola de sempre, a que vale quando não há '
         + 'ar. Com arrasto, o alcance cai de ' + fmt(semAr, 1) + ' m para '
-        + fmt(ref.alcance, 1) + ' m, e a trajetória perde a simetria: a subida '
-        + 'é mais longa que a descida, e a queda fica mais íngreme. Nenhuma '
-        + 'fórmula fechada descreve essa curva.</p>'
+        + fmt(verdade, 1) + ' m, e a trajetória perde a simetria: a subida '
+        + 'é mais longa que a descida, e a queda fica mais íngreme.'
+        + (est.tipo === 'lin' ? '</p>'
+           : ' Nenhuma fórmula fechada descreve essa curva.</p>')
         + '<p>A curva em bronze é o que o método de Euler produz com o passo '
-        + 'escolhido. Diminua \\(\\Delta t\\) e ela encosta na referência; '
+        + 'escolhido. Diminua \\(\\Delta t\\) e ela encosta na curva verde; '
         + 'aumente e ela se descola, sempre <em>por fora</em>, porque cada '
         + 'passo segue a tangente e a tangente ignora a curvatura.</p>';
       tipografar(texto);
@@ -455,6 +536,7 @@
 
     /* --------------------------------------------- vista 3: erro contra Δt */
     function vistaErro() {
+      var exato = est.tipo === 'lin';
       var vref = voo(0.00005, est.k, 'rk4');
       if (vref.truncado) {
         rotulos(['Inclinação (Euler)', 'Inclinação (RK4)',
@@ -465,7 +547,7 @@
           + 'inicial.</div>';
         return;
       }
-      var ref = vref.alcance;
+      var ref = exato ? pousoExatoLinear() : vref.alcance;
       var pts = { euler: [], rk4: [] };
       var e;
       for (e = -0.4; e >= -3.01; e -= 0.2) {
@@ -538,12 +620,13 @@
       ]);
 
       rotulos(['Inclinação (Euler)', 'Inclinação (RK4)',
-               'Alcance de referência', 'Método']);
+               exato ? 'Alcance exato' : 'Alcance de referência',
+               'Comparado com']);
       painel({
         ae: fmt(mE, 2),
         ar: fmt(mR, 2),
         er: fmt(ref, 2) + ' m',
-        np: 'RK4, Δt = 50 µs'
+        np: exato ? 'solução fechada' : 'RK4, Δt = 50 µs'
       });
 
       texto.innerHTML =

@@ -33,7 +33,102 @@ LISTA = [
      inofensiva. Sem ar, caindo de uma nuvem a 2 km, ela chegaria a
      \(\sqrt{2gh} = 198\ \mathrm{m/s}\), e cada gota seria um projétil.</p>''' ),
 
-    ('3.2  Três passos de Euler na mão',
+    ('3.2  Arrasto linear: a solução exata e os dois limites',
+     r'''Para a queda com arrasto linear, \(\der{v}{t} = -g - v/\tau\), deduza
+     \(v(t)\) a partir do repouso e mostre que ela contém dois
+     comportamentos conhecidos: queda livre para \(t \ll \tau\) e velocidade
+     constante para \(t \gg \tau\). Com \(\tau = 3{,}0\ \mathrm{s}\), diga que
+     fração da velocidade terminal já foi atingida em \(\tau\), \(2\tau\) e
+     \(3\tau\).''',
+     r'''<p><b>A integração.</b> Separando as variáveis, com \(v_t = g\tau\),</p>
+     <p>\[ \frac{dv}{v+v_t} = -\frac{dt}{\tau}
+        \;\Longrightarrow\;
+        \ln\frac{v+v_t}{v_0+v_t} = -\frac{t}{\tau}, \]</p>
+     <p>de onde</p>
+     <p>\[ v(t) = \left(v_0+v_t\right)e^{-t/\tau} - v_t, \]</p>
+     <p>e, partindo do repouso, \(v(t) = -v_t\left(1-e^{-t/\tau}\right)\).</p>
+     <p><b>Limite de tempo curto.</b> Para \(t \ll \tau\), use
+     \(e^{-x} \approx 1-x\):</p>
+     <p>\[ v \approx -v_t\frac{t}{\tau} = -g\tau\frac{t}{\tau} = -gt. \]</p>
+     <p>Queda livre, como tem de ser: antes de ganhar velocidade, o corpo não
+     sente arrasto nenhum.</p>
+     <p><b>Limite de tempo longo.</b> Para \(t \gg \tau\), a exponencial
+     morre e \(v \to -v_t\). O arrasto equilibrou o peso.</p>
+     <p><b>As frações.</b> \(1-e^{-n}\) vale</p>
+     <div class="tabela-rolavel">
+     <table>
+     <thead><tr><th>tempo</th><th>fração de \(v_t\)</th></tr></thead>
+     <tbody>
+     <tr><td>\(\tau\) = 3,0 s</td><td>63,2 %</td></tr>
+     <tr><td>\(2\tau\) = 6,0 s</td><td>86,5 %</td></tr>
+     <tr><td>\(3\tau\) = 9,0 s</td><td>95,0 %</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p><b>A regra prática.</b> Três constantes de tempo levam a 95 %, e cinco
+     a 99 %. Essa mesma aritmética reaparece em todo sistema de primeira ordem
+     do curso e da engenharia: circuito RC, resfriamento de um corpo, carga de
+     uma bateria. A física muda, a exponencial não.</p>''' ),
+
+    ('3.3  Subir e descer não levam o mesmo tempo',
+     r'''Uma bola sobe com \(v_0 = 40\ \mathrm{m/s}\) sujeita a arrasto
+     quadrático com \(k = 0{,}004\ \mathrm{m^{-1}}\). Use as fórmulas fechadas
+     da seção 3 para achar o tempo de subida e a altura máxima, e compare com
+     o caso sem ar. Depois mostre, com o programa, que a descida leva mais
+     tempo que a subida, e explique por quê.''',
+     r'''<p><b>Os dados.</b> \(v_t = \sqrt{g/k} = 49{,}52\ \mathrm{m/s}\).</p>
+     <p><b>Subida.</b></p>
+     <p>\[ t_{\text{sub}} = \frac{v_t}{g}\arctan\frac{v_0}{v_t}
+        = 5{,}048\times\arctan(0{,}8077) = 3{,}430\ \mathrm{s}, \]</p>
+     <p>\[ h_{\max} = \frac{v_t^2}{2g}
+        \ln\!\left(1+\frac{v_0^2}{v_t^2}\right)
+        = 250{,}0\times\ln(1{,}6524) = 62{,}78\ \mathrm{m}. \]</p>
+     <p><b>Sem ar</b> seriam \(v_0/g = 4{,}077\) s e \(v_0^2/2g = 81{,}55\) m.
+     O ar tira 23 % da altura e 16 % do tempo de subida.</p>
+     <p><b>Descida.</b> Caindo do repouso dos 62,78 m, com
+     \(y = \frac{v_t^2}{g}\ln\cosh\frac{gt}{v_t}\), inverte-se para achar o
+     tempo:</p>
+     <p>\[ t_{\text{desc}} = \frac{v_t}{g}
+        \,\mathrm{arccosh}\!\left(e^{gh_{\max}/v_t^2}\right)
+        = 3{,}729\ \mathrm{s}, \]</p>
+     <p>isto é, <b>8,7 % mais</b> que a subida. E a bola chega ao chão com
+     \(v_t\tanh(gt_{\text{desc}}/v_t) = 31{,}12\ \mathrm{m/s}\), contra os
+     40 m/s com que saiu.</p>
+     <p><b>Por quê.</b> Na subida, gravidade e arrasto apontam os dois para
+     baixo e somam-se: a desaceleração é maior que \(g\), e tudo acaba mais
+     depressa. Na descida eles se opõem: a aceleração é menor que \(g\), e
+     tudo demora mais. A simetria entre subida e descida que se aprende no
+     ensino médio é uma consequência de não haver ar, e não um fato geral.</p>
+     <p><b>Onde isso aparece.</b> Qualquer jogador de vôlei ou de tênis sabe
+     que a bola "cai mais devagar do que subiu", mesmo sem nunca ter visto
+     uma tangente hiperbólica.</p>''' ),
+
+    ('3.4  A assíntota vertical',
+     r'''Mostre que, com arrasto linear, o alcance horizontal de um projétil é
+     limitado por \(x_\infty = v_{x0}\tau\), por mais tempo que ele fique no
+     ar. Calcule esse limite para \(v_{x0} = 35\ \mathrm{m/s}\) e
+     \(\tau = 3{,}0\ \mathrm{s}\), e diga o que isso significa para a forma da
+     trajetória.''',
+     r'''<p><b>A conta.</b> A equação horizontal é
+     \(\dot v_x = -v_x/\tau\), independente de tudo o mais, com solução
+     \(v_x = v_{x0}e^{-t/\tau}\). Integrando,</p>
+     <p>\[ x(t) = v_{x0}\tau\left(1-e^{-t/\tau}\right)
+        \;\xrightarrow[t\to\infty]{}\;
+        x_\infty = v_{x0}\tau. \]</p>
+     <p>Com os números dados, \(x_\infty = 35\times3{,}0 = 105\ \mathrm{m}\).</p>
+     <p><b>A forma da trajetória.</b> O movimento vertical não tem limite: a
+     bola continua caindo, e a velocidade vertical tende a \(-v_t\). O
+     horizontal, por outro lado, morre exponencialmente. O resultado é que a
+     trajetória se aproxima de uma <em>reta vertical</em> em
+     \(x = x_\infty\), e o projétil termina caindo de pé.</p>
+     <p><b>O que isso diz sobre o caso real.</b> O arrasto quadrático não tem
+     assíntota exata, porque quando a velocidade cai o arrasto cai com o
+     quadrado dela e o movimento horizontal sobrevive um pouco mais. Mesmo
+     assim, a tendência é a mesma, e é visível em qualquer trajetória real:
+     bola de tênis cortada, bola de futebol com efeito, granizo. A parte final
+     da queda é muito mais vertical do que a parábola prevê.</p>''' ),
+
+    ('3.5  Três passos de Euler na mão',
      r'''Uma pedra é lançada verticalmente para cima com
      \(v_0 = 20\ \mathrm{m/s}\), sujeita a \(g = 9{,}81\ \mathrm{m/s^2}\) e a
      arrasto \(a_{\text{arr}} = -k|v|v\) com \(k = 0{,}01\ \mathrm{m^{-1}}\).
@@ -70,7 +165,7 @@ LISTA = [
      e nunca para produzir número confiável. É exatamente o que a terceira vista do widget
      mostra: dividir o passo por dez divide o erro por dez.</p>''' ),
 
-    ('3.3  Por que o ângulo ótimo deixa de ser 45°',
+    ('3.6  Por que o ângulo ótimo deixa de ser 45°',
      r'''Sem arrasto, o alcance máximo acontece a 45°. Rode o programa do
      módulo e verifique que, com arrasto, o ângulo ótimo cai. Explique o
      mecanismo físico, sem fórmula.''',
@@ -102,7 +197,7 @@ LISTA = [
      ótimo). Em balística de longo alcance, com velocidades muito maiores, o
      efeito é enorme.</p>''' ),
 
-    ('3.4  Arrasto linear, e o limite de estabilidade de Euler',
+    ('3.7  Arrasto linear, e o limite de estabilidade de Euler',
      r'''Para arrasto <em>linear</em>, a queda vertical obedece a
      \(\dot v = -(v - v_t)/\tau\), com solução exata
      \(v(t) = v_t\left(1-e^{-t/\tau}\right)\) partindo do repouso. Mostre que o
@@ -134,7 +229,7 @@ LISTA = [
      interessante seja lento. É o que se chama de problema rígido, e é por isso
      que existem métodos implícitos.</p>''' ),
 
-    ('3.5  Quanto custa cada algarismo',
+    ('3.8  Quanto custa cada algarismo',
      r'''Pelo widget, com os valores iniciais, Euler com
      \(\Delta t = 0{,}2\) s erra cerca de 2,4 m no alcance de 149 m. Estime
      quantos passos Euler precisa para errar menos de 1 cm, e quantos o RK4
@@ -159,7 +254,7 @@ LISTA = [
      problemas de sala, Euler com passo pequeno resolve, e o tempo do aluno é
      mais caro que o do computador.</p>''' ),
 
-    ('3.6  Um sistema maior, sem mudar o método',
+    ('3.9  Um sistema maior, sem mudar o método',
      r'''Escreva o vetor de estado e a função derivada para <em>dois</em>
      projéteis que não interagem, lançados ao mesmo tempo com ângulos
      diferentes. Quantas equações são? O que muda no passo de Euler? Depois
