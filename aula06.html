@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O oscilador harmônico simples | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200201">
+<script src="assets/js/comum.js?v=202611200201"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <a href="aula02.html" class="num" title="Módulo 2: As leis de Newton e os referenciais inerciais">2</a>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <a href="aula04.html" class="num" title="Módulo 4: Trabalho, energia e forças conservativas">4</a>
+      <a href="aula05.html" class="num" title="Módulo 5: Momento linear, impulso e o movimento de foguetes">5</a>
+      <span class="grupo">Oscilações</span>
+      <a href="aula06.html" class="num ativo" title="Módulo 6: O oscilador harmônico simples">6</a>
+      <span class="num pendente" title="Módulo 7: Oscilações amortecidas · em preparação">7</span>
+      <span class="num pendente" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer · em preparação">8</span>
+      <span class="grupo">Caos</span>
+      <span class="num pendente" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase · em preparação">9</span>
+      <span class="num pendente" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores · em preparação">10</span>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. Por que um módulo inteiro para uma equação</a></li>
+    <li><a href="#s2">2. A solução, e as duas constantes que sempre são duas</a></li>
+    <li><a href="#s3">3. Isocronismo, e o que ele tem de particular</a></li>
+    <li><a href="#s4">4. A energia que vai e volta, e a área que não muda</a></li>
+    <li><a href="#s5">5. O pêndulo de verdade, sem aproximação</a></li>
+    <li><a href="#s6">6. A mesma equação em cinco sistemas</a></li>
+    <li><a href="#s7">7. No Spyder</a></li>
+    <li><a href="#s8">8. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 6 · Oscilações</p>
+  <h1>O oscilador harmônico simples</h1>
+  <p class="subtitulo">O oscilador harmônico não merece um módulo por ser comum, e sim por ser inevitável: todo mínimo liso é uma parábola para amplitudes pequenas. Aqui a equação é resolvida, o isocronismo é medido, e o pêndulo de verdade mostra onde a aproximação acaba.</p>
+  <h2 id="s1">1. Por que um módulo inteiro para uma equação</h2>
+
+<p>Uma disciplina inteira dedica um módulo a uma equação só, e convém dizer
+por quê. Não é porque molas sejam importantes. É porque o módulo 4 terminou
+mostrando que qualquer mínimo liso de qualquer potencial, expandido em série
+em torno do ponto de equilíbrio \(x_0\), vale</p>
+
+\[ U(x) \simeq U(x_0) + \underbrace{U'(x_0)}_{=\,0}(x-x_0)
+   + \frac12 U''(x_0)\,(x-x_0)^2 + \ldots \]
+
+<p>O termo linear morre porque \(x_0\) é mínimo, e o primeiro termo que
+sobrevive é quadrático. Chamando \(k = U''(x_0)\) e medindo \(x\) a partir do
+equilíbrio, a força é \(F = -kx\) e a equação de movimento é</p>
+
+\[ m\ddot{x} = -kx \qquad\Longleftrightarrow\qquad
+   \ddot{x} + \omega^2 x = 0, \qquad \omega = \sqrt{\frac{k}{m}}. \]
+
+<p>Isso vale para a mola, para o pêndulo, para o átomo numa rede cristalina,
+para a ponte que balança, para o circuito elétrico, para o campo
+eletromagnético numa cavidade. Não porque esses sistemas se pareçam, e sim
+porque todos têm um mínimo e todos ficam perto dele. Aprender esta equação
+uma vez é aprender metade da física.</p>
+
+<div class="destaque">
+<p><strong>A receita, em duas perguntas.</strong> Diante de um sistema novo que
+oscila, não procure a mola. Pergunte: quem faz o papel de inércia, e quem faz
+o papel de rigidez? A resposta é sempre
+\(\omega = \sqrt{\text{rigidez}/\text{inércia}}\), e a seção 6 mostra cinco
+sistemas sem nenhuma semelhança entre si em que a receita funciona sem
+mudança.</p>
+</div>
+
+  <h2 id="s2">2. A solução, e as duas constantes que sempre são duas</h2>
+
+<p>A equação é linear, de segunda ordem, com coeficientes constantes, e por
+isso tem exatamente duas soluções independentes e duas constantes a
+determinar. A maneira direta de escrevê-las:</p>
+
+\[ x(t) = x_0\cos\omega t + \frac{v_0}{\omega}\sen\omega t. \]
+
+<p>As constantes já saíram prontas das condições iniciais: em \(t=0\) a
+primeira parcela vale \(x_0\) e tem derivada nula, e a segunda vale zero e tem
+derivada \(v_0\). Essa forma é cômoda para começar e péssima para ler, porque
+não diz qual é a amplitude do movimento.</p>
+
+<p>A outra forma diz. Usando \(\cos(a-b) = \cos a\cos b + \sen a\sen b\),</p>
+
+\[ x(t) = C\cos\left(\omega t - \varphi\right), \qquad
+   C = \sqrt{x_0^2 + \left(\frac{v_0}{\omega}\right)^2}, \qquad
+   \tg\varphi = \frac{v_0}{\omega x_0}. \]
+
+<p>Não são duas soluções: é a mesma, com o par de constantes trocado. O
+programa confere as duas expressões em cinquenta mil instantes e a maior
+diferença é de \(10^{-17}\) m, que é o erro da aritmética da máquina.</p>
+
+<div data-widget="oscilador"></div>
+
+<p>Vale demorar na terceira vista do componente, mas antes na primeira: mexa
+em \(x_0\) e em \(v_0\) e repare no que <em>não</em> muda. A amplitude muda, a
+fase muda, e o espaçamento entre os máximos fica onde estava. Amplitude e fase
+são herança das condições iniciais; o período é propriedade do sistema.</p>
+
+  <h2 id="s3">3. Isocronismo, e o que ele tem de particular</h2>
+
+<p>Que o período não dependa da amplitude é tão familiar que passa por óbvio,
+e não é. Dobrar a amplitude dobra a distância a percorrer, o que sozinho
+aumentaria o tempo. Mas dobrar a amplitude também dobra a força em cada ponto,
+porque \(F = -kx\), e portanto dobra a velocidade típica. Os dois efeitos se
+cancelam <strong>exatamente</strong>, e o cancelamento exato é privilégio da
+força linear.</p>
+
+<p>O programa testa isso soltando o mesmo oscilador de amplitudes que variam
+por um fator mil:</p>
+
+<div class="saida">
+amplitude (m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;periodo medido (s)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0,01&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>2,094395102</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0,50&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>2,094395102</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10,00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>2,094395102</b>
+</div>
+
+<p>Nove casas iguais. Foi esse fato, observado por
+<a href="https://pt.wikipedia.org/wiki/Galileu_Galilei">Galileu</a> em
+lustres de igreja e verificado por ele com o próprio pulso, que tornou
+possível o relógio de pêndulo de
+<a href="https://pt.wikipedia.org/wiki/Christiaan_Huygens">Huygens</a>, e com
+ele a navegação moderna. Um relógio precisa de um fenômeno cujo ritmo não
+dependa de quão forte se bate nele.</p>
+
+<div class="destaque">
+<p><strong>Mas Galileu estava errado, e Huygens percebeu.</strong> O pêndulo
+<em>não</em> é isócrono: ele apenas é quase isócrono para ângulos pequenos, e
+a seção 5 mede o quanto. Huygens resolveu o problema de verdade em 1659,
+mostrando que a curva exatamente isócrona não é o círculo e sim a
+<strong>cicloide</strong>, e construiu relógios com guias cicloidais para
+forçar o fio a descrevê-la. Na prática o atrito das guias estragava mais do
+que a correção ganhava, e a solução que venceu foi outra: manter a amplitude
+pequena e constante.</p>
+</div>
+
+  <h2 id="s4">4. A energia que vai e volta, e a área que não muda</h2>
+
+<p>Com \(x = C\cos(\omega t - \varphi)\), a velocidade é
+\(v = -C\omega\sen(\omega t - \varphi)\), de modo que</p>
+
+\[ U = \frac12 kx^2 = \frac{kC^2}{2}\cos^2(\omega t - \varphi), \qquad
+   T = \frac{mv^2}{2} = \frac{kC^2}{2}\sen^2(\omega t - \varphi), \]
+
+<p>usando \(m\omega^2 = k\). A soma é \(kC^2/2\) em qualquer instante, que é a
+energia total: a conservação aparece aqui como a identidade trigonométrica
+mais conhecida de todas. E como \(\med{\cos^2} = \med{\sen^2} = 1/2\) ao longo
+de um ciclo,</p>
+
+\[ \med{T} = \med{U} = \frac{E}{2}. \]
+
+<p>A energia passa a metade do tempo em cada forma. O programa mede as duas
+médias integrando ao longo de um período e acha 0,140625000 para cada uma,
+contra \(E/2 = 0{,}140625000\).</p>
+
+<p>Esse resultado é um caso particular do <strong>teorema do virial</strong>, e
+ele tem consequências muito além da mecânica. É dele que vem, na Física
+Estatística, a conclusão de que cada grau de liberdade quadrático leva
+\(\frac12 k_BT\) de energia em média, e daí os calores específicos dos gases e
+dos sólidos.</p>
+
+<h3>A elipse, e a área que ela encerra</h3>
+
+<p>No espaço de fase, eliminando o tempo entre \(x\) e \(v\):</p>
+
+\[ \frac{x^2}{C^2} + \frac{v^2}{C^2\omega^2} = 1, \]
+
+<p>uma elipse. O movimento percorre essa elipse para sempre, no sentido
+horário, e a conservação da energia é exatamente a afirmação de que ele não
+sai dela. A área encerrada vale \(\pi C^2\) no plano \((x, v/\omega)\), que é
+\(2\pi E/\omega^2\), e o programa confirma os dois números até a nona casa.</p>
+
+<p>Essa área tem nome, <strong>ação</strong>, e uma propriedade notável: se a
+mola for enrijecida muito devagar, a energia muda e a área não. É um invariante
+adiabático, e foi exatamente essa quantidade que Bohr quantizou em 1913, muito
+antes de existir mecânica quântica. O módulo 12 a reencontra nas órbitas.</p>
+
+  <h2 id="s5">5. O pêndulo de verdade, sem aproximação</h2>
+
+<p>O pêndulo simples é o exemplo que todo mundo usa e quase ninguém resolve. A
+equação exata, para um fio ideal de comprimento \(L\), vem do torque:</p>
+
+\[ \ddot\theta = -\frac{g}{L}\sen\theta. \]
+
+<p>Isso <strong>não</strong> é um oscilador harmônico. Vira um quando se troca
+\(\sen\theta\) por \(\theta\), o que é legítimo para \(\theta\) pequeno e
+produz \(T_0 = 2\pi\sqrt{L/g}\), famosamente independente da massa e da
+amplitude. A pergunta honesta é quanto custa essa troca.</p>
+
+<p>Da conservação da energia sai o período exato, por quadratura, com a mesma
+técnica do módulo 4:</p>
+
+\[ T = 4\sqrt{\frac{L}{2g}}\int_0^{\theta_0}
+   \frac{d\theta}{\sqrt{\cos\theta - \cos\theta_0}}
+   = 4\sqrt{\frac{L}{g}}\;K\!\left(\sen\frac{\theta_0}{2}\right), \]
+
+<p>em que \(K\) é a
+<a href="https://pt.wikipedia.org/wiki/Integral_el%C3%ADptica">integral
+elíptica completa de primeira espécie</a>, que não se escreve com funções
+elementares. A substituição \(\sen(\theta/2) = \sen(\theta_0/2)\sen u\)
+cancela a divergência do integrando no ponto de retorno, e a regra do ponto
+médio faz o resto:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(\theta_0\)</th><th>\(T\) exato (s)</th><th>\(T/T_0\)</th>
+<th>erro de usar \(T_0\)</th><th>série até \(\theta^4\)</th></tr></thead>
+<tbody>
+<tr><td>5°</td><td>2,007365</td><td>1,00048</td><td>0,05 %</td>
+<td>\(1\times10^{-8}\) %</td></tr>
+<tr><td>10°</td><td>2,010236</td><td>1,00191</td><td>0,19 %</td>
+<td>\(7\times10^{-7}\) %</td></tr>
+<tr><td>20°</td><td>2,021796</td><td>1,00767</td><td>0,77 %</td>
+<td>\(4\times10^{-5}\) %</td></tr>
+<tr><td>45°</td><td>2,086612</td><td>1,03997</td><td>4,0 %</td>
+<td>0,006 %</td></tr>
+<tr><td>90°</td><td>2,368246</td><td>1,18034</td><td>18 %</td><td>0,37 %</td></tr>
+<tr><td>179°</td><td>7,827133</td><td>3,90107</td><td>290 %</td><td>50 %</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A tabela responde a pergunta prática. Em 10°, o erro de 0,19 % é menor que
+a incerteza de um cronômetro de mão disparado a olho, e por isso o pêndulo é
+um bom instrumento de laboratório para medir \(g\). Em 20° ele já atrapalha, e
+o exercício 6.3 mostra que ignorá-lo faz \(g\) sair 1,5 % baixo, o que é mais
+do que o erro de qualquer régua.</p>
+
+<p>Para conferir que a quadratura está certa, o programa calcula os mesmos
+períodos de outro jeito, integrando \(\ddot\theta = -(g/L)\sen\theta\) passo a
+passo. Os dois caminhos concordam em \(2\times10^{-11}\) s.</p>
+
+<p>Na última linha o período quase quadruplica, e ele diverge quando
+\(\theta_0 \to 180^\circ\). Um pêndulo colocado exatamente em pé não cai
+nunca: é um equilíbrio instável, e o tempo infinito para sair dele é o mesmo
+tempo infinito da separatriz do poço duplo do módulo 4. Harmônico e não linear
+não são dois mundos; são o mesmo sistema em amplitudes diferentes, e o
+módulo 9 segue daqui.</p>
+
+  <h2 id="s6">6. A mesma equação em cinco sistemas</h2>
+
+<p>A receita \(\omega = \sqrt{\text{rigidez}/\text{inércia}}\) é mais útil do
+que parece, porque dispensa recomeçar do zero a cada sistema. O programa
+aplica a mesma receita a cinco sistemas que não têm nada em comum:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>sistema</th><th>\(\omega^2\)</th><th>\(\omega\) (rad/s)</th>
+<th>\(T\) (s)</th></tr></thead>
+<tbody>
+<tr><td>mola de 2,5 N/m com 300 g</td><td>\(k/m\)</td><td>2,887</td>
+<td>2,177</td></tr>
+<tr><td>pêndulo simples de 1,00 m</td><td>\(g/L\)</td><td>3,132</td>
+<td>2,006</td></tr>
+<tr><td>barra de 1,00 m presa numa ponta</td><td>\(3g/2L\)</td><td>3,835</td>
+<td>1,638</td></tr>
+<tr><td>água num tubo em U, coluna de 40 cm</td><td>\(2g/L\)</td><td>7,002</td>
+<td>0,897</td></tr>
+<tr><td>boia cilíndrica, 12 cm submersos</td><td>\(g/h\)</td><td>9,040</td>
+<td>0,695</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Duas linhas merecem comentário. A barra uniforme presa numa ponta oscila
+mais rápido que o pêndulo simples de mesmo comprimento, e não mais devagar
+como a intuição sugere: a massa distribuída fica, em média, mais perto do eixo,
+e o pêndulo simples equivalente tem \(2L/3 = 0{,}667\) m. E a boia tem
+frequência que não depende da densidade do material nem do raio do cilindro,
+apenas da altura submersa: ela é um pêndulo de comprimento \(h\) disfarçado.</p>
+
+<p>O exercício 6.5 faz o mesmo com uma molécula, onde a inércia que entra na
+conta não é a massa de nenhum dos dois átomos e sim a massa reduzida. Errar
+isso custa 75 % na constante elástica.</p>
+
+  <h2 id="s7">7. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/oscilador.py">
+    <span class="numero">Programa</span>
+    <h3>oscilador.py</h3>
+    <p>Confere as duas formas da solução, mede o período para amplitudes que
+    variam por mil, calcula as médias de energia e a área da elipse, resolve o
+    pêndulo exato por quadratura e aplica a receita a cinco sistemas.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>As formas \(A\cos\omega t + B\sen\omega t\) e \(C\cos(\omega t-\varphi)\)
+coincidem em \(10^{-17}\) m ao longo de cinquenta mil instantes.</li>
+<li>O período medido é o mesmo nas nove casas para amplitudes de 1 cm a
+10 m.</li>
+<li>As médias de \(T\) e de \(U\) num ciclo dão \(E/2\) cada uma, e a área da
+elipse dá \(2\pi E/\omega^2\), as duas na nona casa.</li>
+<li>O período do pêndulo por quadratura e por integração direta da equação de
+movimento concordam em \(2\times10^{-11}\) s.</li>
+<li>A série \(1 + \theta^2/16 + 11\theta^4/3072\) acompanha a integral
+elíptica até uns 60° e desiste depois.</li>
+</ul>
+
+<div class="bloco ex">
+<p><strong>Para mexer.</strong> Dois tropeços estão guardados no código, com
+comentário: medir o período pelo primeiro zero da velocidade dá metade do
+valor certo, e contar o tempo do pêndulo até o fundo dá um quarto do período,
+não metade. Apague os comentários, refaça as contas erradas e veja o tamanho
+do estrago: são erros que não produzem nenhum sintoma visível, apenas um
+número plausível e errado pela metade. Depois acrescente um sexto sistema à
+tabela da seção 6, por exemplo uma bola rolando sem deslizar dentro de uma
+calota de raio \(R\), e confira se a frequência que você deduziu bate com a
+integração numérica.</p>
+</div>
+
+  <h2 id="s8">8. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">6.1  Das condições iniciais à amplitude e à fase</span>
+  <p>Um bloco de 300 g preso a uma mola de 2,5 N/m é puxado 3,0 cm e solto
+     com velocidade de 12 cm/s <em>para dentro</em> (isto é, em direção ao
+     equilíbrio). Encontre \(\omega\), o período, a amplitude, a fase e a
+     energia total. Depois diga em que instante ele passa pela primeira vez
+     pela posição de equilíbrio.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A frequência.</b></p>
+     <p>\[ \omega = \sqrt{\frac{k}{m}} = \sqrt{\frac{2{,}5}{0{,}300}}
+        = 2{,}887\ \mathrm{rad/s}, \qquad
+        T = \frac{2\pi}{\omega} = 2{,}177\ \mathrm{s}. \]</p>
+     <p>Repare que a frequência não depende de nada do que foi feito com o
+     bloco: ela estava decidida antes de alguém tocar nele.</p>
+     <p><b>A amplitude.</b> Com \(x_0 = +0{,}030\) m e
+     \(v_0 = -0{,}12\) m/s (negativo, porque aponta para o equilíbrio):</p>
+     <p>\[ C = \sqrt{x_0^2 + \left(\frac{v_0}{\omega}\right)^2}
+        = \sqrt{0{,}030^2 + 0{,}04157^2} = 5{,}13\ \mathrm{cm}. \]</p>
+     <p>A amplitude é maior que a distância em que ele foi solto, e tem de ser:
+     ele foi solto <em>com</em> velocidade, e não do repouso. Se tivesse sido
+     solto parado, a amplitude seria os 3,0 cm.</p>
+     <p><b>A fase.</b></p>
+     <p>\[ \tg\varphi = \frac{v_0}{\omega x_0} = \frac{-0{,}12}{0{,}0866}
+        = -1{,}386 \quad\Longrightarrow\quad \varphi = -54{,}2^\circ
+        = -0{,}946\ \mathrm{rad}. \]</p>
+     <p>O sinal negativo diz que o máximo já passou: a partícula está
+     <em>depois</em> do pico, a caminho do equilíbrio, que é exatamente o que
+     o enunciado descreve.</p>
+     <p><b>A energia.</b></p>
+     <p>\[ E = \frac12 kC^2 = \frac12 \times 2{,}5 \times (0{,}0513)^2
+        = 3{,}29\ \mathrm{mJ}. \]</p>
+     <p>Conferindo pelo outro caminho:
+     \(\frac12 k x_0^2 + \frac12 m v_0^2
+     = 1{,}125 + 2{,}16 = 3{,}29\) mJ. Os dois batem, como têm de bater.</p>
+     <p><b>Quando cruza o equilíbrio.</b> \(x = 0\) quando
+     \(\cos(\omega t - \varphi) = 0\), isto é,
+     \(\omega t - \varphi = \pi/2\) (o primeiro valor positivo de \(t\)):</p>
+     <p>\[ t = \frac{\pi/2 + \varphi}{\omega}
+        = \frac{1{,}5708 - 0{,}946}{2{,}887} = 0{,}216\ \mathrm{s}. \]</p>
+     <p>Menos de um décimo do período, o que faz sentido: ele já estava
+     indo nessa direção.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">6.2  As duas médias, feitas no papel</span>
+  <p>Mostre, integrando diretamente ao longo de um período, que
+     \(\med{T} = \med{U} = E/2\) para o oscilador harmônico. Depois verifique
+     que o resultado <em>não</em> vale para o pêndulo em amplitude grande, e
+     diga qual das duas médias fica maior nesse caso.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>As integrais.</b> Com \(x = C\cos(\omega t - \varphi)\),</p>
+     <p>\[ \med{U} = \frac{1}{T}\int_0^T \frac{kC^2}{2}
+        \cos^2(\omega t - \varphi)\,dt. \]</p>
+     <p>Use \(\cos^2\alpha = \frac{1+\cos 2\alpha}{2}\). O termo com
+     \(\cos 2\alpha\) integra a zero ao longo de um período inteiro, porque
+     completa dois ciclos, e sobra</p>
+     <p>\[ \med{U} = \frac{kC^2}{2}\cdot\frac12 = \frac{E}{2}. \]</p>
+     <p>Para \(\med{T}\) o cálculo é idêntico, com
+     \(\sen^2\alpha = \frac{1-\cos 2\alpha}{2}\), e dá o mesmo \(E/2\).
+     Note que nem foi preciso saber a fase: ela só desloca o intervalo de
+     integração de uma função periódica, o que não muda a média.</p>
+     <p><b>Por que o resultado é especial.</b> O teorema do virial diz que,
+     para \(U \propto x^n\), as médias se relacionam por
+     \(2\med{T} = n\med{U}\). O caso \(n = 2\) é o único em que elas são
+     iguais. Para a gravitação, \(n = -1\), e sai \(2\med{T} = -\med{U}\),
+     que é a relação usada para pesar galáxias.</p>
+     <p><b>No pêndulo de amplitude grande.</b> Agora
+     \(U = mgL(1-\cos\theta)\), que cresce mais devagar que a parábola
+     \(\frac12 mgL\theta^2\): o potencial é mais "largo" que o harmônico.
+     A partícula passa mais tempo perto dos pontos de retorno, onde
+     \(T = 0\) e \(U\) é máxima, e portanto <b>\(\med{U}\) fica maior que
+     \(\med{T}\)</b>.</p>
+     <p>Isso é o mesmo fato, visto de outro ângulo, que o aumento do período
+     com a amplitude: o pêndulo demora porque a força restauradora
+     \(\sen\theta\) é mais fraca que \(\theta\) nos extremos, e é essa fraqueza
+     que também desequilibra as médias. Uma afirmação dessas não deve ser
+     aceita de graça: adapte o programa para integrar as duas médias no
+     pêndulo e confira o sinal da diferença em 90°.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">6.3  Medir g com um pêndulo, e o erro que ninguém vê</span>
+  <p>Um estudante mede \(T\) para um pêndulo de exatamente 1,000 m e usa
+     \(g = 4\pi^2L/T^2\). Calcule o \(g\) que ele obtém se soltar o pêndulo de
+     5°, de 10° e de 20°, usando os períodos exatos da tabela da seção 5.
+     Proponha uma correção e verifique o que sobra de erro.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Os três resultados.</b> Com \(g = 4\pi^2 L/T^2\):</p>
+     <div class="tabela-rolavel">
+     <table>
+     <thead><tr><th>\(\theta_0\)</th><th>\(T\) exato (s)</th>
+     <th>\(g\) obtido</th><th>erro</th></tr></thead>
+     <tbody>
+     <tr><td>5°</td><td>2,007365</td><td>9,7973</td><td>\(-0{,}10\) %</td></tr>
+     <tr><td>10°</td><td>2,010236</td><td>9,7694</td><td>\(-0{,}38\) %</td></tr>
+     <tr><td>20°</td><td>2,021796</td><td>9,6579</td><td>\(-1{,}52\) %</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p>O erro é sempre <b>para baixo</b>, e isso é importante: não é ruído,
+     é viés. Repetir a medida mil vezes e tirar a média não melhora nada,
+     porque o erro não é aleatório. Soltar de 20° e medir com um cronômetro de
+     0,01 s dá um \(g\) com três casas de precisão aparente e uma casa de
+     exatidão real.</p>
+     <p><b>A correção.</b> Como \(T = T_0(1 + \theta_0^2/16 + \ldots)\), basta
+     inverter:</p>
+     <p>\[ g_{\text{corrigido}} = \frac{4\pi^2L}{T^2}
+        \left(1 + \frac{\theta_0^2}{16}\right)^2. \]</p>
+     <p>Aplicando aos três casos, sobra \(4\times10^{-7}\),
+     \(7\times10^{-6}\) e \(1\times10^{-4}\) de erro relativo. Em 20°, uma
+     correção de duas linhas transforma 1,5 % de erro em 0,01 %, que é melhor
+     do que qualquer cronômetro de mão consegue medir.</p>
+     <p><b>A lição experimental.</b> Nem todo erro aparece na repetição. O
+     desvio padrão de um conjunto de medidas mede o acaso, e não mede o viés
+     do modelo usado para interpretá-las. Quem confunde precisão com exatidão
+     publica três casas erradas com grande confiança.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">6.4  A boia que é um pêndulo disfarçado</span>
+  <p>Um cilindro de seção \(A\) e densidade \(\rho_c\) flutua em água de
+     densidade \(\rho\), com uma altura \(h\) submersa no equilíbrio. Mostre
+     que, afundado um pouco e solto, ele oscila harmonicamente com
+     \(\omega = \sqrt{g/h}\). Explique por que a resposta não depende de
+     \(\rho_c\), de \(A\) nem da altura total do cilindro, e calcule o período
+     para \(h = 12\) cm.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O equilíbrio.</b> O empuxo sustenta o peso:</p>
+     <p>\[ \rho g A h = m g \quad\Longrightarrow\quad m = \rho A h. \]</p>
+     <p>Essa igualdade é a chave de tudo o que vem a seguir, e é bom guardá-la
+     antes de prosseguir: a massa do cilindro é a massa do líquido que ele
+     desloca.</p>
+     <p><b>Deslocado de \(y\) para baixo.</b> O volume submerso aumenta de
+     \(Ay\), e o empuxo extra é uma força restauradora:</p>
+     <p>\[ F = -\rho g A y, \]</p>
+     <p>que é a lei de Hooke com \(k = \rho g A\). Então</p>
+     <p>\[ \omega = \sqrt{\frac{k}{m}} = \sqrt{\frac{\rho g A}{\rho A h}}
+        = \sqrt{\frac{g}{h}}. \]</p>
+     <p><b>Por que tudo cancela.</b> Porque a mesma quantidade \(\rho A\)
+     aparece na rigidez e na inércia. Um cilindro mais largo tem mais empuxo
+     por centímetro afundado, e exatamente na mesma proporção tem mais massa.
+     Um cilindro mais denso afunda mais, e isso aumenta \(h\) na medida certa.
+     Sobra apenas a altura submersa.</p>
+     <p><b>O número.</b> Com \(h = 0{,}12\) m:</p>
+     <p>\[ \omega = \sqrt{9{,}80665/0{,}12} = 9{,}04\ \mathrm{rad/s},
+        \qquad T = 0{,}695\ \mathrm{s}. \]</p>
+     <p>É o mesmo período de um pêndulo simples de 12 cm, e a coincidência não
+     é coincidência: as duas contas chegam em \(\omega^2 = g/\ell\) porque as
+     duas têm a gravidade como única fonte de rigidez, e nos dois casos a
+     inércia é proporcional ao mesmo comprimento.</p>
+     <p><b>A letra miúda.</b> Esse resultado ignora que a água em volta também
+     precisa ser acelerada (a chamada massa adicionada) e que o movimento gera
+     ondas que levam energia embora. Na prática a boia oscila um pouco mais
+     devagar e amortece depressa, o que é assunto do módulo 7.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">6.5  A molécula, e a massa que não é de nenhum átomo</span>
+  <p>Dois átomos de massas \(m_1\) e \(m_2\) ligados por uma mola de
+     constante \(k\) oscilam ao longo da linha que os une, com o centro de
+     massa parado. Mostre que a separação \(s = x_2 - x_1 - s_0\) obedece à
+     equação do oscilador harmônico com a massa reduzida
+     \(\mu = m_1m_2/(m_1+m_2)\). Aplique ao monóxido de carbono, cujo espectro
+     mostra absorção em 2143 cm⁻¹, para obter \(k\), e diga quanto se erraria
+     usando a massa de um átomo só.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>As duas equações.</b> A mola puxa os dois átomos com forças
+     opostas, proporcionais ao esticamento \(s\):</p>
+     <p>\[ m_1\ddot{x}_1 = +ks, \qquad m_2\ddot{x}_2 = -ks. \]</p>
+     <p>Divida cada uma pela respectiva massa e subtraia:</p>
+     <p>\[ \ddot{x}_2 - \ddot{x}_1 = -ks\left(\frac{1}{m_2}+\frac{1}{m_1}\right)
+        \quad\Longrightarrow\quad
+        \ddot{s} = -\frac{k}{\mu}s, \qquad
+        \frac{1}{\mu} = \frac{1}{m_1}+\frac{1}{m_2}. \]</p>
+     <p>O problema de dois corpos virou o de um corpo só, de massa \(\mu\),
+     preso a uma parede. É o mesmo truque que o módulo 12 usa para reduzir o
+     problema de dois corpos gravitacional, e vale a pena reconhecê-lo aqui,
+     onde é barato.</p>
+     <p><b>A massa reduzida do CO.</b> Com \(m_1 = 12{,}000\) u e
+     \(m_2 = 15{,}995\) u:</p>
+     <p>\[ \mu = \frac{12{,}000\times15{,}995}{27{,}995}
+        = 6{,}856\ \mathrm{u} = 1{,}1385\times10^{-26}\ \mathrm{kg}. \]</p>
+     <p>Ela é menor que a menor das duas massas, sempre, e é essa a razão de
+     chamá-la reduzida.</p>
+     <p><b>A constante elástica.</b> O número de onda de 2143 cm⁻¹ é uma
+     frequência disfarçada: \(\omega = 2\pi c\tilde\nu\), com \(c\) em cm/s,</p>
+     <p>\[ \omega = 2\pi \times 2{,}998\times10^{10} \times 2143
+        = 4{,}037\times10^{14}\ \mathrm{rad/s}, \]</p>
+     <p>\[ k = \mu\omega^2 = 1{,}1385\times10^{-26}\times
+        \left(4{,}037\times10^{14}\right)^2 = 1855\ \mathrm{N/m}. \]</p>
+     <p>Para comparar: uma mola de academia tem algumas centenas de N/m, e
+     esta ligação química é mais rígida que isso, numa escala de 0,1 nm.</p>
+     <p><b>O erro de usar a massa errada.</b> Com 12 u no lugar de \(\mu\),
+     sairia \(k = 3247\) N/m, <b>75 % maior</b>. O erro não está em nenhuma
+     conta: está em supor que um dos átomos fica parado, quando os dois se
+     movem. Como \(\mu\) é sempre menor que qualquer das massas, esse engano
+     sempre superestima a rigidez.</p>
+     <p><b>Um aviso.</b> Esses 1855 N/m valem para a aproximação harmônica. A
+     curva de energia de uma ligação real é assimétrica (lembre do
+     Lennard-Jones do módulo 4: a parede repulsiva é muito mais íngreme que a
+     cauda atrativa), e a anarmonicidade empurra o valor tabelado para perto de
+     1900 N/m. A diferença de 2 % é justamente o que a espectroscopia mede
+     olhando o segundo harmônico.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">6.6  Huygens, a cicloide e a correção de quarta ordem</span>
+  <p>Obtenha a correção \(T \simeq T_0(1+\theta_0^2/16)\) expandindo
+     \(\sen\theta\) até a ordem cúbica. Depois explique, sem fazer a conta,
+     por que a cicloide de Huygens é exatamente isócrona, e por que isso não
+     contradiz nada do que foi dito sobre o pêndulo circular.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A expansão.</b> Com
+     \(\sen\theta \simeq \theta - \theta^3/6\), a equação vira</p>
+     <p>\[ \ddot\theta + \omega_0^2\theta
+        \left(1 - \frac{\theta^2}{6}\right) = 0,
+        \qquad \omega_0^2 = \frac{g}{L}. \]</p>
+     <p>O termo cúbico enfraquece a força restauradora, e já se pode prever o
+     sinal do efeito antes de qualquer conta: força menor, oscilação mais
+     lenta, período maior. Tratando o termo como pequeno e exigindo que a
+     solução não acumule erro de fase (o método de Lindstedt-Poincaré, que o
+     módulo 9 retoma), sai</p>
+     <p>\[ \omega \simeq \omega_0\left(1 - \frac{\theta_0^2}{16}\right)
+        \quad\Longrightarrow\quad
+        T \simeq T_0\left(1 + \frac{\theta_0^2}{16}\right). \]</p>
+     <p>Em 20°, \(\theta_0 = 0{,}349\) rad e a correção vale 0,76 %, contra
+     0,767 % do cálculo exato. Uma correção de um termo já captura quase todo
+     o erro.</p>
+     <p><b>A cicloide.</b> Huygens percebeu que o problema não era o pêndulo e
+     sim a <em>curva</em>. Numa trajetória qualquer, o que importa é como a
+     força restauradora varia com a distância percorrida ao longo da curva,
+     medida pelo comprimento de arco \(s\). O período é rigorosamente
+     independente da amplitude se, e somente se, a força for
+     <em>exatamente</em> proporcional a \(s\):</p>
+     <p>\[ \der{^2s}{t^2} = -\omega^2 s. \]</p>
+     <p>No círculo, a força vale \(-mg\sen\theta\) enquanto o arco vale
+     \(s = L\theta\): proporcional a \(\sen\theta\), não a \(\theta\), e daí
+     todo o desvio. A cicloide é a curva em que a componente da gravidade ao
+     longo do arco sai proporcional ao próprio arco, e por isso ela é
+     <b>exatamente</b> isócrona, em qualquer amplitude.</p>
+     <p><b>Por que não há contradição.</b> O isocronismo nunca foi propriedade
+     da gravidade nem da oscilação: é propriedade da <em>força linear</em>. O
+     pêndulo circular é quase isócrono porque \(\sen\theta \simeq \theta\)
+     para \(\theta\) pequeno, e a cicloide é exatamente isócrona porque nela a
+     linearidade é exata. As duas afirmações dizem a mesma coisa.</p>
+     <p><b>E por que ninguém usa.</b> Huygens construiu relógios com guias
+     cicloidais em 1673. O atrito do fio contra as guias introduzia mais erro
+     do que a correção eliminava, e a solução que prevaleceu foi manter a
+     amplitude pequena e constante, com um escapamento que repõe exatamente a
+     energia perdida. É uma lição que vale além dos relógios: a solução
+     teoricamente perfeita perdeu para a que convivia melhor com o atrito.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="aula05.html"><small>Módulo anterior</small>← 5. Momento e foguetes</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611200201"></script>
+</body>
+</html>

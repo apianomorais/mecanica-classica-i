@@ -1889,6 +1889,347 @@
   };
 
 
+  /* =================================================================
+     6. O oscilador harmônico, e onde ele deixa de valer
+     As três coisas que o módulo 6 precisa mostrar e que texto nenhum
+     mostra bem: que as duas constantes são as mesmas duas escritas de
+     outro jeito, que o período não depende da amplitude (e que isso é
+     particularidade da parábola), e quanto exatamente custa a
+     aproximação de ângulo pequeno no pêndulo.
+     ================================================================= */
+  REGISTRO.oscilador = function (raiz) {
+    var est = { x0: 0.8, v0: 1.2, w: 3.0, vista: 'solucao', graus: 30 };
+
+    var G0 = 9.80665;
+
+    function amplitude() { return Math.hypot(est.x0, est.v0 / est.w); }
+    function fase() { return Math.atan2(est.v0 / est.w, est.x0); }
+
+    /* Período exato do pêndulo, pela integral elíptica completa, com a
+       regra do ponto médio: a mesma conta do oscilador.py. */
+    function razaoPendulo(th0, n) {
+      n = n || 2000;
+      var k = Math.sin(th0 / 2), passo = (Math.PI / 2) / n, soma = 0;
+      for (var i = 0; i < n; i++) {
+        var u = passo * (i + 0.5), s = k * Math.sin(u);
+        soma += 1 / Math.sqrt(1 - s * s);
+      }
+      return (soma * passo) * 2 / Math.PI;      // T / T0
+    }
+    function serie(th0) {
+      return 1 + th0 * th0 / 16 + 11 * Math.pow(th0, 4) / 3072;
+    }
+
+    var corpo = moldura(raiz, 'O oscilador harmônico, e o preço de sair dele');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'A solução', v: 'solucao' },
+      { rot: 'Isocronismo', v: 'isocronismo' },
+      { rot: 'O pêndulo de verdade', v: 'pendulo' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(x, c) {
+      var v = x.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(v)) v = v.slice(1);
+      return v.replace('.', ',').replace('-', '\u2212');
+    }
+    function fmtm(x, c) {
+      var v = x.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(v)) v = v.slice(1);
+      return v.replace('.', '{,}');
+    }
+
+    /* uma porcentagem que pode ser minúscula: em notação decimal ela
+       apareceria como 0,000 e não diria nada */
+    function pct(v) {
+      if (v === 0) return '0 %';
+      if (v >= 0.01) return fmt(v, 2) + ' %';
+      var e = Math.floor(Math.log(v) / Math.LN10);
+      var mant = v / Math.pow(10, e);
+      return fmt(mant, 1) + '×10<sup>' + e + '</sup> %';
+    }
+
+    function tracar(g, f, cor, esp, tracejado) {
+      var ct = g.ct, dentro = false;
+      ct.save();
+      ct.strokeStyle = cor; ct.lineWidth = esp || 2;
+      if (tracejado) ct.setLineDash(tracejado);
+      ct.beginPath();
+      for (var i = 0; i <= 600; i++) {
+        var x = g.xmin + (g.xmax - g.xmin) * i / 600, y = f(x);
+        if (!isFinite(y) || y < g.ymin || y > g.ymax) { dentro = false; continue; }
+        if (!dentro) { ct.moveTo(g.X(x), g.Y(y)); dentro = true; }
+        else ct.lineTo(g.X(x), g.Y(y));
+      }
+      ct.stroke(); ct.restore();
+    }
+
+    function montar() {
+      c1.innerHTML = '';
+      if (est.vista === 'pendulo') {
+        deslizante(c1, 'Amplitude \\(\\theta_0\\)', 1, 175, 1, est.graus,
+          function (v) { est.graus = v; desenhar(); },
+          function (v) { return fmt(v, 0) + '°'; });
+      } else {
+        /* as condições iniciais só mudam alguma coisa na primeira vista:
+           na segunda, as quatro amplitudes são fixas de propósito */
+        if (est.vista === 'solucao') {
+          deslizante(c1, 'Posição inicial \\(x_0\\)', -2, 2, 0.05, est.x0,
+            function (v) { est.x0 = v; desenhar(); },
+            function (v) { return fmt(v) + ' m'; });
+          deslizante(c1, 'Velocidade inicial \\(v_0\\)', -4, 4, 0.05, est.v0,
+            function (v) { est.v0 = v; desenhar(); },
+            function (v) { return fmt(v) + ' m/s'; });
+        }
+        deslizante(c1, 'Frequência \\(\\omega\\)', 1, 6, 0.05, est.w,
+          function (v) { est.w = v; desenhar(); },
+          function (v) { return fmt(v) + ' rad/s'; });
+      }
+      tipografar(c1);
+    }
+
+    /* ---------------- vista 1: a solução ---------------- */
+    function vistaSolucao() {
+      var A = amplitude(), ph = fase(), T = 2 * Math.PI / est.w;
+      /* a escala segue a amplitude: fixa, ela esconderia o movimento
+         pequeno e cortaria o grande */
+      var lim = Math.max(0.5, 1.25 * A);
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: 3 * T, ymin: -lim, ymax: lim,
+        divY: 4, marcasX: G.marcasLineares(0, 3 * T, 6, 1),
+        rotX: 'tempo (s)', rotY: 'posição (m)',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      /* as duas parcelas, e a soma delas */
+      tracar(g, function (t) { return est.x0 * Math.cos(est.w * t); },
+             G.COR.clara, 1.5, [5, 4]);
+      tracar(g, function (t) { return (est.v0 / est.w) * Math.sin(est.w * t); },
+             G.COR.ambar, 1.5, [5, 4]);
+      tracar(g, function (t) { return A * Math.cos(est.w * t - ph); },
+             G.COR.mestra, 2.8);
+
+      /* a amplitude e a fase, marcadas na figura */
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1; ct.setLineDash([2, 3]);
+      [A, -A].forEach(function (y) {
+        ct.beginPath(); ct.moveTo(g.x0, g.Y(y)); ct.lineTo(g.x1, g.Y(y));
+        ct.stroke();
+      });
+      ct.restore();
+      rotulo(ct, 'C = ' + fmt(A) + ' m', g.x1 - 10, g.Y(A) - 12, G.COR.suave,
+             'right');
+
+      var tpico = ph / est.w;
+      while (tpico < 0) tpico += T;
+      ct.save();
+      ct.strokeStyle = G.COR.bronze; ct.lineWidth = 1.6;
+      ct.beginPath(); ct.moveTo(g.X(tpico), g.Y(0)); ct.lineTo(g.X(tpico), g.Y(A));
+      ct.stroke(); ct.restore();
+      ct.fillStyle = G.COR.bronze;
+      ct.beginPath(); ct.arc(g.X(tpico), g.Y(A), 5, 0, 6.2832); ct.fill();
+      rotulo(ct, 'primeiro máximo', g.X(tpico) + 8, g.Y(A) - 14, G.COR.bronze,
+             'left');
+
+      rotulo(ct, 'x₀ cos ωt', g.X(0.42 * T),
+             g.Y(est.x0 * Math.cos(est.w * 0.42 * T)) - 13, G.COR.suave);
+      rotulo(ct, '(v₀/ω) sen ωt', g.X(1.18 * T),
+             g.Y((est.v0 / est.w) * Math.sin(est.w * 1.18 * T)) + 15,
+             G.COR.ambar);
+
+      rotulos(['Amplitude C', 'Fase φ', 'Período T', 'Energia por kg']);
+      painel({
+        a: fmt(A) + ' m',
+        b: fmt(180 * ph / Math.PI, 1) + '°',
+        c: fmt(T, 3) + ' s',
+        d: fmt(0.5 * est.w * est.w * A * A, 3) + ' J/kg'
+      });
+
+      texto.innerHTML =
+        '<p>As duas curvas tracejadas são as parcelas que vêm das condições '
+        + 'iniciais: \\(x_0\\cos\\omega t\\), que vale \\(x_0\\) em '
+        + '\\(t = 0\\) e tem derivada nula ali, e '
+        + '\\((v_0/\\omega)\\sen\\omega t\\), que começa em zero com a '
+        + 'inclinação certa. A soma das duas é a curva cheia.</p>'
+        + '<p>E a soma é <strong>outro cosseno</strong>, com amplitude '
+        + '\\(C = \\sqrt{x_0^2 + (v_0/\\omega)^2} = ' + fmtm(A) + '\\) m e '
+        + 'fase \\(\\varphi = ' + fmtm(180 * ph / Math.PI, 1) + '^\\circ\\). '
+        + 'As constantes continuam sendo duas, porque a equação é de segunda '
+        + 'ordem; o que muda é o par escolhido. O programa confere que as '
+        + 'duas formas coincidem em \\(10^{-17}\\) m ao longo de cinquenta '
+        + 'mil instantes.</p>'
+        + '<p>Mexa em \\(x_0\\) e em \\(v_0\\) e observe o que <em>não</em> '
+        + 'muda: o espaçamento dos máximos. A amplitude e a fase dependem de '
+        + 'como o movimento começou; o período, não. Ele é propriedade da '
+        + 'mola e da massa, e de mais nada.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: isocronismo ---------------- */
+    function vistaIsocronismo() {
+      var T = 2 * Math.PI / est.w;
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: 2.2 * T, ymin: -1.15, ymax: 1.15,
+        divY: 4, marcasX: G.marcasLineares(0, 2.2 * T, 5, 1),
+        rotX: 'tempo (s)', rotY: 'posição, em frações da amplitude',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      /* quatro amplitudes diferentes do MESMO oscilador */
+      var cores = [G.COR.mestra, G.COR.azul, G.COR.bronze, G.COR.ambar];
+      [1, 0.6, 0.3, 0.12].forEach(function (a, i) {
+        tracar(g, function (t) { return a * Math.cos(est.w * t); },
+               cores[i], i === 0 ? 2.6 : 1.8);
+      });
+
+      /* as linhas verticais onde todas cruzam o zero ao mesmo tempo */
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.2; ct.setLineDash([4, 4]);
+      for (var k = 0; k * T / 2 + T / 4 < 2.2 * T; k++) {
+        var tc = T / 4 + k * T / 2;
+        ct.beginPath(); ct.moveTo(g.X(tc), g.y0); ct.lineTo(g.X(tc), g.y1);
+        ct.stroke();
+      }
+      ct.restore();
+      rotulo(ct, 'todas cruzam o zero juntas', g.X(T / 4) + 8, g.y0 + 14,
+             G.COR.vinho, 'left');
+
+      rotulos(['Período, qualquer amplitude', 'Amplitudes desenhadas',
+               'Diferença entre os períodos', 'No poço duplo do módulo 4']);
+      painel({
+        a: fmt(T, 4) + ' s',
+        b: '1 : 0,6 : 0,3 : 0,12',
+        c: '0 <small>em todas as casas</small>',
+        d: 'muda com E'
+      });
+
+      texto.innerHTML =
+        '<p>As quatro curvas são o <strong>mesmo</strong> oscilador, soltado '
+        + 'de quatro amplitudes diferentes, numa razão de oito para um entre '
+        + 'a maior e a menor. Elas cruzam o zero exatamente juntas, e chegam '
+        + 'aos extremos exatamente juntas. É o isocronismo, e foi o que '
+        + 'Galileu notou olhando um lustre.</p>'
+        + '<p>A razão é a forma da força. Com \\(F = -kx\\), dobrar a '
+        + 'amplitude dobra a distância a percorrer e dobra a força em cada '
+        + 'ponto, de modo que o corpo anda o dobro em velocidade dobrada, e o '
+        + 'tempo sai igual. O cancelamento é exato só para a parábola: o '
+        + 'programa mostra períodos idênticos em nove casas com amplitudes '
+        + 'de 1 cm a 10 m.</p>'
+        + '<p>Convém guardar que isso é <em>particularidade</em>, e não regra '
+        + 'de oscilações. O poço duplo do módulo 4 tem período que cresce com '
+        + 'a energia, e o pêndulo de verdade, na vista seguinte, também. '
+        + 'Isocronismo é privilégio de quem fica perto do fundo.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: o pêndulo ---------------- */
+    function vistaPendulo() {
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: 175, ymin: 1, ymax: 2.6,
+        divY: 8, marcasX: G.marcasLineares(0, 175, 7, 0),
+        rotX: 'amplitude θ₀ (graus)', rotY: 'T / T₀',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      /* a aproximação de ângulo pequeno é a reta em 1 */
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.3; ct.setLineDash([5, 4]);
+      ct.beginPath(); ct.moveTo(g.x0, g.Y(1)); ct.lineTo(g.x1, g.Y(1));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'aproximação de ângulo pequeno: T = T₀', g.x0 + 10,
+             g.Y(1) - 13, G.COR.suave, 'left');
+
+      tracar(g, function (gr) { return serie(gr * Math.PI / 180); },
+             G.COR.ambar, 1.8, [5, 4]);
+      tracar(g, function (gr) { return razaoPendulo(gr * Math.PI / 180, 400); },
+             G.COR.mestra, 2.8);
+      rotulo(ct, 'exato (integral elíptica)', g.X(118),
+             g.Y(razaoPendulo(118 * Math.PI / 180, 400)) - 14, G.COR.mestra);
+      rotulo(ct, 'série até θ⁴', g.X(150),
+             g.Y(Math.min(2.55, serie(150 * Math.PI / 180))) + 15, G.COR.ambar);
+
+      /* a faixa em que a aproximação erra menos de 1 % */
+      ct.save();
+      ct.fillStyle = 'rgba(29,95,126,.07)';
+      var lim = 0;
+      for (var gr = 1; gr <= 175; gr++) {
+        if (razaoPendulo(gr * Math.PI / 180, 300) < 1.01) lim = gr;
+      }
+      ct.fillRect(g.x0, g.y0, g.X(lim) - g.x0, g.y1 - g.y0);
+      ct.restore();
+      rotulo(ct, 'erro < 1 %', g.X(lim / 2), g.y0 + 16, G.COR.suave);
+
+      var th = est.graus * Math.PI / 180;
+      var r = razaoPendulo(th, 4000), rs = serie(th);
+      ct.fillStyle = G.COR.bronze;
+      ct.beginPath(); ct.arc(g.X(est.graus), g.Y(Math.min(g.ymax, r)), 6, 0,
+                             6.2832);
+      ct.fill();
+
+      var T0 = 2 * Math.PI * Math.sqrt(1 / G0);
+      rotulos(['T exato, pêndulo de 1 m', 'Erro de usar T₀',
+               'Erro da série até θ⁴', 'Limite do erro de 1 %']);
+      painel({
+        a: fmt(T0 * r, 4) + ' s',
+        b: fmt(100 * (r - 1), 2) + ' %',
+        c: pct(100 * Math.abs(rs - r) / r),
+        d: fmt(lim, 0) + '°'
+      });
+
+      texto.innerHTML =
+        '<p>A equação do pêndulo é '
+        + '\\(\\ddot\\theta = -(g/L)\\sen\\theta\\), e ela <strong>não</strong> '
+        + 'é a do oscilador harmônico. Vira a dele quando se troca '
+        + '\\(\\sen\\theta\\) por \\(\\theta\\), o que custa menos de 1 % até '
+        + fmt(lim, 0) + '°, e é por isso que o pêndulo serve para medir '
+        + '\\(g\\) com cronômetro de mão.</p>'
+        + '<p>Com \\(\\theta_0 = ' + fmt(est.graus, 0) + '^\\circ\\), o '
+        + 'período verdadeiro é ' + fmt(100 * (r - 1), 2) + ' % maior que '
+        + '\\(T_0 = 2\\pi\\sqrt{L/g}\\). A curva cheia é a integral elíptica '
+        + 'completa, calculada por quadratura; a tracejada em âmbar é a série '
+        + '\\(1 + \\theta_0^2/16 + 11\\theta_0^4/3072\\), que acompanha bem '
+        + 'até uns 60° e depois desiste.</p>'
+        + '<p>Perto de 180° o período dispara. O pêndulo colocado '
+        + 'exatamente em pé é um equilíbrio instável, e levar uma '
+        + 'eternidade para sair dele é a mesma coisa que o tempo infinito da '
+        + 'separatriz do módulo 4. Harmônico e caótico não são mundos '
+        + 'separados: são o mesmo sistema em amplitudes diferentes, e o '
+        + 'módulo 9 continua essa conversa.</p>';
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'solucao') vistaSolucao();
+      else if (est.vista === 'isocronismo') vistaIsocronismo();
+      else vistaPendulo();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {
