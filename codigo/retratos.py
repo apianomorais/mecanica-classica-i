@@ -7,7 +7,8 @@ O QUE RESOLVE
     2. Classifica os pontos fixos pela matriz jacobiana, comparando os
        autovalores analíticos com os calculados por diferenças finitas.
     3. Verifica que uma trajetória lançada perto de uma sela sai ao longo da
-       direção do autovetor instável, que é o que a linearização promete.
+       direção do autovetor instável, mesmo tendo sido empurrada numa direção
+       perpendicular a ele.
     4. Mapeia as bacias de atração do pêndulo amortecido: em qual dos
        mínimos o pêndulo para, dado o chute inicial.
     5. Mostra que o oscilador de van der Pol tem um ciclo-limite ÚNICO e
@@ -48,23 +49,42 @@ def campo_pendulo(th, om, g_sobre_l=1.0, gama=0.0):
     return om, -g_sobre_l * np.sin(th) - 2 * gama * om
 
 
-def integra(campo, estado, t_fim, dt=1e-4, parar=None):
-    """Runge-Kutta de 4a ordem para um sistema de duas equações."""
+def passo_rk4(campo, x, y, dt):
+    """Um passo de Runge-Kutta de 4a ordem para duas equações."""
+    k1 = campo(x, y)
+    k2 = campo(x + dt * k1[0] / 2, y + dt * k1[1] / 2)
+    k3 = campo(x + dt * k2[0] / 2, y + dt * k2[1] / 2)
+    k4 = campo(x + dt * k3[0], y + dt * k3[1])
+    return (x + dt * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) / 6,
+            y + dt * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) / 6)
+
+
+def integra(campo, estado, t_fim, dt=1e-4):
+    """Trajetória inteira, guardada ponto a ponto."""
     n = int(round(t_fim / dt))
     x, y = float(estado[0]), float(estado[1])
     saida = np.empty((n + 1, 2))
     saida[0] = (x, y)
     for i in range(1, n + 1):
-        k1 = campo(x, y)
-        k2 = campo(x + dt * k1[0] / 2, y + dt * k1[1] / 2)
-        k3 = campo(x + dt * k2[0] / 2, y + dt * k2[1] / 2)
-        k4 = campo(x + dt * k3[0], y + dt * k3[1])
-        x += dt * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) / 6
-        y += dt * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) / 6
+        x, y = passo_rk4(campo, x, y, dt)
         saida[i] = (x, y)
-        if parar is not None and parar(x, y):
-            return saida[:i + 1]
     return saida
+
+
+def integra_ate(campo, estado, t_fim, dt=1e-4, parar=None):
+    """Só o estado final, sem guardar a trajetória.
+
+    Guardar quatro milhões de pontos para olhar apenas o último custa
+    memória e tempo à toa, e é o que acontece nas varreduras das seções
+    3 e 4, em que a trajetória inteira não interessa.
+    """
+    x, y = float(estado[0]), float(estado[1])
+    n = int(round(t_fim / dt))
+    for _ in range(n):
+        x, y = passo_rk4(campo, x, y, dt)
+        if parar is not None and parar(x, y):
+            break
+    return np.array([x, y])
 
 
 def jacobiana(campo, x, y, h=1e-6):
@@ -102,12 +122,23 @@ def campo_vdp(x, y, mu=1.0):
     return y, mu * (1 - x * x) * y - x
 
 
-def amplitude_e_periodo(mu, inicial=(0.1, 0.0), t_fim=None, dt=None):
-    """Amplitude e período do ciclo-limite, medidos depois do transiente."""
+def amplitude_e_periodo(mu, inicial=(2.0, 0.0), t_fim=None, dt=None):
+    """Amplitude e período do ciclo-limite, medidos depois do transiente.
+
+    O dimensionamento do passo e do tempo não é detalhe: com mu grande o
+    movimento tem trechos lentos, de duração mu, e saltos rápidos, de
+    duração 1/mu, de modo que o passo tem de acompanhar o salto e o tempo
+    total tem de acompanhar o período. Pedir as duas coisas com margem
+    larga produz dezenas de milhões de passos e horas de espera.
+
+    O transiente também muda de tamanho: com mu pequeno ele dura cerca de
+    1/mu, e por isso a condição inicial padrão é a própria amplitude do
+    ciclo, 2, que já está quase em cima dele.
+    """
     if t_fim is None:
-        t_fim = max(200.0, 60.0 * mu)
+        t_fim = max(120.0, 14.0 * mu)
     if dt is None:
-        dt = min(1e-3, 1e-3 / max(1.0, mu))
+        dt = min(5e-4, 2e-2 / max(1.0, mu))
     traj = integra(lambda x, y: campo_vdp(x, y, mu), inicial, t_fim, dt)
     # usa só o último terço, quando o transiente já morreu
     corte = 2 * len(traj) // 3
@@ -198,22 +229,54 @@ def main():
     print('   Sela em theta = pi. Autovalor instavel: %+.6f' % vals[i_inst].real)
     print('   Autovetor instavel (normalizado): (%+.6f, %+.6f)' % (v[0], v[1]))
     print()
-    print('   Deslocamento inicial   direcao da trajetoria     angulo (graus)')
-    for eps in (1e-3, 1e-4, 1e-5, 1e-6):
-        # empurrado numa direcao QUALQUER, perpendicular ao autovetor
-        perp = np.array([-v[1], v[0]])
-        ini = np.array([np.pi, 0.0]) + eps * perp
-        tr = integra(campo, ini, 12.0, dt=1e-4)
-        d = tr[-1] - np.array([np.pi, 0.0])
-        d = d / np.linalg.norm(d)
-        ang = np.degrees(np.arccos(np.clip(abs(np.dot(d, v)), -1, 1)))
-        print('   %18.0e   (%+.6f, %+.6f)   %10.4f' % (eps, d[0], d[1], ang))
+    print('   A direcao e medida quando a trajetoria se afasta 0,05 da sela,')
+    print('   e nao num instante fixo: com deslocamento inicial menor ela')
+    print('   demora mais para sair, e comparar tempos iguais compararia')
+    print('   estagios diferentes da fuga.')
     print()
-    print('   O chute inicial foi PERPENDICULAR ao autovetor instavel, e')
-    print('   mesmo assim a trajetoria sai alinhada com ele: o angulo vai a')
-    print('   zero quando o deslocamento inicial diminui. A sela esquece a')
-    print('   direcao de entrada e impoe a sua. E isso que torna a')
-    print('   linearizacao util mesmo longe do ponto fixo.')
+    fixo = np.array([np.pi, 0.0])
+    perp = np.array([-v[1], v[0]])
+
+    def direcao_de_saida(eps, raio):
+        fim = integra_ate(campo, fixo + eps * perp, 600.0, dt=2e-4,
+                          parar=lambda x, y:
+                          (x - np.pi) ** 2 + y ** 2 > raio ** 2)
+        d = fim - fixo
+        d = d / np.linalg.norm(d)
+        return d, np.degrees(np.arccos(np.clip(abs(np.dot(d, v)), -1, 1)))
+
+    print('   (a) MESMO raio de medida, 0,05, com chutes iniciais de tamanhos')
+    print('   muito diferentes:')
+    print()
+    print('   deslocamento inicial   direcao ao sair          angulo (graus)')
+    for eps in (1e-2, 1e-3, 1e-4, 1e-5, 1e-6):
+        d, ang = direcao_de_saida(eps, 0.05)
+        print('   %20.0e   (%+.6f, %+.6f)   %10.5f' % (eps, d[0], d[1], ang))
+    print()
+    print('   As cinco direcoes sao IDENTICAS nas seis casas, embora os')
+    print('   chutes difiram por um fator dez mil. A sela esquece por onde')
+    print('   entrou e impoe a sua propria direcao de saida.')
+    print()
+    print('   (b) MESMO chute inicial, medindo a direcao a raios cada vez')
+    print('   menores. O que sobra dos 0,003 graus acima e a nao linearidade')
+    print('   no raio de medida, e nao resto do chute:')
+    print()
+    print('   raio de medida   angulo (graus)   angulo/raio   angulo/raio^2')
+    for raio in (0.2, 0.1, 0.05, 0.02, 0.01):
+        d, ang = direcao_de_saida(1e-4, raio)
+        print('   %14.3f   %14.6f   %11.4f   %13.4f'
+              % (raio, ang, ang / raio, ang / raio ** 2))
+    print()
+    print('   Repare em QUAL das duas colunas fica constante: a ultima. O')
+    print('   desvio em relacao ao autovetor nao cai proporcionalmente a')
+    print('   distancia, e sim ao QUADRADO dela. Isso diz mais do que a')
+    print('   linearizacao prometia: a variedade instavel nao apenas passa')
+    print('   pelo ponto fixo na direcao do autovetor, ela e TANGENTE a ele,')
+    print('   e por isso o erro e de segunda ordem.')
+    print()
+    print('   Dividir pela potencia errada e um jeito barato de se enganar:')
+    print('   a coluna do meio tambem diminui, e quem olhasse so para ela')
+    print('   poderia concluir que o erro vai a zero sem notar a que taxa.')
     print()
 
     print('=' * 72)
@@ -227,23 +290,35 @@ def main():
     print('   omega0    minimo final    voltas completas')
     anterior = None
     trocas = []
-    for om0 in np.arange(1.0, 6.01, 0.05):
-        tr = integra(campo, (0.0, om0), 200.0, dt=1e-3)
-        k = int(round(tr[-1, 0] / (2 * np.pi)))
+    for om0 in np.arange(1.0, 9.01, 0.05):
+        # para assim que o pêndulo já está preso num poço e quase parado
+        fim = integra_ate(campo, (0.0, om0), 300.0, dt=2e-3,
+                          parar=lambda x, y: abs(y) < 1e-3
+                          and abs(x - 2 * np.pi * round(x / (2 * np.pi))) < 1e-2)
+        k = int(round(fim[0] / (2 * np.pi)))
         if anterior is not None and k != anterior:
             trocas.append((om0, anterior, k))
         anterior = k
-        if abs(om0 - round(om0 * 2) / 2) < 1e-9:     # imprime de meio em meio
+        if abs(om0 - round(om0)) < 1e-9:              # imprime de um em um
             print('   %6.2f    theta = %4d pi    %d' % (om0, 2 * k, k))
     print()
-    print('   As trocas de bacia acontecem em:')
+    print('   As fronteiras entre bacias, e a largura de cada faixa:')
+    anterior_fronteira = 0.0
     for om0, a, b in trocas:
-        print('     entre omega0 = %.2f e %.2f, o pendulo passa do minimo'
-              % (om0 - 0.05, om0))
-        print('     %d pi para o minimo %d pi' % (2 * a, 2 * b))
+        print('     em omega0 entre %.2f e %.2f: do minimo %d pi para %d pi'
+              % (om0 - 0.05, om0, 2 * a, 2 * b))
+        print('       largura da faixa anterior: %.2f' % (om0 - anterior_fronteira))
+        anterior_fronteira = om0
     print()
-    print('   Repare que as faixas ficam mais estreitas quando a velocidade')
-    print('   cresce. Perto de uma fronteira, uma diferenca minima no chute')
+    print('   A primeira faixa e larga, 2,6, e as seguintes ficam entre 1,7')
+    print('   e 1,9: quase constantes, e nao estreitando, que era o que se')
+    print('   poderia esperar. Vale anotar que a expectativa errada e')
+    print('   razoavel (cruzar mais barreiras custa mais energia, e omega')
+    print('   cresce com a raiz da energia), e que foi a medida que a')
+    print('   desmentiu.')
+    print()
+    print('   O que importa aqui nao e a largura, e sim a existencia das')
+    print('   fronteiras. Perto de uma delas, uma diferenca minima no chute')
     print('   leva o pendulo a parar uma volta inteira adiante: a dinamica e')
     print('   previsivel (nao ha caos aqui), mas a DEPENDENCIA do resultado')
     print('   final com a condicao inicial ja e desconfortavel. O modulo 10')
@@ -260,7 +335,7 @@ def main():
     print()
     print('   Convergencia de dentro e de fora para a MESMA curva:')
     print('   mu     amplitude de dentro   de fora     diferenca')
-    for mu in (0.1, 1.0, 4.0):
+    for mu in (0.5, 1.0, 4.0):
         a_in, _ = amplitude_e_periodo(mu, (0.05, 0.0))
         a_out, _ = amplitude_e_periodo(mu, (4.0, 0.0))
         print('   %4.1f   %17.9f   %9.9f   %.1e'
@@ -277,12 +352,25 @@ def main():
         a, T = amplitude_e_periodo(mu)
         print('   %5.2f   %11.6f   %9.6f   %.6f' % (mu, a, T, 2 * np.pi))
     print()
-    print('   Limite de mu grande: o periodo cresce como (3 - 2 ln 2) mu')
-    print('   mu        periodo      T / mu      3 - 2 ln 2')
+    print('   Limite de mu grande: o periodo cresce como (3 - 2 ln 2) mu.')
+    print('   A convergencia e lenta, e a teoria preve a correcao seguinte:')
+    print('     T = (3 - 2 ln 2) mu + 3 alfa mu^(-1/3),  alfa = 2,33811')
+    print('   em que alfa e o primeiro zero da funcao de Airy.')
+    print()
+    print('   mu     periodo      T/mu      so o termo 1   com a correcao')
     alvo = 3 - 2 * np.log(2)
+    alfa = 2.338107410
     for mu in (5.0, 10.0, 20.0, 40.0):
-        a, T = amplitude_e_periodo(mu, (2.0, 0.0))
-        print('   %5.1f   %11.5f   %9.6f   %10.6f' % (mu, T, T / mu, alvo))
+        a, T = amplitude_e_periodo(mu)
+        print('   %4.0f   %10.5f   %9.6f   %12.6f   %13.6f'
+              % (mu, T, T / mu, alvo, alvo + 3 * alfa * mu ** (-4.0 / 3.0)))
+    print()
+    print('   A ultima coluna acompanha a medida de perto, e a penultima nao:')
+    print('   em mu = 40 a correcao de Airy reduz o erro de 3 % para 0,15 %.')
+    print('   Essa correcao e uma conta dificil, feita por Dorodnitsyn em')
+    print('   1947, e serve aqui como teste: uma formula que acerta a')
+    print('   SEGUNDA casa de uma coisa medida numericamente nao e')
+    print('   coincidencia.')
     print()
     print('   Com mu grande o movimento deixa de ser senoidal: sao cargas')
     print('   lentas seguidas de descargas rapidas, o que se chama oscilacao')

@@ -2960,6 +2960,444 @@
   };
 
 
+  /* =================================================================
+     9. Retratos de fase
+     O módulo muda a pergunta: em vez de "qual é x(t)", pergunta-se
+     "que tipos de movimento existem". As três vistas são as três
+     respostas que o plano de fase dá sem resolver nada: o retrato
+     inteiro do pêndulo com a separatriz, a classificação dos pontos
+     fixos pela matriz 2x2, e o ciclo-limite, que é um tipo de
+     movimento que não existe em sistema linear nenhum.
+     ================================================================= */
+  REGISTRO.retratos = function (raiz) {
+    var est = { gama: 0.0, mu: 1.0, fixo: 'centro', vista: 'pendulo' };
+
+    /* ---- campos ---- */
+    function fPend(th, om, g) {
+      return [om, -Math.sin(th) - 2 * g * om];
+    }
+    function fVdp(x, y, mu) {
+      return [y, mu * (1 - x * x) * y - x];
+    }
+
+    function rk4(f, x, y, dt) {
+      var k1 = f(x, y);
+      var k2 = f(x + dt * k1[0] / 2, y + dt * k1[1] / 2);
+      var k3 = f(x + dt * k2[0] / 2, y + dt * k2[1] / 2);
+      var k4 = f(x + dt * k3[0], y + dt * k3[1]);
+      return [x + dt * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) / 6,
+              y + dt * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) / 6];
+    }
+
+    function trajeto(f, x0, y0, dt, n) {
+      var pts = [[x0, y0]], x = x0, y = y0;
+      for (var i = 0; i < n; i++) {
+        var p = rk4(f, x, y, dt);
+        x = p[0]; y = p[1];
+        if (!isFinite(x) || !isFinite(y) || Math.abs(y) > 1e4) break;
+        pts.push([x, y]);
+      }
+      return pts;
+    }
+
+    var corpo = moldura(raiz, 'O plano de fase: todos os movimentos de uma vez');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'O pêndulo inteiro', v: 'pendulo' },
+      { rot: 'Perto de um ponto fixo', v: 'linear' },
+      { rot: 'O ciclo-limite', v: 'ciclo' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', ',').replace('-', '\u2212');
+    }
+    function fmtm(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', '{,}');
+    }
+
+    function linha(g, pts, cor, esp, tracejado) {
+      var ct = g.ct, dentro = false;
+      ct.save();
+      ct.strokeStyle = cor; ct.lineWidth = esp || 1.6;
+      if (tracejado) ct.setLineDash(tracejado);
+      ct.beginPath();
+      for (var i = 0; i < pts.length; i++) {
+        var x = pts[i][0], y = pts[i][1];
+        if (x < g.xmin || x > g.xmax || y < g.ymin || y > g.ymax) {
+          dentro = false; continue;
+        }
+        if (!dentro) { ct.moveTo(g.X(x), g.Y(y)); dentro = true; }
+        else ct.lineTo(g.X(x), g.Y(y));
+      }
+      ct.stroke(); ct.restore();
+    }
+
+    function montar() {
+      c1.innerHTML = '';
+      if (est.vista === 'ciclo') {
+        deslizante(c1, 'Não linearidade \\(\\mu\\)', 0.05, 4, 0.05, est.mu,
+          function (v) { est.mu = v; desenhar(); },
+          function (v) { return fmt(v); });
+      } else {
+        deslizante(c1, 'Amortecimento \\(\\gamma\\)', 0, 1.2, 0.01, est.gama,
+          function (v) { est.gama = v; desenhar(); },
+          function (v) {
+            return v === 0 ? 'nenhum (conservativo)' : fmt(v);
+          });
+      }
+      if (est.vista === 'linear') {
+        opcoes(c1, [
+          { rot: 'O fundo, θ = 0', v: 'centro' },
+          { rot: 'O alto, θ = π', v: 'sela' }
+        ], est.fixo === 'centro' ? 0 : 1,
+          function (v) { est.fixo = v; desenhar(); });
+      }
+      tipografar(c1);
+    }
+
+    /* ---------------- vista 1: o pêndulo inteiro ---------------- */
+    function vistaPendulo() {
+      var g = est.gama;
+      var f = function (th, om) { return fPend(th, om, g); };
+      var gr = G.eixos(cv, {
+        altura: 330, xmin: -1.6 * Math.PI, xmax: 1.6 * Math.PI,
+        ymin: -3.2, ymax: 3.2, divY: 4,
+        marcasX: [{ v: -Math.PI, r: '−π' }, { v: 0, r: '0' },
+                  { v: Math.PI, r: 'π' }],
+        rotX: 'ângulo θ', rotY: 'velocidade angular ω',
+        formataY: function (v) { return fmt(v, 0); }
+      });
+      var ct = gr.ct;
+
+      /* órbitas de libração, de dentro para fora */
+      [0.4, 0.9, 1.4, 1.8, 1.96].forEach(function (om0) {
+        linha(gr, trajeto(f, 0, om0, 0.01, 4000), G.COR.clara, 1.5);
+      });
+      /* órbitas de rotação, nos dois sentidos */
+      [2.1, 2.5, 3.0].forEach(function (om0) {
+        linha(gr, trajeto(f, -1.6 * Math.PI, om0, 0.01, 2500), G.COR.clara, 1.5);
+        linha(gr, trajeto(f, 1.6 * Math.PI, -om0, 0.01, 2500), G.COR.clara, 1.5);
+      });
+
+      /* a separatriz: sai da sela e volta a ela */
+      if (g === 0) {
+        linha(gr, trajeto(f, 0, 1.9999999, 0.005, 6000), G.COR.vinho, 2.4);
+        linha(gr, trajeto(f, 0, -1.9999999, 0.005, 6000), G.COR.vinho, 2.4);
+        rotulo(ct, 'separatriz', gr.X(0), gr.Y(2.0) - 14, G.COR.vinho);
+      } else {
+        /* com atrito ela deixa de ser fechada: o que sobra é a
+           variedade estável da sela, a fronteira entre as bacias */
+        [1, -1].forEach(function (s) {
+          var pts = trajeto(function (th, om) {
+            var d = fPend(th, om, g);
+            return [-d[0], -d[1]];          // integra para trás no tempo
+          }, Math.PI - s * 1e-6, s * 1e-6 * 0.6, 0.01, 2200);
+          linha(gr, pts, G.COR.vinho, 2.2);
+        });
+        rotulo(ct, 'fronteira das bacias', gr.X(0.1), gr.Y(2.55),
+               G.COR.vinho);
+      }
+
+      /* os pontos fixos */
+      [-1, 0, 1].forEach(function (k) {
+        var x = 2 * Math.PI * k;
+        if (x >= gr.xmin && x <= gr.xmax) {
+          ct.fillStyle = g === 0 ? G.COR.mestra : G.COR.bronze;
+          ct.beginPath(); ct.arc(gr.X(x), gr.Y(0), 6, 0, 6.2832); ct.fill();
+        }
+        var xs = Math.PI * (2 * k + 1);
+        if (xs >= gr.xmin && xs <= gr.xmax) {
+          ct.strokeStyle = G.COR.vinho; ct.lineWidth = 2.4;
+          ct.beginPath();
+          ct.moveTo(gr.X(xs) - 6, gr.Y(0) - 6); ct.lineTo(gr.X(xs) + 6, gr.Y(0) + 6);
+          ct.moveTo(gr.X(xs) - 6, gr.Y(0) + 6); ct.lineTo(gr.X(xs) + 6, gr.Y(0) - 6);
+          ct.stroke();
+        }
+      });
+      rotulo(ct, g === 0 ? 'centro' : 'foco estável', gr.X(0), gr.Y(0) + 20,
+             g === 0 ? G.COR.mestra : G.COR.bronze);
+      rotulo(ct, 'sela', gr.X(Math.PI), gr.Y(0) + 20, G.COR.vinho);
+
+      rotulos(['Fundo do poço', 'Alto', 'Energia da separatriz',
+               'Tipos de movimento']);
+      painel({
+        a: g === 0 ? 'centro' : 'foco estável',
+        b: 'sela',
+        c: g === 0 ? 'e = 2, exata' : 'não se conserva',
+        d: g === 0 ? 'libração e rotação' : 'tudo para no fundo'
+      });
+
+      texto.innerHTML = g === 0
+        ? '<p>Cada curva é um movimento inteiro, e o plano traz todos de uma '
+          + 'vez. Dentro da curva vinho o pêndulo <strong>libra</strong>: vai '
+          + 'e volta, e a curva se fecha. Fora dela ele <strong>roda</strong>: '
+          + 'passa por cima e \\(\\theta\\) cresce sem limite. Não há um '
+          + 'terceiro tipo.</p>'
+          + '<p>A curva vinho é a <strong>separatriz</strong>, em '
+          + '\\(e = 2\\) exatamente, e ela não é um movimento como os outros: '
+          + 'o pêndulo leva tempo <em>infinito</em> para chegar ao alto. Duas '
+          + 'condições iniciais que diferem em \\(10^{-6}\\) na velocidade, '
+          + 'uma de cada lado dela, fazem coisas qualitativamente diferentes '
+          + 'para sempre. É a primeira vez no curso que uma diferença '
+          + 'minúscula decide um destino.</p>'
+          + '<p>Repare que o retrato se repete a cada \\(2\\pi\\): o plano é '
+          + 'na verdade um cilindro, porque \\(\\theta\\) e '
+          + '\\(\\theta+2\\pi\\) são o mesmo estado.</p>'
+        : '<p>Com atrito as curvas deixam de se fechar: toda trajetória '
+          + 'termina num dos mínimos, que viraram <strong>focos '
+          + 'estáveis</strong>. A energia não se conserva, de modo que as '
+          + 'curvas atravessam as linhas de energia constante em vez de '
+          + 'segui-las.</p>'
+          + '<p>A separatriz some, e no lugar dela fica a curva vinho: a '
+          + '<strong>fronteira entre bacias de atração</strong>, que é o '
+          + 'conjunto das condições iniciais que terminam exatamente na sela. '
+          + 'De um lado dela o pêndulo para num mínimo, do outro no seguinte. '
+          + 'O programa mede essas fronteiras: a primeira está em '
+          + '\\(\\omega_0\\) entre 2,60 e 2,65.</p>'
+          + '<p>As selas continuam onde estavam, e continuam selas em '
+          + 'qualquer amortecimento. O equilíbrio de cabeça para baixo é '
+          + 'instável por geometria, e não por falta de atrito.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: perto de um ponto fixo ---------------- */
+    function vistaLinear() {
+      var g = est.gama, sela = est.fixo === 'sela';
+      var th0 = sela ? Math.PI : 0;
+      var f = function (th, om) { return fPend(th, om, g); };
+
+      /* a jacobiana do pêndulo, em forma fechada */
+      var a21 = sela ? 1 : -1;            // -cos(theta0)
+      var J = [[0, 1], [a21, -2 * g]];
+      var tr = J[0][0] + J[1][1], det = J[0][0] * J[1][1] - J[0][1] * J[1][0];
+      var disc = tr * tr - 4 * det;
+
+      var R = 0.9;
+      var gr = G.eixos(cv, {
+        altura: 330, xmin: -R, xmax: R, ymin: -R, ymax: R, divY: 4,
+        marcasX: G.marcasLineares(-R, R, 5, 1),
+        rotX: sela ? 'θ − π' : 'θ', rotY: 'ω',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = gr.ct;
+
+      /* campo de direções, que é o que a equação diz em cada ponto */
+      ct.save();
+      ct.strokeStyle = G.COR.grade; ct.lineWidth = 1.2;
+      for (var i = -4; i <= 4; i++) {
+        for (var j = -4; j <= 4; j++) {
+          var px = i * R / 4.5, py = j * R / 4.5;
+          var d = f(th0 + px, py);
+          var m = Math.hypot(d[0], d[1]);
+          if (m < 1e-9) continue;
+          var L = 0.1 * R;
+          seta(ct, gr.X(px - L * d[0] / m / 2), gr.Y(py - L * d[1] / m / 2),
+               gr.X(px + L * d[0] / m / 2), gr.Y(py + L * d[1] / m / 2),
+               G.COR.grade, 1.2);
+        }
+      }
+      ct.restore();
+
+      /* trajetórias de verdade, lançadas a distâncias diferentes: todas
+         ao mesmo raio dariam a mesma órbita no caso conservativo, que é
+         o que acontece quando se esquece de variar a energia */
+      [0.18, 0.36, 0.54, 0.72, 0.9].forEach(function (frac) {
+        [0, Math.PI].forEach(function (ang) {
+          var r0 = frac * R;
+          var pts = trajeto(f, th0 + r0 * Math.cos(ang), r0 * Math.sin(ang),
+                            0.01, 2600).map(function (p) {
+            return [p[0] - th0, p[1]];
+          });
+          linha(gr, pts, G.COR.clara, 1.6);
+        });
+      });
+
+      /* os autovetores, quando são reais */
+      var tipo, lam1, lam2;
+      if (disc > 0) {
+        lam1 = (tr + Math.sqrt(disc)) / 2;
+        lam2 = (tr - Math.sqrt(disc)) / 2;
+        [[lam1, G.COR.vinho, 'instável'], [lam2, G.COR.mestra, 'estável']]
+          .forEach(function (par) {
+            var lam = par[0];
+            /* autovetor de [[0,1],[a21,-2g]]: (1, lam) */
+            var vx = 1 / Math.hypot(1, lam), vy = lam / Math.hypot(1, lam);
+            ct.save();
+            ct.strokeStyle = par[1]; ct.lineWidth = 2.4;
+            ct.beginPath();
+            ct.moveTo(gr.X(-R * vx), gr.Y(-R * vy));
+            ct.lineTo(gr.X(R * vx), gr.Y(R * vy));
+            ct.stroke(); ct.restore();
+            rotulo(ct, par[2], gr.X(0.78 * R * vx), gr.Y(0.78 * R * vy) - 12,
+                   par[1]);
+          });
+        tipo = (lam1 * lam2 < 0) ? 'sela'
+             : (lam1 < 0 ? 'nó estável' : 'nó instável');
+      } else {
+        lam1 = lam2 = tr / 2;
+        tipo = Math.abs(tr) < 1e-9 ? 'centro'
+             : (tr < 0 ? 'foco estável' : 'foco instável');
+      }
+
+      ct.fillStyle = G.COR.tinta;
+      ct.beginPath(); ct.arc(gr.X(0), gr.Y(0), 6, 0, 6.2832); ct.fill();
+
+      var desc = disc > 0
+        ? fmt(lam1, 3) + ' e ' + fmt(lam2, 3)
+        : fmt(tr / 2, 3) + ' ± ' + fmt(Math.sqrt(-disc) / 2, 3) + 'i';
+      rotulos(['Ponto fixo', 'Traço e determinante', 'Autovalores', 'Tipo']);
+      painel({
+        a: sela ? 'θ = π' : 'θ = 0',
+        b: 'tr = ' + fmt(tr, 2) + ', det = ' + fmt(det, 2),
+        c: desc,
+        d: tipo
+      });
+
+      texto.innerHTML =
+        '<p>Perto de um ponto fixo, o campo é quase linear, e quem decide '
+        + 'tudo é a matriz das derivadas:</p>'
+        + '<p>\\[ J = \\begin{pmatrix} 0 & 1 \\\\ '
+        + (sela ? '+1' : '-1') + ' & -2\\gamma \\end{pmatrix}, \\qquad '
+        + '\\operatorname{tr}J = ' + fmtm(tr, 2) + ', \\qquad '
+        + '\\det J = ' + fmtm(det, 2) + '. \\]</p>'
+        + (disc > 0
+          ? '<p>O discriminante é positivo, de modo que os autovalores são '
+            + '<strong>reais</strong>, e as retas coloridas são os '
+            + 'autovetores. Repare no que as trajetórias fazem: elas chegam '
+            + 'pela direção estável e saem pela instável, e nenhuma delas '
+            + 'alcança o ponto fixo. O programa mostra que a direção de saída '
+            + 'não depende de por onde a trajetória entrou, e que o desvio em '
+            + 'relação ao autovetor cai com o <em>quadrado</em> da distância: '
+            + 'a trajetória é tangente a ele.</p>'
+          : '<p>O discriminante é negativo, de modo que os autovalores são '
+            + '<strong>complexos conjugados</strong>, e não há autovetor real '
+            + 'nenhum para desenhar: a trajetória gira. A parte real '
+            + 'vale \\(-\\gamma\\) e decide se a espiral fecha para dentro '
+            + '(estável) ou abre para fora. Com \\(\\gamma = 0\\) ela é '
+            + 'exatamente nula, as órbitas se fecham e o ponto é um '
+            + '<strong>centro</strong>.</p>')
+        + '<p>O centro é o caso delicado: ele é o único tipo cuja '
+        + 'classificação a linearização <em>não</em> garante. Parte real nula '
+        + 'quer dizer que os termos não lineares, que a matriz descartou, '
+        + 'decidem. No pêndulo eles não estragam nada, porque a energia se '
+        + 'conserva; em geral, podem transformar o centro numa espiral lenta '
+        + 'para qualquer um dos dois lados.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: o ciclo-limite ---------------- */
+    function vistaCiclo() {
+      var mu = est.mu;
+      var f = function (x, y) { return fVdp(x, y, mu); };
+      var lim = Math.max(3.2, 1.2 * mu + 1.6);
+      var gr = G.eixos(cv, {
+        altura: 330, xmin: -3.2, xmax: 3.2, ymin: -lim, ymax: lim, divY: 4,
+        marcasX: G.marcasLineares(-3, 3, 5, 0),
+        rotX: 'x', rotY: 'velocidade',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = gr.ct;
+
+      var dt = Math.min(0.004, 0.02 / Math.max(1, mu));
+      var n = Math.round(Math.max(60, 25 * mu) / dt);
+
+      /* o ciclo: parte de cima dele e desenha só o último pedaço */
+      var ciclo = trajeto(f, 2, 0, dt, n);
+      var corte = Math.floor(ciclo.length * 0.75);
+      linha(gr, ciclo.slice(corte), G.COR.mestra, 2.8);
+
+      /* uma de dentro e uma de fora, com o transiente inteiro */
+      linha(gr, trajeto(f, 0.05, 0, dt, n), G.COR.bronze, 1.5);
+      linha(gr, trajeto(f, 3.0, 0, dt, Math.round(n / 2)), G.COR.ambar, 1.5);
+
+      ct.fillStyle = G.COR.vinho;
+      ct.beginPath(); ct.arc(gr.X(0), gr.Y(0), 5, 0, 6.2832); ct.fill();
+      rotulo(ct, 'foco instável', gr.X(0) + 10, gr.Y(0) - 12, G.COR.vinho,
+             'left');
+      rotulo(ct, 'de dentro', gr.X(-1.1), gr.Y(0.25 * lim), G.COR.bronze);
+      rotulo(ct, 'de fora', gr.X(2.1), gr.Y(-0.45 * lim), G.COR.ambar);
+      rotulo(ct, 'o ciclo-limite', gr.X(0), gr.Y(0.86 * lim), G.COR.mestra);
+
+      /* amplitude e período medidos */
+      var ult = ciclo.slice(Math.floor(ciclo.length * 0.6));
+      var amp = 0;
+      ult.forEach(function (p) { amp = Math.max(amp, Math.abs(p[0])); });
+      var zeros = [];
+      for (var i = 0; i + 1 < ult.length; i++) {
+        if (ult[i][0] < 0 && ult[i + 1][0] >= 0) zeros.push(i * dt);
+      }
+      var T = zeros.length >= 2
+        ? (zeros[zeros.length - 1] - zeros[0]) / (zeros.length - 1) : NaN;
+
+      rotulos(['Amplitude do ciclo', 'Período', 'A origem é',
+               'T / μ  (limite 1,6137)']);
+      painel({
+        a: fmt(amp, 4),
+        b: isFinite(T) ? fmt(T, 3) : '—',
+        c: 'foco instável',
+        d: isFinite(T) ? fmt(T / mu, 3) : '—'
+      });
+
+      texto.innerHTML =
+        '<p>A equação é \\(\\ddot{x} - \\mu(1-x^2)\\dot{x} + x = 0\\), e o '
+        + 'truque está no sinal: o amortecimento é <strong>negativo</strong> '
+        + 'para \\(|x| &lt; 1\\), isto é, bombeia energia perto da origem, e '
+        + 'positivo para \\(|x| &gt; 1\\), isto é, dissipa longe dela. Nem o '
+        + 'repouso nem a amplitude grande sobrevivem, e entre os dois sobra '
+        + 'uma órbita fechada.</p>'
+        + '<p>Essa órbita é o <strong>ciclo-limite</strong>, e ela é '
+        + '<em>única</em> e atrai todo mundo. As duas curvas finas partem de '
+        + '\\(x = 0{,}05\\) e de \\(x = 3\\), e terminam na mesma curva: o '
+        + 'programa mostra que as amplitudes coincidem em \\(10^{-9}\\).</p>'
+        + '<p>Isso é uma <strong>oscilação autossustentada</strong>, e é '
+        + 'coisa que sistema linear nenhum faz. No módulo 6 a amplitude vinha '
+        + 'das condições iniciais e qualquer valor servia; aqui ela é '
+        + 'propriedade do sistema, e o sistema a impõe de volta se for '
+        + 'perturbado. É por isso que relógios, corações e neurônios podem '
+        + 'funcionar: eles precisam de um ritmo que se restabeleça sozinho '
+        + 'depois de um empurrão.</p>'
+        + '<p>Com \\(\\mu\\) pequeno o ciclo é quase um círculo de raio 2 e o '
+        + 'período é quase \\(2\\pi\\). Com \\(\\mu\\) grande ele vira uma '
+        + 'oscilação de <strong>relaxação</strong>: cargas lentas seguidas de '
+        + 'quedas rápidas, com \\(T \\simeq (3-2\\ln 2)\\mu\\). O mesmo '
+        + 'amortecimento negativo do flutter do módulo 8, com a diferença de '
+        + 'que aqui a não linearidade o segura.</p>';
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'pendulo') vistaPendulo();
+      else if (est.vista === 'linear') vistaLinear();
+      else vistaCiclo();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {
