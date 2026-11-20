@@ -4114,6 +4114,447 @@
   };
 
 
+  /* =================================================================
+     12. Forças centrais
+     O potencial efetivo responde antes de integrar, as cônicas saem de
+     um único parâmetro, e a roseta mostra o que o 1/r^2 tem de
+     excepcional: fechar. Tudo em unidades em que mu = 1 e o raio
+     inicial vale 1.
+     ================================================================= */
+  REGISTRO.orbitas = function (raiz) {
+    var est = { f: 1.25, beta: 0.0, vista: 'efetivo' };
+
+    var MU = 1, R0 = 1;        // mu = GM, raio inicial
+
+    /* a órbita começa sempre em (1, 0) com velocidade (0, v) */
+    function elementos(f) {
+      var v = f * Math.sqrt(MU / R0);
+      var E = 0.5 * v * v - MU / R0;
+      var L = R0 * v;
+      var a = E < 0 ? -MU / (2 * E) : Infinity;
+      var e = Math.sqrt(Math.max(0, 1 + 2 * E * L * L / (MU * MU)));
+      return { v: v, E: E, L: L, a: a, e: e, p: L * L / MU };
+    }
+
+    function passo(x, y, vx, vy, dt, beta) {
+      function ac(x, y) {
+        var d2 = x * x + y * y, d = Math.sqrt(d2);
+        var g = -MU / (d2 * d) - 3 * beta / Math.pow(d, 5);
+        return [g * x, g * y];
+      }
+      var a1 = ac(x, y);
+      var a2 = ac(x + dt * vx / 2, y + dt * vy / 2);
+      var a3 = ac(x + dt * (vx + dt * a1[0] / 2) / 2,
+                  y + dt * (vy + dt * a1[1] / 2) / 2);
+      var a4 = ac(x + dt * (vx + dt * a2[0] / 2), y + dt * (vy + dt * a2[1] / 2));
+      var nvx = vx + dt * (a1[0] + 2 * a2[0] + 2 * a3[0] + a4[0]) / 6;
+      var nvy = vy + dt * (a1[1] + 2 * a2[1] + 2 * a3[1] + a4[1]) / 6;
+      var nx = x + dt * (vx + (dt / 6) * (a1[0] + a2[0] + a3[0]));
+      var ny = y + dt * (vy + (dt / 6) * (a1[1] + a2[1] + a3[1]));
+      return [nx, ny, nvx, nvy];
+    }
+
+    function orbita(f, beta, voltas, n) {
+      var el0 = elementos(f);
+      var T = isFinite(el0.a) ? 2 * Math.PI * Math.sqrt(Math.pow(el0.a, 3) / MU)
+                              : 12;
+      var dt = voltas * T / n;
+      var x = R0, y = 0, vx = 0, vy = el0.v, pts = [[x, y]];
+      for (var i = 0; i < n; i++) {
+        var q = passo(x, y, vx, vy, dt, beta);
+        x = q[0]; y = q[1]; vx = q[2]; vy = q[3];
+        if (!isFinite(x) || Math.hypot(x, y) > 60) break;
+        pts.push([x, y]);
+      }
+      return pts;
+    }
+
+    var corpo = moldura(raiz, 'Órbitas: o gráfico que responde antes da conta');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'O potencial efetivo', v: 'efetivo' },
+      { rot: 'As quatro cônicas', v: 'conicas' },
+      { rot: 'Quando não fecha', v: 'roseta' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', ',').replace('-', '\u2212');
+    }
+    function fmtm(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', '{,}');
+    }
+
+    function montar() {
+      c1.innerHTML = '';
+      if (est.vista === 'roseta') {
+        deslizante(c1, 'Perturbação \\(\\beta\\) em \\(-\\beta/r^3\\)',
+          0, 0.12, 0.002, est.beta,
+          function (v) { est.beta = v; desenhar(); },
+          function (v) { return v === 0 ? 'nenhuma (Kepler puro)' : fmt(v, 3); });
+      } else {
+        deslizante(c1, 'Velocidade inicial, em \\(v_{\\text{circ}}\\)',
+          0.55, 1.55, 0.01, est.f,
+          function (v) { est.f = v; desenhar(); },
+          function (v) {
+            return fmt(v) + (Math.abs(v - Math.SQRT2) < 0.006 ? ' (escape)' : '');
+          });
+      }
+      tipografar(c1);
+    }
+
+    function nomeConica(e) {
+      if (e < 1e-3) return 'circunferência';
+      if (e < 1) return 'elipse';
+      if (Math.abs(e - 1) < 2e-3) return 'parábola';
+      return 'hipérbole';
+    }
+
+    /* ---------------- vista 1: o potencial efetivo ---------------- */
+    function vistaEfetivo() {
+      var q = elementos(est.f);
+      var Uef = function (r) { return q.L * q.L / (2 * r * r) - MU / r; };
+      var rmin = 0.08, rmax = 6;
+      var g = G.eixos(cv, {
+        altura: 310, xmin: 0, xmax: rmax, ymin: -1.1, ymax: 0.9, divY: 4,
+        marcasX: G.marcasLineares(0, rmax, 6, 0),
+        rotX: 'distância ao centro r', rotY: 'energia',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      /* as duas parcelas, e a soma */
+      function tracar(f, cor, esp, tr) {
+        ct.save();
+        ct.strokeStyle = cor; ct.lineWidth = esp; if (tr) ct.setLineDash(tr);
+        ct.beginPath();
+        var dentro = false;
+        for (var i = 0; i <= 700; i++) {
+          var r = rmin + (rmax - rmin) * i / 700, y = f(r);
+          if (y < g.ymin || y > g.ymax) { dentro = false; continue; }
+          if (!dentro) { ct.moveTo(g.X(r), g.Y(y)); dentro = true; }
+          else ct.lineTo(g.X(r), g.Y(y));
+        }
+        ct.stroke(); ct.restore();
+      }
+      tracar(function (r) { return -MU / r; }, G.COR.clara, 1.6, [5, 4]);
+      tracar(function (r) { return q.L * q.L / (2 * r * r); }, G.COR.ambar,
+             1.6, [5, 4]);
+      tracar(Uef, G.COR.mestra, 2.8);
+      rotulo(ct, 'barreira centrífuga', g.X(0.95), g.Y(0.72), G.COR.ambar,
+             'left');
+      rotulo(ct, '−GM/r', g.X(4.6), g.Y(-MU / 4.6) + 16, G.COR.suave);
+
+      /* a reta da energia e os pontos de retorno */
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 2;
+      ct.beginPath(); ct.moveTo(g.x0, g.Y(q.E)); ct.lineTo(g.x1, g.Y(q.E));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'E', g.x0 + 14, g.Y(q.E) - 12, G.COR.vinho);
+
+      var rp = q.p / (1 + q.e), ra = q.e < 1 ? q.p / (1 - q.e) : Infinity;
+      [rp, ra].forEach(function (r) {
+        if (!isFinite(r) || r > rmax) return;
+        ct.fillStyle = G.COR.vinho;
+        ct.beginPath(); ct.arc(g.X(r), g.Y(q.E), 5, 0, 6.2832); ct.fill();
+      });
+
+      var rc = q.L * q.L / MU;
+      if (rc < rmax) {
+        ct.fillStyle = G.COR.bronze;
+        ct.beginPath(); ct.arc(g.X(rc), g.Y(Uef(rc)), 5, 0, 6.2832); ct.fill();
+        rotulo(ct, 'mínimo: órbita circular', g.X(rc), g.Y(Uef(rc)) + 18,
+               G.COR.bronze);
+      }
+
+      rotulos(['Tipo de órbita', 'Excentricidade', 'Periastro e apoastro',
+               'Energia']);
+      painel({
+        a: nomeConica(q.e),
+        b: fmt(q.e, 4),
+        c: fmt(rp, 3) + (isFinite(ra) ? ' e ' + fmt(ra, 3) : ' e ∞'),
+        d: fmt(q.E, 4)
+      });
+
+      texto.innerHTML =
+        '<p>O momento angular faz duas coisas de uma vez. Primeiro, achata o '
+        + 'movimento num plano, porque \\(\\vet{L}\\) é constante e '
+        + '\\(\\vet{r}\\) é sempre perpendicular a ele. Segundo, elimina o '
+        + 'ângulo da conta de energia: substituindo '
+        + '\\(\\dot\\varphi = L/mr^2\\),</p>'
+        + '<p>\\[ E = \\frac{m\\dot{r}^2}{2} + \\underbrace{\\frac{L^2}{2mr^2} '
+        + '- \\frac{GMm}{r}}_{U_{\\text{ef}}(r)}. \\]</p>'
+        + '<p>O problema de duas dimensões virou um de <strong>uma</strong>, '
+        + 'formalmente idêntico ao do módulo 4. O primeiro termo é a '
+        + '<strong>barreira centrífuga</strong>, repulsiva e divergente na '
+        + 'origem: é ela que impede uma partícula com \\(L \\neq 0\\) de cair '
+        + 'no centro, por mais atraída que seja.</p>'
+        + '<p>E aí o gráfico responde tudo, sem integrar nada. Os cruzamentos '
+        + 'da reta da energia com a curva são os pontos de retorno; entre '
+        + 'eles o movimento é limitado; no mínimo da curva a órbita é '
+        + 'circular. Com \\(E \\ge 0\\) sobra um só ponto de retorno e o '
+        + 'corpo vai embora para nunca mais.</p>'
+        + '<p>Aqui a órbita é uma <strong>' + nomeConica(q.e) + '</strong>, '
+        + 'com \\(e = ' + fmtm(q.e, 4) + '\\).</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: as cônicas ---------------- */
+    function vistaConicas() {
+      var q = elementos(est.f);
+      var p = G.preparar(cv, 330), ct = p.ct, L = p.L, A = p.A;
+      var pts = orbita(est.f, 0, 1.0, 3000);
+
+      /* O enquadramento segue a órbita escolhida, e não um limite fixo: com
+         e = 0,96 o apoastro fica a 49 raios de periastro, e qualquer escala
+         fixa ou some com a elipse ou com a parábola. Pontos muito longe são
+         descartados porque pertencem aos ramos que escapam. */
+      var xi = 0, xf = 1, yi = 0, yf = 0;
+      pts.forEach(function (w) {
+        if (Math.abs(w[0]) > 14 || Math.abs(w[1]) > 14) return;
+        if (w[0] < xi) xi = w[0]; if (w[0] > xf) xf = w[0];
+        if (w[1] < yi) yi = w[1]; if (w[1] > yf) yf = w[1];
+      });
+      var mx = (xi + xf) / 2, my = (yi + yf) / 2;
+      var hx = Math.max((xf - xi) / 2, 1.2), hy = Math.max((yf - yi) / 2, 1.2);
+      var esc = Math.min(L * 0.46 / hx, A * 0.46 / hy);
+      var cx = L / 2 - mx * esc, cy = A / 2 + my * esc;
+      function X(u) { return cx + u * esc; }
+      function Y(u) { return cy - u * esc; }
+
+      /* as outras cônicas, de fundo */
+      [0.8, 1.0, Math.SQRT2, 1.45].forEach(function (f) {
+        var pts = orbita(f, 0, 1.0, 2600);
+        ct.save();
+        ct.strokeStyle = 'rgba(134,180,205,.65)'; ct.lineWidth = 1.3;
+        ct.beginPath();
+        pts.forEach(function (w, i) {
+          if (i === 0) ct.moveTo(X(w[0]), Y(w[1])); else ct.lineTo(X(w[0]), Y(w[1]));
+        });
+        ct.stroke(); ct.restore();
+      });
+
+      /* a órbita escolhida, com setores de área igual */
+      ct.save();
+      ct.fillStyle = 'rgba(168,96,31,.18)';
+      [0, 1].forEach(function (k) {
+        var i0 = k === 0 ? 0 : Math.floor(pts.length * 0.42);
+        var i1 = i0 + Math.floor(pts.length * 0.08);
+        if (i1 >= pts.length) return;
+        ct.beginPath(); ct.moveTo(X(0), Y(0));
+        for (var i = i0; i <= i1; i++) ct.lineTo(X(pts[i][0]), Y(pts[i][1]));
+        ct.closePath(); ct.fill();
+      });
+      ct.restore();
+
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.8;
+      ct.beginPath();
+      pts.forEach(function (w, i) {
+        if (i === 0) ct.moveTo(X(w[0]), Y(w[1])); else ct.lineTo(X(w[0]), Y(w[1]));
+      });
+      ct.stroke(); ct.restore();
+
+      /* o foco */
+      ct.fillStyle = G.COR.ambar;
+      ct.beginPath(); ct.arc(X(0), Y(0), 7, 0, 6.2832); ct.fill();
+      rotulo(ct, 'foco', X(0), Y(0) + 20, G.COR.bronze);
+      ct.fillStyle = G.COR.vinho;
+      ct.beginPath(); ct.arc(X(1), Y(0), 5, 0, 6.2832); ct.fill();
+      rotulo(ct, 'início', X(1) + 10, Y(0) - 12, G.COR.vinho, 'left');
+
+      rotulos(['Tipo', 'Excentricidade', 'Velocidade de escape',
+               'Áreas em sombra']);
+      painel({
+        a: nomeConica(q.e),
+        b: q.e < 1 ? fmt(q.e, 4) : fmt(q.e, 3),
+        c: fmt(Math.SQRT2, 4) + ' v<sub>circ</sub>',
+        d: 'iguais, em tempos iguais'
+      });
+
+      texto.innerHTML =
+        '<p>Resolvendo a equação da órbita com a substituição \\(u = 1/r\\), '
+        + 'que transforma o problema num oscilador harmônico em '
+        + '\\(\\varphi\\), sai</p>'
+        + '<p>\\[ r(\\varphi) = \\frac{p}{1+e\\cos\\varphi}, \\qquad '
+        + 'p = \\frac{L^2}{GMm^2}, \\qquad '
+        + 'e = \\sqrt{1+\\frac{2EL^2}{G^2M^2m^3}}. \\]</p>'
+        + '<p>É a equação de uma <strong>cônica com foco na origem</strong>, '
+        + 'e um único número decide qual: a excentricidade, que depende só de '
+        + '\\(E\\) e \\(L\\). Não é preciso desenhar a órbita para saber o '
+        + 'formato dela.</p>'
+        + '<p>As quatro curvas finas são a mesma física com velocidades '
+        + 'iniciais diferentes: abaixo de \\(v_{\\text{circ}}\\) a elipse tem '
+        + 'o apoastro no ponto de partida, em \\(v_{\\text{circ}}\\) ela vira '
+        + 'circunferência, acima dela o periastro é que fica na partida, e em '
+        + '\\(\\sqrt2\\,v_{\\text{circ}}\\) a energia zera: é a velocidade de '
+        + 'escape do módulo 5, aqui como fronteira entre parábola e '
+        + 'hipérbole.</p>'
+        + '<p>As duas áreas sombreadas correspondem a intervalos de tempo '
+        + '<em>iguais</em>, e têm a mesma área. Essa é a segunda lei de '
+        + 'Kepler, e ela não é sobre gravitação: vale para qualquer força '
+        + 'central, porque só usa que o torque é nulo. O programa mede '
+        + '\\(dA/dt\\) constante e igual a \\(L/2m\\), com o resíduo caindo '
+        + 'como o quadrado do passo.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: a roseta ---------------- */
+    function vistaRoseta() {
+      var f = 1.3, q = elementos(f);
+      var pts = orbita(f, est.beta, 5.0, 9000);
+      var p = G.preparar(cv, 330), ct = p.ct, L = p.L, A = p.A;
+      /* mesmo enquadramento adaptativo da vista das cônicas: a roseta muda
+         de tamanho com beta, e uma escala fixa deixaria metade do quadro
+         vazia num caso e cortaria a figura no outro */
+      var xi = 0, xf = 0, yi = 0, yf = 0;
+      pts.forEach(function (w) {
+        if (w[0] < xi) xi = w[0]; if (w[0] > xf) xf = w[0];
+        if (w[1] < yi) yi = w[1]; if (w[1] > yf) yf = w[1];
+      });
+      var mx = (xi + xf) / 2, my = (yi + yf) / 2;
+      var hx = Math.max((xf - xi) / 2, 1.2), hy = Math.max((yf - yi) / 2, 1.2);
+      var esc = Math.min(L * 0.47 / hx, A * 0.47 / hy);
+      var cx = L / 2 - mx * esc, cy = A / 2 + my * esc;
+
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 1.8;
+      ct.beginPath();
+      pts.forEach(function (w, i) {
+        var x = cx + w[0] * esc, y = cy - w[1] * esc;
+        if (i === 0) ct.moveTo(x, y); else ct.lineTo(x, y);
+      });
+      ct.stroke(); ct.restore();
+
+      ct.fillStyle = G.COR.ambar;
+      ct.beginPath(); ct.arc(cx, cy, 7, 0, 6.2832); ct.fill();
+
+      /* o avanço do periastro, medido na própria trajetória */
+      var ds = pts.map(function (w) { return Math.hypot(w[0], w[1]); });
+
+      /* A detecção é feita em duas passagens. A separação mínima entre dois
+         periastros não pode ser fixada pelo período SEM perturbação: com
+         beta grande o período radial encurta, a peneira deixa passar um
+         periastro em cada dois, e o avanço medido salta de 2π de uma vez.
+         A primeira passagem usa uma peneira frouxa só para estimar o
+         espaçamento típico; a segunda usa esse espaçamento. */
+      function acharMinimos(sep) {
+        var m = [];
+        for (var i = 1; i < ds.length - 1; i++) {
+          if (ds[i] < ds[i - 1] && ds[i] <= ds[i + 1]) {
+            if (m.length && i - m[m.length - 1] < sep) continue;
+            m.push(i);
+          }
+        }
+        return m;
+      }
+      var minimos = acharMinimos(Math.floor(pts.length / 5.0 * 0.12));
+      if (minimos.length >= 3) {
+        var gaps = [];
+        for (var g = 1; g < minimos.length; g++) {
+          gaps.push(minimos[g] - minimos[g - 1]);
+        }
+        gaps.sort(function (a, b) { return a - b; });
+        var mediana = gaps[Math.floor(gaps.length / 2)];
+        minimos = acharMinimos(Math.floor(mediana * 0.6));
+      }
+      /* O ângulo é acumulado ao longo da trajetória, e não lido com atan2 em
+         cada periastro. A diferença importa: o ângulo varrido entre dois
+         periastros passa de 2π, e lido módulo 2π um avanço de 3,2 rad é
+         indistinguível de um recuo de 3,1. Acumulando, a conta é a mesma do
+         programa em Python e vale para qualquer perturbação. */
+      var acum = [0];
+      for (var j = 1; j < pts.length; j++) {
+        var da0 = Math.atan2(pts[j][1], pts[j][0])
+                - Math.atan2(pts[j - 1][1], pts[j - 1][0]);
+        while (da0 > Math.PI) da0 -= 2 * Math.PI;
+        while (da0 < -Math.PI) da0 += 2 * Math.PI;
+        acum.push(acum[j - 1] + da0);
+      }
+      var avanco = NaN;
+      if (minimos.length >= 2) {
+        var n1 = minimos.length - 1;
+        avanco = (acum[minimos[n1]] - acum[minimos[0]]) / n1 - 2 * Math.PI;
+      }
+      minimos.forEach(function (i) {
+        ct.fillStyle = G.COR.vinho;
+        ct.beginPath();
+        ct.arc(cx + pts[i][0] * esc, cy - pts[i][1] * esc, 4, 0, 6.2832);
+        ct.fill();
+      });
+      rotulo(ct, 'periastros', cx + pts[minimos[0]][0] * esc,
+             cy - pts[minimos[0]][1] * esc - 16, G.COR.vinho);
+
+      var prev = 6 * Math.PI * est.beta / (q.L * q.L * q.p);
+      rotulos(['Avanço medido', 'Previsto, 6πβ/L²p',
+               'Medido / previsto', 'Mercúrio, pela RG']);
+      painel({
+        a: isFinite(avanco) ? fmt(avanco, 4) + ' rad' : '—',
+        b: fmt(prev, 4) + ' rad',
+        c: est.beta === 0 ? 'a órbita fecha'
+                          : fmt(avanco / prev, 3),
+        d: '43″ por século'
+      });
+
+      texto.innerHTML =
+        '<p>Com \\(\\beta = 0\\) a órbita <strong>fecha</strong>: o periastro '
+        + 'volta exatamente ao mesmo ângulo, volta após volta. O programa '
+        + 'mede um avanço de \\(10^{-13}\\) rad em seis órbitas, que é erro '
+        + 'de integrador.</p>'
+        + '<p>Isso é excepcional. Pelo <strong>teorema de Bertrand</strong>, '
+        + 'entre todas as leis de potência apenas \\(1/r^2\\) e a mola '
+        + '\\(r^2\\) produzem órbitas fechadas. Qualquer outra lei, e qualquer '
+        + 'perturbação, abre a órbita numa roseta. A regularidade que Kepler '
+        + 'observou não é típica: é um acidente privilegiado da lei do '
+        + 'inverso do quadrado.</p>'
+        + '<p>Acrescente \\(-\\beta/r^3\\) ao potencial e veja o periastro '
+        + 'caminhar. A previsão de primeira ordem é '
+        + '\\(\\Delta\\varphi = 6\\pi\\beta/L^2p\\), e o programa mostra a '
+        + 'razão entre medida e previsão indo a 1 quando \\(\\beta\\) '
+        + 'diminui: 1,004 para a menor perturbação testada.</p>'
+        + '<p>O caso que importa é esse mesmo. A relatividade geral '
+        + 'acrescenta ao potencial newtoniano exatamente um termo em '
+        + '\\(1/r^3\\), e dele sai '
+        + '\\(\\Delta\\varphi = 6\\pi GM/c^2a(1-e^2)\\). Para Mercúrio isso '
+        + 'dá <strong>42,98 segundos de arco por século</strong>, contra 43,0 '
+        + 'observados depois de descontadas as perturbações dos outros '
+        + 'planetas. Foi a primeira confirmação da teoria, e é um número que '
+        + 'a mecânica newtoniana não consegue produzir de jeito nenhum.</p>';
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'efetivo') vistaEfetivo();
+      else if (est.vista === 'conicas') vistaConicas();
+      else vistaRoseta();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {
