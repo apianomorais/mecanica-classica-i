@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistemas de partículas: centro de massa, colisões e espalhamento | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611201015">
+<script src="assets/js/comum.js?v=202611201015"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <a href="aula02.html" class="num" title="Módulo 2: As leis de Newton e os referenciais inerciais">2</a>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <a href="aula04.html" class="num" title="Módulo 4: Trabalho, energia e forças conservativas">4</a>
+      <a href="aula05.html" class="num" title="Módulo 5: Momento linear, impulso e o movimento de foguetes">5</a>
+      <span class="grupo">Oscilações</span>
+      <a href="aula06.html" class="num" title="Módulo 6: O oscilador harmônico simples">6</a>
+      <a href="aula07.html" class="num" title="Módulo 7: Oscilações amortecidas">7</a>
+      <a href="aula08.html" class="num" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer">8</a>
+      <span class="grupo">Caos</span>
+      <a href="aula09.html" class="num" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase">9</a>
+      <a href="aula10.html" class="num" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores">10</a>
+      <span class="grupo">Gravitação</span>
+      <a href="aula11.html" class="num" title="Módulo 11: Gravitação: campo, potencial, cascas e marés">11</a>
+      <a href="aula12.html" class="num" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler">12</a>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. A terceira lei, e o centro de massa</a></li>
+    <li><a href="#s2">2. O referencial que simplifica tudo</a></li>
+    <li><a href="#s3">3. Colisões, e a energia que o momento protege</a></li>
+    <li><a href="#s4">4. Duas dimensões, e os 90° das massas iguais</a></li>
+    <li><a href="#s5">5. Espalhamento: de Rutherford ao núcleo</a></li>
+    <li><a href="#s6">6. No Spyder</a></li>
+    <li><a href="#s7">7. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 13 · Gravitação e forças centrais</p>
+  <h1>Sistemas de partículas: centro de massa, colisões e espalhamento</h1>
+  <p class="subtitulo">Somadas as equações de movimento, as forças internas se cancelam aos pares e sobra uma única equação para o centro de massa. Dela saem a conservação do momento, a teoria das colisões e, no limite em que só se observa quem entra e quem sai, o espalhamento que revelou o núcleo atômico.</p>
+  <h2 id="s1">1. A terceira lei, e o centro de massa</h2>
+
+<p>Até aqui, quase tudo foi uma partícula só, ou duas. Um sistema de
+\(N\) partículas parece outro problema, com \(N\) equações acopladas e
+nenhuma esperança de solução. E é mesmo, em geral. Mas algumas perguntas
+sobre o sistema inteiro têm resposta sem que se resolva nada.</p>
+
+<p>Some as \(N\) equações de movimento. Cada partícula sofre forças de
+todas as outras, mais uma força externa:</p>
+
+\[ m_i\ddot{\vet{r}}_i = \vet{F}_i^{\text{ext}}
+   + \sum_{j \neq i}\vet{F}_{ij}. \]
+
+<p>Na soma sobre \(i\), o termo \(\vet{F}_{ij}\) aparece junto com
+\(\vet{F}_{ji}\), e pela terceira lei os dois se cancelam. <em>Todas</em>
+as forças internas somem, aos pares, por mais complicadas que sejam.
+Definindo a posição do centro de massa,</p>
+
+<div class="bloco def">
+<p class="rotulo">O teorema do centro de massa</p>
+\[ \vet{R} = \frac{1}{M}\sum_i m_i\vet{r}_i, \qquad M = \sum_i m_i
+   \quad\Longrightarrow\quad
+   M\ddot{\vet{R}} = \vet{F}^{\text{ext}}_{\text{total}}. \]
+<p>O centro de massa se move como uma única partícula de massa \(M\) sob a
+resultante das forças externas. Nada do que acontece dentro do sistema
+interfere nisso.</p>
+</div>
+
+<div data-widget="particulas"></div>
+
+<p>O programa testa isso com seis partículas ligadas por molas entre todos
+os pares, mais uma repulsão em \(1/r^2\), caindo num campo de gravidade.
+As trajetórias individuais são um emaranhado. O centro de massa percorre
+19 m numa parábola, e se afasta da parábola prevista em
+\(3\times10^{-14}\) m.</p>
+
+<div class="bloco alerta">
+<p class="rotulo">Quando refinar o passo piora</p>
+<p>Esse desvio <strong>cresce</strong> quando o passo de integração
+diminui: \(3\times10^{-14}\) com \(dt = 2\times10^{-4}\) e
+\(2\times10^{-13}\) com \(dt = 5\times10^{-5}\). É o contrário do que
+acontece em todo o resto do curso, e não é defeito. O teorema do centro de
+massa é exato: não há erro de truncamento a reduzir, e o que resta é
+arredondamento, que se acumula com o número de passos. Quando uma conta já
+está certa até a última casa, refiná-la só a piora.</p>
+</div>
+
+<p>Sem força externa, \(\ddot{\vet{R}} = 0\), e o momento total
+\(\vet{P} = M\dot{\vet{R}}\) se conserva. Essa é a lei de conservação mais
+geral da mecânica newtoniana, e ela não depende de o sistema ser rígido,
+elástico, dissipativo, ou coisa alguma. Depende só da terceira lei.</p>
+
+  <h2 id="s2">2. O referencial que simplifica tudo</h2>
+
+<p>Há um referencial em que tudo fica mais simples, e vale a pena mudar
+para ele antes de qualquer conta de colisão: o que viaja com o centro de
+massa. Nele, por construção, o momento total é zero.</p>
+
+<p>Para duas partículas, escreva as velocidades como a do centro de massa
+mais o resto. A energia cinética se separa em duas parcelas que não se
+misturam:</p>
+
+<div class="bloco def">
+<p class="rotulo">A energia cinética se parte em duas</p>
+\[ K = \underbrace{\frac{MV^2}{2}}_{\text{do centro de massa}}
+     + \underbrace{\frac{\mu v_{\text{rel}}^2}{2}}_{\text{do movimento relativo}},
+  \qquad \mu = \frac{m_1m_2}{m_1+m_2}. \]
+<p>Os termos cruzados se cancelam, e a massa reduzida do módulo 6 reaparece
+aqui sem ter sido convidada.</p>
+</div>
+
+<p>Essa separação decide, sozinha, quanta energia uma colisão pode
+dissipar. A primeira parcela é intocável: o momento total se conserva, logo
+\(V\) não muda, logo \(MV^2/2\) não muda. Só a segunda parcela está
+disponível. Mesmo numa batida em que os dois corpos saem grudados, sobra
+\(MV^2/2\), e sobra porque a conservação do momento obriga.</p>
+
+<p>No referencial do centro de massa isso fica visível: os dois momentos
+são sempre opostos, antes e depois, e a colisão elástica é apenas uma
+<strong>reflexão</strong> do vetor velocidade relativa, que mantém o módulo
+e muda a direção. O problema de duas incógnitas vira um problema de um
+ângulo.</p>
+
+  <h2 id="s3">3. Colisões, e a energia que o momento protege</h2>
+
+<p>Na colisão unidimensional, a conservação do momento dá uma equação e
+faltam duas incógnitas. A segunda equação é empírica, e se escreve com o
+<strong>coeficiente de restituição</strong>:</p>
+
+\[ v_2 - v_1 = -e\,(u_2-u_1), \qquad 0 \leq e \leq 1. \]
+
+<p>A velocidade relativa inverte de sinal e encolhe por um fator \(e\).
+Com \(e = 1\) ela só inverte, e a colisão é elástica; com \(e = 0\) os dois
+corpos saem juntos. Resolvendo as duas equações:</p>
+
+\[ v_1 = \frac{m_1u_1+m_2u_2 + m_2e\,(u_2-u_1)}{M}, \qquad
+   v_2 = \frac{m_1u_1+m_2u_2 + m_1e\,(u_1-u_2)}{M}. \]
+
+<p>E a energia perdida sai da seção anterior sem esforço nenhum: a colisão
+retira do movimento relativo a fração \(1-e^2\), e o centro de massa não é
+tocado.</p>
+
+\[ \Delta K = \frac{\mu\,v_{\text{rel}}^2}{2}\left(1-e^2\right). \]
+
+<p>O programa confere isso com \(m_1 = 2\) kg a \(+5\) m/s contra
+\(m_2 = 3\) kg a \(-1\) m/s:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(e\)</th><th>\(v_1\)</th><th>\(v_2\)</th>
+<th>\(K_f/K_i\)</th><th>perda prevista</th><th>perda medida</th></tr></thead>
+<tbody>
+<tr><td>1,0</td><td>−2,20</td><td>+3,80</td><td>1,000000</td>
+<td>0,0 J</td><td>0,0 J</td></tr>
+<tr><td>0,8</td><td>−1,48</td><td>+3,32</td><td>0,706566</td>
+<td>7,776 J</td><td>7,776 J</td></tr>
+<tr><td>0,5</td><td>−0,40</td><td>+2,60</td><td>0,388679</td>
+<td>16,200 J</td><td>16,200 J</td></tr>
+<tr><td>0,0</td><td>+1,40</td><td>+1,40</td><td>0,184906</td>
+<td>21,600 J</td><td>21,600 J</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Na última linha os dois saem com a mesma velocidade, que é a do centro
+de massa, e ainda assim 18,5 % da energia inicial sobrevive. Essa é a
+parcela que o momento protege.</p>
+
+<div class="bloco fisica">
+<p class="rotulo">O que o \(e\) esconde</p>
+<p>O coeficiente de restituição não é uma propriedade do material, por mais
+que as tabelas o apresentem assim. Ele depende da velocidade do impacto, da
+geometria dos corpos, da temperatura, e cai quando a batida é mais forte,
+porque a deformação plástica aumenta. Usá-lo é admitir que não se vai olhar
+para dentro da colisão: é um parâmetro de ignorância, útil e honesto,
+contanto que não se finja que é constante.</p>
+</div>
+
+  <h2 id="s4">4. Duas dimensões, e os 90° das massas iguais</h2>
+
+<p>Em duas dimensões, a conservação do momento dá duas equações e as
+incógnitas são quatro. Falta uma informação, que é o parâmetro de impacto,
+ou equivalentemente o ângulo de espalhamento no referencial do centro de
+massa. Fixado esse ângulo, tudo o mais se determina.</p>
+
+<p>Um caso vale ser memorizado. Duas massas <strong>iguais</strong>, uma
+delas parada, em colisão elástica. A conservação do momento dá
+\(\vet{u} = \vet{v}_1+\vet{v}_2\) e a da energia dá
+\(u^2 = v_1^2+v_2^2\). Elevando a primeira ao quadrado e comparando:</p>
+
+\[ \vet{v}_1\cdot\vet{v}_2 = 0. \]
+
+<div class="destaque">
+<p>Massas iguais, colisão elástica, alvo parado: os dois saem em ângulo
+reto, qualquer que seja o quanto a batida foi de raspão.</p>
+</div>
+
+<p>O programa verifica para cinco ângulos de espalhamento diferentes, e o
+produto escalar dá \(10^{-16}\) em todos. Com massas diferentes o ângulo
+deixa de ser reto imediatamente: \(76{,}9°\) com um alvo de metade da massa
+e \(103{,}1°\) com um alvo do dobro, para a mesma batida. Uma fotografia de
+câmara de bolhas, com dois rastros a 90°, está dizendo que as duas
+partículas têm a mesma massa.</p>
+
+<h3>Laboratório e centro de massa</h3>
+
+<p>Traduzir o ângulo de um referencial para o outro é somar a velocidade do
+centro de massa, o que dá</p>
+
+\[ \tg\theta_{\text{lab}} =
+   \frac{\sen\theta_{\text{cm}}}{\cos\theta_{\text{cm}} + m_1/m_2}. \]
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(m_1/m_2\)</th><th>\(\theta_{\text{cm}}=60°\)</th>
+<th>\(120°\)</th><th>\(180°\)</th><th>\(\theta_{\text{lab}}\) máximo</th></tr></thead>
+<tbody>
+<tr><td>0,2</td><td>51,05°</td><td>109,11°</td><td>180,00°</td><td>180°</td></tr>
+<tr><td>1,0</td><td>30,00°</td><td>60,00°</td><td>90,00°</td><td>90°</td></tr>
+<tr><td>2,0</td><td>19,11°</td><td>30,00°</td><td>0,00°</td><td>30,00°</td></tr>
+<tr><td>5,0</td><td>8,95°</td><td>10,89°</td><td>0,00°</td><td>11,54°</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A coluna de \(180°\) merece ser lida devagar. Para um projétil mais
+pesado que o alvo ela dá <strong>zero</strong>: bater de frente e voltar no
+referencial do centro de massa significa, no laboratório, seguir em frente,
+só que mais devagar. O recuo só chega ao laboratório quando o alvo é
+pesado o bastante.</p>
+
+<p>E há um teto. Quando \(m_1 &gt; m_2\), o denominador nunca troca de
+sinal, e o ângulo de laboratório não passa de</p>
+
+\[ \sen\theta_{\max} = \frac{m_2}{m_1}. \]
+
+<p>Uma bola de boliche não volta de um pino, por mais perfeita que seja a
+pontaria. Guarde isso para a seção seguinte.</p>
+
+  <h2 id="s5">5. Espalhamento: de Rutherford ao núcleo</h2>
+
+<p>Espalhamento é a colisão vista de longe: não se observa o que acontece
+no encontro, apenas por onde a partícula entrou e por onde saiu. Foi assim
+que o núcleo atômico foi descoberto, e continua sendo assim que se estuda
+tudo o que é pequeno demais para ser visto.</p>
+
+<p>Uma partícula de carga positiva vinda do infinito contra um núcleo
+também positivo segue uma órbita do módulo 12 com energia positiva: uma
+hipérbole. O ângulo de deflexão é o ângulo entre as assíntotas, e a mesma
+equação da órbita dá</p>
+
+\[ \tg\frac{\theta}{2} = \frac{k}{m v_\infty^2\,b}, \]
+
+<p>com \(b\) o parâmetro de impacto. O programa integra as trajetórias e
+confere:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(b\)</th><th>\(\theta\) medido</th><th>\(\theta\) previsto</th>
+<th>diferença</th></tr></thead>
+<tbody>
+<tr><td>0,20</td><td>2,74671</td><td>2,74680</td><td>\(9{,}6\times10^{-5}\)</td></tr>
+<tr><td>1,00</td><td>1,57055</td><td>1,57080</td><td>\(2{,}5\times10^{-4}\)</td></tr>
+<tr><td>5,00</td><td>0,39469</td><td>0,39479</td><td>\(9{,}6\times10^{-5}\)</td></tr>
+<tr><td>10,00</td><td>0,19929</td><td>0,19934</td><td>\(5{,}0\times10^{-5}\)</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="bloco alerta">
+<p class="rotulo">A diferença não é erro de integrador</p>
+<p>Ela cai exatamente como \(1/r_{\text{ini}}\): dobrando a distância de
+onde a partícula parte, o desvio cai pela metade, em todas as linhas. É o
+preço de medir em distância finita um ângulo que só existe no infinito. O
+impulso que falta receber depois de \(r_{\text{ini}}\) é a integral de
+\(k/r^2\,dt\), que vale \(k/mv\,r_{\text{ini}}\). Uma força de alcance
+infinito não deixa a partícula livre em lugar nenhum, e isso vai importar
+daqui a dois parágrafos.</p>
+</div>
+
+<h3>A seção de choque</h3>
+
+<p>Num experimento não se escolhe \(b\): o feixe chega com todos os
+parâmetros de impacto, e o que se conta é quantas partículas saem em cada
+direção. Partículas que entram num anel de raio \(b\) e espessura \(db\)
+saem num anel de ângulo \(\theta\) e espessura \(d\theta\), de modo que</p>
+
+\[ \der{\sigma}{\Omega}
+   = \frac{b}{\sen\theta}\left|\der{b}{\theta}\right|. \]
+
+<p>Com \(b = (k/mv^2)\cotg(\theta/2)\), a derivada sai em três linhas e
+dá a fórmula de Rutherford:</p>
+
+<div class="bloco def">
+<p class="rotulo">A seção de choque de Rutherford</p>
+\[ \der{\sigma}{\Omega}
+   = \left(\frac{k}{2mv_\infty^2}\right)^2
+     \frac{1}{\sen^4(\theta/2)}. \]
+</div>
+
+<p>O programa monta a seção de choque numericamente, derivando \(b(\theta)\)
+nas trajetórias integradas, e compara: a razão vale 1 em três casas ao
+longo de quatro ordens de grandeza da seção de choque, de
+\(2{,}6\times10^{-1}\) a \(2{,}0\times10^{3}\).</p>
+
+<p>Repare que a integral dessa expressão sobre todos os ângulos
+<strong>diverge</strong> em \(\theta \to 0\). A seção de choque total de
+Rutherford é infinita, e o motivo é o do bloco acima: alcance infinito. Num
+alvo real a divergência some, porque a partir do raio atômico os elétrons
+blindam o núcleo e o potencial deixa de ser \(1/r\).</p>
+
+<div class="bloco fisica">
+<p class="rotulo">1911</p>
+<p>No átomo de Thomson a carga positiva estava espalhada por todo o volume,
+e o campo interno era fraco: nenhuma partícula alfa poderia ser desviada de
+mais do que uma fração de grau. Geiger e Marsden encontraram uma em oito
+mil voltando para trás. Pela seção 4, voltar para trás exige um alvo mais
+pesado que o projétil, e pelo \(1/\sen^4\) exige que o campo continue
+crescendo até distâncias muito pequenas: o alvo tinha de ser pesado,
+concentrado e minúsculo. Rutherford comparou o resultado a atirar uma
+granada numa folha de papel e vê-la ricochetear. A conta que ele fez para
+se convencer é, essencialmente, a desta seção.</p>
+</div>
+
+  <h2 id="s6">6. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/particulas.py">
+    <span class="numero">Programa</span>
+    <h3>particulas.py</h3>
+    <p>Integra seis partículas com forças internas emaranhadas e segue o
+    centro de massa, resolve a colisão com restituição, verifica os 90° das
+    massas iguais, traduz entre laboratório e centro de massa, e monta a
+    seção de choque de Rutherford a partir das trajetórias.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>O centro de massa segue a parábola prevista com desvio de
+\(3\times10^{-14}\) m em 19 m de voo, e o desvio cresce quando o passo
+diminui, porque só resta arredondamento.</li>
+<li>O momento total, sem campo externo, muda de \(8\times10^{-15}\) em
+valor relativo.</li>
+<li>A perda de energia na colisão bate com \(\mu v_{\text{rel}}^2(1-e^2)/2\)
+em todas as casas impressas.</li>
+<li>O produto escalar das velocidades finais, para massas iguais, dá
+\(10^{-16}\) em qualquer ângulo.</li>
+<li>O desvio de Rutherford bate com a fórmula, e a diferença cai como
+\(1/r_{\text{ini}}\), com razão 2,000 em cada linha.</li>
+<li>A seção de choque medida dá a fórmula em três casas.</li>
+</ul>
+
+<div class="bloco ex">
+<p><strong>Para mexer.</strong> Troque a repulsão por atração, mudando o
+sinal de \(k\), e refaça o leque: o desvio muda de sentido e aparecem
+trajetórias que dão a volta. Depois ponha o expoente da força em 2,5 e
+meça a seção de choque: o \(1/\sen^4(\theta/2)\) some, e é essa
+sensibilidade que faz do espalhamento um instrumento. Por fim, implemente a
+colisão de três corpos alinhados, solte-os com um pequeno desencontro e
+confirme que o centro de massa continua sem tomar conhecimento.</p>
+</div>
+
+<div class="bloco fisica">
+<p class="rotulo">Fim do curso, e o que vem depois</p>
+<p>O curso começou com \(\vet{F} = m\vet{a}\) e termina usando a terceira
+lei para falar de um sistema inteiro sem resolvê-lo. O padrão se repetiu:
+quase sempre, o que deu resposta não foi integrar a equação de movimento, e
+sim encontrar a quantidade que não muda. Energia no módulo 4, momento
+angular no 12, momento total aqui.</p>
+<p>Mecânica Clássica II vira esse padrão do avesso. Em vez de procurar as
+constantes depois de escrever as forças, parte-se de uma única função
+escalar e as constantes aparecem como consequência das simetrias que ela
+tem. A órbita de Kepler, que custou uma aula inteira aqui, sai lá em uma
+página; o pêndulo duplo, que é impensável com forças de vínculo, fica
+tratável. Vale ter este curso perto quando aquele começar: o formalismo
+novo só convence quem já sabe quanto trabalho ele está poupando.</p>
+</div>
+
+  <h2 id="s7">7. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">13.1  As duas versões da terceira lei</span>
+  <p>Deduza \(M\ddot{\vet{R}} = \vet{F}^{\text{ext}}\) somando as
+     equações de movimento. Depois mostre que a conservação do
+     <em>momento angular</em> total exige mais do que a terceira lei na
+     forma \(\vet{F}_{ij} = -\vet{F}_{ji}\): exige que as forças internas
+     sejam dirigidas ao longo da reta que une os dois corpos. Dê um exemplo
+     de força que não satisfaz essa segunda condição.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O centro de massa.</b> Somando sobre \(i\):</p>
+     <p>\[ \sum_i m_i\ddot{\vet{r}}_i = \sum_i\vet{F}_i^{\text{ext}}
+        + \sum_i\sum_{j\neq i}\vet{F}_{ij}. \]</p>
+     <p>A soma dupla percorre cada par duas vezes, uma como \(\vet{F}_{ij}\)
+     e outra como \(\vet{F}_{ji}\), e os dois se cancelam. O lado esquerdo é
+     \(M\ddot{\vet{R}}\) por definição.</p>
+     <p><b>O momento angular.</b> Derivando
+     \(\vet{L} = \sum_i\vet{r}_i\cruz m_i\dot{\vet{r}}_i\), o termo
+     \(\dot{\vet{r}}_i\cruz\dot{\vet{r}}_i\) some e sobra o torque. Para as
+     forças internas, agrupando o par \(ij\):</p>
+     <p>\[ \vet{r}_i\cruz\vet{F}_{ij} + \vet{r}_j\cruz\vet{F}_{ji}
+        = (\vet{r}_i-\vet{r}_j)\cruz\vet{F}_{ij}, \]</p>
+     <p>usando apenas \(\vet{F}_{ji} = -\vet{F}_{ij}\). Esse produto
+     vetorial só é nulo se \(\vet{F}_{ij}\) for <b>paralelo</b> a
+     \(\vet{r}_i-\vet{r}_j\).</p>
+     <p><b>Os nomes.</b> A condição \(\vet{F}_{ij} = -\vet{F}_{ji}\) é a
+     forma <em>fraca</em> da terceira lei, e basta para o momento linear. A
+     forma <em>forte</em> exige também que as forças estejam na linha que
+     une os corpos, e é ela que o momento angular pede. Todas as forças
+     centrais satisfazem as duas.</p>
+     <p><b>O contraexemplo.</b> A força magnética entre duas cargas em
+     movimento viola as duas formas. Duas cargas se movendo
+     perpendicularmente uma à outra exercem forças que nem são opostas nem
+     são colineares, e o momento do par não se conserva. A física não está
+     errada: o que falta na conta é o momento carregado pelo próprio campo
+     eletromagnético, que é um terceiro participante. Somando ele, a
+     conservação volta. Esse é o preço de tratar interações que se propagam
+     com velocidade finita como se fossem instantâneas, e é um dos motivos
+     pelos quais a mecânica newtoniana não sobrevive à eletrodinâmica
+     sem reparos.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">13.2  O teorema de König, e a massa reduzida outra vez</span>
+  <p>Escrevendo \(\vet{r}_i = \vet{R}+\vet{r}_i'\), mostre que</p>
+     <p>\[ K = \frac{MV^2}{2} + \sum_i\frac{m_iv_i'^2}{2}, \]</p>
+     <p>isto é, que os termos cruzados somem. Depois particularize para duas
+     partículas e obtenha \(K = MV^2/2 + \mu v_{\text{rel}}^2/2\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A separação.</b> Derivando a decomposição,
+     \(\vet{v}_i = \vet{V}+\vet{v}_i'\), e elevando ao quadrado:</p>
+     <p>\[ K = \sum_i\frac{m_i}{2}\left(V^2 + 2\vet{V}\cdot\vet{v}_i'
+        + v_i'^2\right). \]</p>
+     <p>O primeiro termo dá \(MV^2/2\) e o terceiro é a soma pedida. O
+     cruzado vale \(\vet{V}\cdot\sum_i m_i\vet{v}_i'\), e essa soma é o
+     momento total <em>medido no referencial do centro de massa</em>, que é
+     zero por definição. É o único passo da conta, e ele é o que dá sentido
+     à decomposição: as duas parcelas não se misturam.</p>
+     <p><b>Duas partículas.</b> No referencial do CM,
+     \(\vet{v}_1' = (m_2/M)\vet{v}_{\text{rel}}\) e
+     \(\vet{v}_2' = -(m_1/M)\vet{v}_{\text{rel}}\), com
+     \(\vet{v}_{\text{rel}} = \vet{v}_1-\vet{v}_2\). Somando:</p>
+     <p>\[ \frac{m_1}{2}\frac{m_2^2}{M^2}v_{\text{rel}}^2
+        + \frac{m_2}{2}\frac{m_1^2}{M^2}v_{\text{rel}}^2
+        = \frac{m_1m_2}{2M}v_{\text{rel}}^2
+        = \frac{\mu v_{\text{rel}}^2}{2}. \]</p>
+     <p><b>Para que serve.</b> Essa é a conta que decide quanta energia uma
+     colisão pode dissipar, e ela responde antes de se saber qualquer coisa
+     sobre o mecanismo da batida. O que o momento protege é \(MV^2/2\); o
+     que está em jogo é \(\mu v_{\text{rel}}^2/2\). A massa reduzida, que
+     apareceu no módulo 6 como truque de dois corpos e no 12 como redução do
+     problema de Kepler, é a mesma coisa aqui.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">13.3  O pêndulo balístico</span>
+  <p>Uma bala de 10 g se aloja num bloco de 2,00 kg pendurado por um fio.
+     O conjunto sobe 8,0 cm. Ache a velocidade da bala, calcule a fração da
+     energia cinética que se perdeu e explique por que o problema <em>não</em>
+     pode ser resolvido por conservação de energia do começo ao fim.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>As duas fases, e a ordem certa.</b> A colisão é
+     instantânea e totalmente inelástica: vale momento, não vale energia. A
+     subida é lenta e sem atrito: vale energia, não vale momento (o fio
+     exerce força externa). Resolver na ordem errada é o erro clássico
+     aqui.</p>
+     <p><b>A subida.</b> \(v_{\text{bloco}} = \sqrt{2gh}
+     = \sqrt{2(9{,}81)(0{,}080)} = 1{,}253\) m/s.</p>
+     <p><b>A colisão.</b> \(mv = (M+m)v_{\text{bloco}}\), então</p>
+     <p>\[ v = \frac{2{,}010}{0{,}010}\times 1{,}253
+        = \underline{252\ \mathrm{m/s}}. \]</p>
+     <p><b>A energia.</b> \(K_i = \tfrac12(0{,}010)(252)^2 = 317\) J contra
+     \(K_f = \tfrac12(2{,}010)(1{,}253)^2 = 1{,}58\) J: sobra
+     \(0{,}50\ \%\). A fração que resta é exatamente \(m/(M+m)\), e isso
+     não é coincidência: pelo exercício anterior, o que sobrevive é
+     \(MV^2/2\), e a razão sai em duas linhas.</p>
+     <p><b>Por que não dá para usar energia na colisão.</b> Porque 99,5 % da
+     energia vai para deformação, calor e som dentro do bloco. Se alguém
+     insistir em conservar energia na primeira fase, obtém
+     \(v = \sqrt{2gh}\times\sqrt{(M+m)/m} = 17{,}8\) m/s, catorze vezes
+     menor que o valor certo.</p>
+     <p><b>O que torna o aparelho útil.</b> Justamente essa perda enorme. A
+     grandeza medida, \(h\), depende da velocidade da bala de maneira
+     linear, e não quadrática, o que torna o instrumento preciso com uma
+     régua comum. O pêndulo balístico foi inventado por Benjamin Robins em
+     1742 e foi o primeiro meio confiável de medir velocidade de
+     projétil.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">13.4  Por que o moderador de um reator é leve</span>
+  <p>Mostre que, numa colisão elástica frontal com um alvo parado, a
+     energia que resta ao projétil é
+     \(E_f/E_i = \left[(A-1)/(A+1)\right]^2\), com \(A = m_2/m_1\). Calcule
+     para hidrogênio, carbono e urânio-238, e estime quantas colisões um
+     nêutron de 2 MeV precisa para chegar a 0,025 eV em cada um.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A fórmula.</b> Da colisão unidimensional com \(e = 1\) e
+     \(u_2 = 0\):</p>
+     <p>\[ v_1 = \frac{m_1-m_2}{m_1+m_2}u_1
+        \quad\Longrightarrow\quad
+        \frac{E_f}{E_i} = \left(\frac{1-A}{1+A}\right)^2 \equiv \alpha. \]</p>
+     <p><b>Os números</b> (com \(m_1\) o nêutron):</p>
+     <p>hidrogênio, \(A = 1\): \(\alpha = 0\), o nêutron <b>para</b>;<br>
+     carbono, \(A = 12\): \(\alpha = (11/13)^2 = 0{,}716\);<br>
+     urânio, \(A = 238\): \(\alpha = (237/239)^2 = 0{,}983\).</p>
+     <p><b>Quantas colisões.</b> Numa batida qualquer, e não frontal, a
+     energia final se distribui uniformemente entre \(\alpha E_i\) e
+     \(E_i\), e o que é constante em média é o logaritmo:</p>
+     <p>\[ \xi = \med{\ln\frac{E_i}{E_f}}
+        = 1 + \frac{\alpha\ln\alpha}{1-\alpha}. \]</p>
+     <p>O número de colisões é \(\ln(E_0/E_t)/\xi\), com
+     \(\ln(2\times10^6/0{,}025) = 18{,}2\):</p>
+     <p>hidrogênio, \(\xi = 1\): <b>18</b> colisões;<br>
+     carbono, \(\xi = 0{,}158\): <b>115</b> colisões;<br>
+     urânio, \(\xi = 0{,}0084\): <b>2170</b> colisões.</p>
+     <p><b>A conclusão de projeto.</b> Moderar nêutrons pede núcleos leves,
+     e a água comum seria perfeita se não fosse por um detalhe que esta
+     conta não vê: o hidrogênio <em>absorve</em> nêutrons com facilidade,
+     formando deutério. Daí a água pesada e o grafite, que moderam pior mas
+     não comem o nêutron. O reator de Fermi, em 1942, foi de grafite por
+     essa razão, e o programa alemão perdeu a guerra do reator em parte por
+     ter descartado o grafite com base numa medida de absorção feita com
+     material impuro.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">13.5  Esferas rígidas, e o que a seção de choque mede</span>
+  <p>Calcule \(d\sigma/d\Omega\) para o espalhamento de uma esfera
+     rígida de raio \(R\), mostrando que é isotrópico e que a seção de
+     choque total vale \(\pi R^2\). Compare com Rutherford e diga o que a
+     forma angular está informando em cada caso.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A geometria.</b> A partícula atinge a esfera num ponto em que
+     a normal faz ângulo \(\gamma\) com a direção de incidência, e reflete
+     especularmente, de modo que \(\theta = \pi - 2\gamma\). O parâmetro de
+     impacto é \(b = R\sen\gamma = R\cos(\theta/2)\).</p>
+     <p><b>A seção de choque.</b> Com
+     \(|db/d\theta| = (R/2)\sen(\theta/2)\):</p>
+     <p>\[ \der{\sigma}{\Omega} = \frac{b}{\sen\theta}\left|\der{b}{\theta}\right|
+        = \frac{R^2\cos(\theta/2)\sen(\theta/2)}{2\sen\theta}
+        = \frac{R^2}{4}, \]</p>
+     <p>usando \(\sen\theta = 2\sen(\theta/2)\cos(\theta/2)\). É
+     independente de \(\theta\): o espalhamento é <b>isotrópico</b>.
+     Integrando sobre os \(4\pi\) esterradianos,
+     \(\sigma = \pi R^2\), que é a área da sombra da esfera, como o bom
+     senso exige.</p>
+     <p><b>A comparação.</b> O contraste com Rutherford é o ponto do
+     exercício. Esfera rígida: alcance finito, seção total finita,
+     distribuição plana. Coulomb: alcance infinito, seção total divergente,
+     distribuição com um pico feroz em \(\theta\) pequeno.</p>
+     <p><b>E o que isso informa.</b> A forma angular é uma impressão digital
+     do potencial. Um espalhamento isotrópico diz que o alvo tem uma borda
+     bem definida; um \(1/\sen^4(\theta/2)\) diz que o potencial é \(1/r\)
+     até distâncias muito menores que o alvo. Medir a distribuição angular e
+     ler dela o potencial é o que se faz, com a mesma lógica, desde Geiger e
+     Marsden até os aceleradores de hoje. Foi assim, aliás, que se descobriu
+     que o próton não é pontual: em energia alta a distribuição se afasta da
+     de uma carga pontual, e o desvio mede o tamanho dele.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">13.6  O ângulo máximo de um projétil pesado</span>
+  <p>Demonstre que, se \(m_1 &gt; m_2\), o ângulo de espalhamento no
+     laboratório não pode passar de \(\sen\theta_{\max} = m_2/m_1\). Use o
+     argumento geométrico das velocidades, e não a fórmula da tangente.
+     Depois explique o que esse resultado tem a ver com 1911.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A construção.</b> A velocidade do projétil no laboratório é
+     sempre</p>
+     <p>\[ \vet{v}_1 = \vet{V} + \vet{v}_1', \]</p>
+     <p>com \(\vet{V}\) a velocidade do centro de massa, fixa, e
+     \(\vet{v}_1'\) a velocidade no referencial do CM, que na colisão
+     elástica <b>mantém o módulo</b> e só gira. Então a ponta de
+     \(\vet{v}_1\) percorre uma circunferência de raio
+     \(v_1' = u_1m_2/M\), centrada na ponta de \(\vet{V}\), cujo módulo é
+     \(V = u_1m_1/M\).</p>
+     <p><b>Os dois casos.</b> Se \(v_1' &gt; V\), isto é \(m_2 &gt; m_1\), a
+     origem fica <em>dentro</em> da circunferência, e \(\vet{v}_1\) pode
+     apontar para qualquer lado: todos os ângulos são possíveis, inclusive
+     180°. Se \(v_1' &lt; V\), a origem fica <em>fora</em>, e o vetor só
+     alcança os pontos da circunferência vistos da origem: há um ângulo
+     máximo, o da tangente.</p>
+     <p><b>O ângulo.</b> No triângulo retângulo formado pelo centro, o ponto
+     de tangência e a origem, o cateto oposto é o raio e a hipotenusa é a
+     distância ao centro:</p>
+     <p>\[ \sen\theta_{\max} = \frac{v_1'}{V}
+        = \frac{u_1m_2/M}{u_1m_1/M} = \frac{m_2}{m_1}. \]</p>
+     <p>Para \(m_1 = m_2\) a origem cai sobre a circunferência e o máximo é
+     90°, que é o resultado da seção 4 visto por outro caminho.</p>
+     <p><b>E 1911.</b> Partículas alfa (massa 4) voltando para trás numa
+     folha de ouro exigem um alvo mais pesado que 4, e portanto não podem
+     estar batendo em elétrons, que são dois mil vezes mais leves: contra um
+     elétron, a alfa nem sente. O alvo tinha de ser pesado. Pelo
+     \(1/\sen^4(\theta/2)\), tinha também de ser concentrado, porque uma
+     carga espalhada não produz campo forte o bastante perto do centro. As
+     duas exigências juntas, pesado e minúsculo, são o núcleo atômico, e
+     ambas saem de contas que cabem nesta página.</p>
+  </div>
+  </details>
+</div>
+
+
+  
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611201015"></script>
+</body>
+</html>

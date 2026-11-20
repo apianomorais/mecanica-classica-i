@@ -4555,6 +4555,440 @@
   };
 
 
+  REGISTRO.particulas = function (raiz) {
+    var est = { vista: 'cm', k: 30, e: 1.0, razao: 1.0, kmv: 1.0 };
+
+    var corpo = moldura(raiz, 'Partículas: o centro de massa, a colisão e o desvio');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'O centro de massa', v: 'cm' },
+      { rot: 'A colisão, nos dois referenciais', v: 'colisao' },
+      { rot: 'O leque de Rutherford', v: 'leque' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', ',').replace('-', '\u2212');
+    }
+
+    function montar() {
+      c1.innerHTML = '';
+      if (est.vista === 'cm') {
+        deslizante(c1, 'Rigidez das molas internas',
+          0, 120, 2, est.k,
+          function (v) { est.k = v; desenhar(); },
+          function (v) { return v === 0 ? 'nenhuma (partículas livres)' : fmt(v, 0); });
+      } else if (est.vista === 'colisao') {
+        deslizante(c1, 'Coeficiente de restituição \\(e\\)',
+          0, 1, 0.05, est.e,
+          function (v) { est.e = v; desenhar(); },
+          function (v) {
+            return fmt(v, 2) + (v === 1 ? ' (elástica)'
+                 : (v === 0 ? ' (totalmente inelástica)' : ''));
+          });
+        deslizante(c1, 'Razão de massas \\(m_2/m_1\\)',
+          0.25, 4, 0.25, est.razao,
+          function (v) { est.razao = v; desenhar(); },
+          function (v) { return fmt(v, 2); });
+      } else {
+        deslizante(c1, 'Força da repulsão, \\(k/mv^2\\)',
+          0.2, 3, 0.1, est.kmv,
+          function (v) { est.kmv = v; desenhar(); },
+          function (v) { return fmt(v, 1); });
+      }
+      tipografar(c1);
+    }
+
+    /* Notação científica com expoente em algarismos sobrescritos: o cartão
+       é texto puro, sem MathJax, e um "10-15" ali seria lido como menos
+       quinze. */
+    var SOBE = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+                 '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+                 '-': '⁻', '+': '' };
+    function potencia(v) {
+      var s = v.toExponential(1).split('e');
+      var exp = s[1].replace(/./g, function (c) { return SOBE[c]; });
+      return s[0].replace('.', ',') + ' × 10' + exp;
+    }
+
+    /* ---------------- vista 1: o centro de massa ---------------- */
+
+    /* Seis partículas com molas entre TODOS os pares e repulsão em 1/r^2.
+       As condições iniciais são fixas, e não sorteadas, para que o desenho
+       seja o mesmo em todo computador e possa ser discutido em sala. */
+    var MAS = [1.0, 2.0, 0.5, 3.0, 1.5, 0.8];
+    var CAR = [0.6, -1.2, 0.9, -0.6, 1.2, -0.9];
+    var P0 = [[-1.7, 0.9], [1.4, 1.5], [1.9, -0.8],
+              [-1.1, -1.6], [0.2, 0.4], [-0.4, 1.9]];
+    /* A deriva comum existe só para que o centro de massa atravesse o
+       quadro: sem ela o sistema fica girando em torno de si mesmo e a reta
+       em vinho sai do tamanho de um ponto. */
+    var DERIVA = [1.4, 1.0];
+    var V0 = [[0.9, -0.5], [-1.2, 0.3], [-0.4, 1.1],
+              [0.7, 0.9], [1.3, -0.8], [-0.6, -0.7]]
+      .map(function (w) { return [w[0] + DERIVA[0], w[1] + DERIVA[1]]; });
+
+    function sistema(k, t_fim, passos) {
+      var n = MAS.length, i, j;
+      var p = P0.map(function (q) { return q.slice(); });
+      var v = V0.map(function (q) { return q.slice(); });
+      var dt = t_fim / passos;
+      function acel(p) {
+        var a = [];
+        for (i = 0; i < n; i++) a.push([0, 0]);
+        for (i = 0; i < n; i++) {
+          for (j = i + 1; j < n; j++) {
+            var dx = p[j][0] - p[i][0], dy = p[j][1] - p[i][1];
+            var r = Math.hypot(dx, dy), ux = dx / r, uy = dy / r;
+            var f = k * (r - 1.0) - CAR[i] * CAR[j] / (r * r);
+            a[i][0] += f * ux / MAS[i]; a[i][1] += f * uy / MAS[i];
+            a[j][0] -= f * ux / MAS[j]; a[j][1] -= f * uy / MAS[j];
+          }
+        }
+        return a;
+      }
+      var a = acel(p);
+      var tr = [], cm = [];
+      for (i = 0; i < n; i++) tr.push([[p[i][0], p[i][1]]]);
+      var mtot = 0;
+      for (i = 0; i < n; i++) mtot += MAS[i];
+      function centro(p) {
+        var x = 0, y = 0;
+        for (var q = 0; q < n; q++) { x += MAS[q] * p[q][0]; y += MAS[q] * p[q][1]; }
+        return [x / mtot, y / mtot];
+      }
+      cm.push(centro(p));
+      for (var s = 0; s < passos; s++) {
+        for (i = 0; i < n; i++) {
+          p[i][0] += v[i][0] * dt + 0.5 * a[i][0] * dt * dt;
+          p[i][1] += v[i][1] * dt + 0.5 * a[i][1] * dt * dt;
+        }
+        var an = acel(p);
+        for (i = 0; i < n; i++) {
+          v[i][0] += 0.5 * (a[i][0] + an[i][0]) * dt;
+          v[i][1] += 0.5 * (a[i][1] + an[i][1]) * dt;
+          a[i] = an[i];
+        }
+        if (s % 4 === 0) {
+          for (i = 0; i < n; i++) tr[i].push([p[i][0], p[i][1]]);
+          cm.push(centro(p));
+        }
+      }
+      /* momento total no fim */
+      var px = 0, py = 0;
+      for (i = 0; i < n; i++) { px += MAS[i] * v[i][0]; py += MAS[i] * v[i][1]; }
+      return { tr: tr, cm: cm, p: [px, py], mtot: mtot };
+    }
+
+    function vistaCM() {
+      var s = sistema(est.k, 2.2, 9000);
+      var p = G.preparar(cv, 330), ct = p.ct, L = p.L, A = p.A;
+
+      var xi = 1e9, xf = -1e9, yi = 1e9, yf = -1e9;
+      s.tr.forEach(function (t) {
+        t.forEach(function (w) {
+          if (w[0] < xi) xi = w[0]; if (w[0] > xf) xf = w[0];
+          if (w[1] < yi) yi = w[1]; if (w[1] > yf) yf = w[1];
+        });
+      });
+      var mx = (xi + xf) / 2, my = (yi + yf) / 2;
+      var esc = Math.min(L * 0.46 / Math.max((xf - xi) / 2, 0.5),
+                         A * 0.44 / Math.max((yf - yi) / 2, 0.5));
+      function X(u) { return L / 2 + (u - mx) * esc; }
+      function Y(u) { return A / 2 - (u - my) * esc; }
+
+      var CORES = [G.COR.mestra, G.COR.clara, G.COR.roxo,
+                   G.COR.azul, G.COR.bronze, G.COR.suave];
+      s.tr.forEach(function (t, i) {
+        ct.save();
+        ct.strokeStyle = CORES[i % CORES.length]; ct.lineWidth = 1.4;
+        ct.globalAlpha = 0.85;
+        ct.beginPath();
+        t.forEach(function (w, j) {
+          if (j === 0) ct.moveTo(X(w[0]), Y(w[1])); else ct.lineTo(X(w[0]), Y(w[1]));
+        });
+        ct.stroke(); ct.restore();
+        ct.fillStyle = CORES[i % CORES.length];
+        ct.beginPath();
+        ct.arc(X(t[t.length - 1][0]), Y(t[t.length - 1][1]),
+               2.4 + MAS[i], 0, 6.2832);
+        ct.fill();
+      });
+
+      /* o centro de massa */
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 3;
+      ct.beginPath();
+      s.cm.forEach(function (w, j) {
+        if (j === 0) ct.moveTo(X(w[0]), Y(w[1])); else ct.lineTo(X(w[0]), Y(w[1]));
+      });
+      ct.stroke(); ct.restore();
+      ct.fillStyle = G.COR.vinho;
+      ct.beginPath(); ct.arc(X(s.cm[0][0]), Y(s.cm[0][1]), 5, 0, 6.2832); ct.fill();
+      ct.beginPath();
+      ct.arc(X(s.cm[s.cm.length - 1][0]), Y(s.cm[s.cm.length - 1][1]), 5, 0, 6.2832);
+      ct.fill();
+      rotulo(ct, 'centro de massa',
+             X(s.cm[Math.floor(s.cm.length / 2)][0]),
+             Y(s.cm[Math.floor(s.cm.length / 2)][1]) - 14, G.COR.vinho);
+
+      /* quanto o CM se afasta de uma reta */
+      var r0 = s.cm[0], r1 = s.cm[s.cm.length - 1];
+      var dx = r1[0] - r0[0], dy = r1[1] - r0[1], dd = Math.hypot(dx, dy);
+      var fora = 0;
+      s.cm.forEach(function (w) {
+        var d = Math.abs((w[0] - r0[0]) * dy - (w[1] - r0[1]) * dx) / dd;
+        if (d > fora) fora = d;
+      });
+
+      var p0x = 0, p0y = 0;
+      for (var i = 0; i < MAS.length; i++) {
+        p0x += MAS[i] * V0[i][0]; p0y += MAS[i] * V0[i][1];
+      }
+
+      rotulos(['Massa total', 'Momento total, antes', 'Momento total, depois',
+               'Desvio do CM da reta']);
+      painel({
+        a: fmt(s.mtot, 1),
+        b: '(' + fmt(p0x, 3) + '; ' + fmt(p0y, 3) + ')',
+        c: '(' + fmt(s.p[0], 3) + '; ' + fmt(s.p[1], 3) + ')',
+        d: potencia(fora) + ' m'
+      });
+
+      texto.innerHTML =
+        '<p>Seis partículas, ligadas por molas entre <em>todos</em> os pares '
+        + 'e ainda se repelindo em \\(1/r^2\\). Puxe a rigidez das molas e '
+        + 'veja as trajetórias mudarem por completo: o que não muda é a reta '
+        + 'em vinho.</p>'
+        + '<p>A razão é a terceira lei. Na soma \\(\\sum_i m_i\\ddot{\\vet{r}}_i\\), '
+        + 'cada força interna aparece duas vezes, com sinais opostos, e o que '
+        + 'sobra é só a força externa:</p>'
+        + '<p>\\[ M\\ddot{\\vet{R}} = \\vet{F}_{\\text{ext}}. \\]</p>'
+        + '<p>Aqui não há força externa nenhuma, de modo que o centro de '
+        + 'massa segue em linha reta com velocidade constante, e o momento '
+        + 'total não muda em nenhuma casa decimal. É isso que autoriza tratar '
+        + 'a Terra inteira como um ponto na hora de calcular a órbita, apesar '
+        + 'de tudo o que acontece dentro dela.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: a colisão nos dois referenciais ---------- */
+    function vistaColisao() {
+      var m1 = 1.0, m2 = est.razao, M = m1 + m2;
+      var u1 = 3.0, u2 = -1.0;
+      var v1 = (m1 * u1 + m2 * u2 + m2 * est.e * (u2 - u1)) / M;
+      var v2 = (m1 * u1 + m2 * u2 + m1 * est.e * (u1 - u2)) / M;
+      var vcm = (m1 * u1 + m2 * u2) / M;
+      var K0 = 0.5 * m1 * u1 * u1 + 0.5 * m2 * u2 * u2;
+      var K1 = 0.5 * m1 * v1 * v1 + 0.5 * m2 * v2 * v2;
+      var mu = m1 * m2 / M;
+      var perda = 0.5 * mu * (u1 - u2) * (u1 - u2) * (1 - est.e * est.e);
+
+      var p = G.preparar(cv, 340), ct = p.ct, L = p.L, A = p.A;
+      var esc = L * 0.085;                  /* pixels por (m/s) */
+      var cxs = [L * 0.30, L * 0.72];
+      var ys = [A * 0.18, A * 0.38, A * 0.66, A * 0.86];
+
+      function bola(x, y, m, cor) {
+        ct.fillStyle = cor;
+        ct.beginPath(); ct.arc(x, y, 6 + 5 * Math.sqrt(m), 0, 6.2832); ct.fill();
+      }
+      function linha(y, rot) {
+        ct.save();
+        ct.strokeStyle = G.COR.grade; ct.lineWidth = 1; ct.setLineDash([4, 4]);
+        ct.beginPath(); ct.moveTo(L * 0.06, y); ct.lineTo(L * 0.94, y); ct.stroke();
+        ct.restore();
+        rotulo(ct, rot, L * 0.06, y - 14, G.COR.tinta, 'left');
+      }
+
+      linha(ys[0], 'laboratório, antes');
+      bola(cxs[0], ys[0], m1, G.COR.mestra);
+      seta(ct, cxs[0], ys[0], cxs[0] + u1 * esc, ys[0], G.COR.mestra, 2.5);
+      bola(cxs[1], ys[0], m2, G.COR.bronze);
+      seta(ct, cxs[1], ys[0], cxs[1] + u2 * esc, ys[0], G.COR.bronze, 2.5);
+
+      linha(ys[1], 'laboratório, depois');
+      bola(cxs[0], ys[1], m1, G.COR.mestra);
+      seta(ct, cxs[0], ys[1], cxs[0] + v1 * esc, ys[1], G.COR.mestra, 2.5);
+      bola(cxs[1], ys[1], m2, G.COR.bronze);
+      seta(ct, cxs[1], ys[1], cxs[1] + v2 * esc, ys[1], G.COR.bronze, 2.5);
+
+      linha(ys[2], 'centro de massa, antes');
+      bola(cxs[0], ys[2], m1, G.COR.mestra);
+      seta(ct, cxs[0], ys[2], cxs[0] + (u1 - vcm) * esc, ys[2], G.COR.mestra, 2.5);
+      bola(cxs[1], ys[2], m2, G.COR.bronze);
+      seta(ct, cxs[1], ys[2], cxs[1] + (u2 - vcm) * esc, ys[2], G.COR.bronze, 2.5);
+
+      linha(ys[3], 'centro de massa, depois');
+      bola(cxs[0], ys[3], m1, G.COR.mestra);
+      seta(ct, cxs[0], ys[3], cxs[0] + (v1 - vcm) * esc, ys[3], G.COR.mestra, 2.5);
+      bola(cxs[1], ys[3], m2, G.COR.bronze);
+      seta(ct, cxs[1], ys[3], cxs[1] + (v2 - vcm) * esc, ys[3], G.COR.bronze, 2.5);
+
+      rotulos(['Velocidades finais', 'Energia que resta',
+               'Perda prevista', 'Velocidade do CM']);
+      painel({
+        a: fmt(v1, 2) + ' e ' + fmt(v2, 2),
+        b: fmt(100 * K1 / K0, 1) + ' %',
+        c: fmt(perda, 3) + ' J  (medida ' + fmt(K0 - K1, 3) + ')',
+        d: fmt(vcm, 3)
+      });
+
+      texto.innerHTML =
+        '<p>As quatro linhas são a <em>mesma</em> colisão. As duas de cima '
+        + 'no laboratório, as duas de baixo no referencial que anda junto com '
+        + 'o centro de massa, com velocidade \\(V = (m_1u_1+m_2u_2)/M\\).</p>'
+        + '<p>Repare no que acontece embaixo: no referencial do centro de '
+        + 'massa os dois momentos são sempre opostos, antes e depois, porque '
+        + 'o momento total ali é zero por definição. As setas são '
+        + '<em>velocidades</em>, de modo que a partícula mais leve tem a seta '
+        + 'mais comprida, e o produto é que se iguala. Com \\(e = 1\\) as '
+        + 'duas setas apenas invertem, mantendo o comprimento. É por isso que o '
+        + 'referencial do CM é o lugar certo para pensar colisões: nele a '
+        + 'colisão elástica não é um problema de duas incógnitas, e sim uma '
+        + 'reflexão.</p>'
+        + '<p>A energia perdida também fica óbvia dali. A energia cinética se '
+        + 'separa em duas parcelas, a do centro de massa e a do movimento '
+        + 'relativo:</p>'
+        + '<p>\\[ K = \\frac{MV^2}{2} + \\frac{\\mu v_{\\text{rel}}^2}{2}, '
+        + '\\qquad \\mu = \\frac{m_1m_2}{m_1+m_2}. \\]</p>'
+        + '<p>A primeira parcela é intocável, porque o momento total se '
+        + 'conserva. Só a segunda pode ser dissipada, e a colisão retira '
+        + 'dela a fração \\(1-e^2\\). Daí a perda máxima, em \\(e = 0\\), não '
+        + 'ser a energia toda: é exatamente \\(\\mu v_{\\text{rel}}^2/2\\).</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: o leque de Rutherford ---------------- */
+
+    var R_LONGE = 400, R_QUADRO = 10;
+
+    function trajetoria(b, kmv) {
+      /* Unidades: v no infinito = 1, k/m = kmv. RK4 com passo adaptado.
+
+         A partícula parte de MUITO longe, e não da borda do quadro. O ângulo
+         de deflexão só existe no infinito, e medido a uma distância r o erro
+         cai apenas como 1/r: saindo de r = 10, como o desenho pede, o ângulo
+         sairia 5 graus errado. Guardamos para desenhar só o trecho que cabe
+         no quadro. */
+      var x = -R_LONGE, y = b, vx = 1, vy = 0, pts = [], t = 0;
+      function ax(x, y) {
+        var r2 = x * x + y * y, r3 = r2 * Math.sqrt(r2);
+        return [kmv * x / r3, kmv * y / r3];
+      }
+      while (t < 4000) {
+        var r = Math.hypot(x, y);
+        if (r < R_QUADRO) pts.push([x, y]);
+        if (r > R_LONGE && (x * vx + y * vy) > 0) break;
+        var dt = Math.min(0.02 * r, 0.5);
+        var a1 = ax(x, y);
+        var a2 = ax(x + dt * vx / 2, y + dt * vy / 2);
+        var a3 = ax(x + dt * (vx + dt * a1[0] / 2) / 2,
+                    y + dt * (vy + dt * a1[1] / 2) / 2);
+        var a4 = ax(x + dt * (vx + dt * a2[0] / 2), y + dt * (vy + dt * a2[1] / 2));
+        var nvx = vx + dt * (a1[0] + 2 * a2[0] + 2 * a3[0] + a4[0]) / 6;
+        var nvy = vy + dt * (a1[1] + 2 * a2[1] + 2 * a3[1] + a4[1]) / 6;
+        x = x + dt * (vx + (dt / 6) * (a1[0] + a2[0] + a3[0]));
+        y = y + dt * (vy + (dt / 6) * (a1[1] + a2[1] + a3[1]));
+        vx = nvx; vy = nvy;
+        t += dt;
+      }
+      return { pts: pts, th: Math.atan2(vy, vx) };
+    }
+
+    function vistaLeque() {
+      var bs = [0.15, 0.3, 0.5, 0.8, 1.2, 1.8, 2.6, 3.6, 5.0];
+      var tr = bs.map(function (b) { return trajetoria(b, est.kmv); });
+
+      var p = G.preparar(cv, 340), ct = p.ct, L = p.L, A = p.A;
+      var lim = R_QUADRO;
+      var esc = Math.min(L * 0.47 / lim, A * 0.47 / lim);
+      function X(u) { return L / 2 + u * esc; }
+      function Y(u) { return A / 2 - u * esc; }
+
+      /* cada parâmetro de impacto é desenhado também espelhado em y, que é
+         a mesma trajetória pela simetria do problema, e com isso o leque
+         ocupa o quadro inteiro em vez de só a metade de cima */
+      [1, -1].forEach(function (lado) {
+        tr.forEach(function (q, i) {
+          ct.save();
+          ct.strokeStyle = i % 2 ? G.COR.clara : G.COR.mestra;
+          ct.lineWidth = 1.8;
+          ct.beginPath();
+          q.pts.forEach(function (w, j) {
+            if (j === 0) ct.moveTo(X(w[0]), Y(lado * w[1]));
+            else ct.lineTo(X(w[0]), Y(lado * w[1]));
+          });
+          ct.stroke(); ct.restore();
+        });
+      });
+
+      /* o núcleo */
+      ct.fillStyle = G.COR.vinho;
+      ct.beginPath(); ct.arc(X(0), Y(0), 7, 0, 6.2832); ct.fill();
+      rotulo(ct, 'núcleo', X(0), Y(0) + 22, G.COR.vinho);
+
+      var med = tr[4].th, prev = 2 * Math.atan(est.kmv / bs[4]);
+
+      rotulos(['Desvio medido em b = 1,2', 'Previsto pela fórmula',
+               'Medido / previsto', 'Seção de choque']);
+      painel({
+        a: fmt(med * 180 / Math.PI, 2) + '°',
+        b: fmt(prev * 180 / Math.PI, 2) + '°',
+        c: fmt(med / prev, 4),
+        d: '∝ 1/sen⁴(θ/2)'
+      });
+
+      texto.innerHTML =
+        '<p>Cada curva é uma partícula vinda da esquerda com um parâmetro de '
+        + 'impacto diferente, repelida por um \\(1/r^2\\). É a órbita do '
+        + 'módulo 12 com energia positiva: uma hipérbole, e o desvio é o '
+        + 'ângulo entre as duas assíntotas,</p>'
+        + '<p>\\[ \\tg\\frac{\\theta}{2} = \\frac{k}{mv^2b}. \\]</p>'
+        + '<p>Duas coisas para notar no leque. A primeira é que nenhuma '
+        + 'trajetória passa reto: o desvio cai como \\(1/b\\), e não a zero '
+        + 'em distância finita. É dessa cauda que vem a divergência da seção '
+        + 'de choque total, e ela só some num alvo real porque os elétrons '
+        + 'blindam o núcleo.</p>'
+        + '<p>A segunda é o que acontece com \\(b\\) pequeno: o desvio passa '
+        + 'de 90° e a partícula volta por onde veio. Era isso que não podia '
+        + 'acontecer no átomo de Thomson, no qual a carga positiva estava '
+        + 'espalhada e o campo interno era fraco demais. Em 1911, uma alfa em '
+        + 'cada oito mil voltava, e Rutherford comparou aquilo a atirar uma '
+        + 'granada numa folha de papel e vê-la ricochetear.</p>';
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'cm') vistaCM();
+      else if (est.vista === 'colisao') vistaColisao();
+      else vistaLeque();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {
