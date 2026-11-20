@@ -302,8 +302,8 @@ var F = (function () {
    =================================================================== */
 var G = (function () {
 
-  /* A cor mestra do site é o verde-petróleo, para a disciplina não se
-     confundir com Física Estatística, que é azul-marinho. As demais são
+  /* A cor mestra do site é o azul-petróleo, um tom afastado tanto do
+     azul-marinho da Física Estatística quanto do verde da Mecânica II. As demais são
      as cores de série dos gráficos, escolhidas para se distinguirem
      também em preto e branco e para quem não enxerga cor vermelha. */
   var COR = {

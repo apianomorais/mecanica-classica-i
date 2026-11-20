@@ -157,7 +157,7 @@ def main():
     print('   Angulo em que o bloco comeca a deslizar com mu = 0,35:')
     print('     theta = arctan(mu) = %.3f graus' % th_lim)
     print('     (abaixo disso a aceleracao daria negativa, o que significa')
-    print('      apenas que o bloco fica parado: o atuito estatico segura)')
+    print('      apenas que o bloco fica parado: o atrito estatico segura)')
     print()
 
     print('=' * 70)
@@ -188,18 +188,37 @@ def main():
     print('   aceleracao centrifuga no equador = %.5f m/s^2 (%.2f %% de g)'
           % (OMEGA ** 2 * R_EQUADOR, 100 * OMEGA ** 2 * R_EQUADOR / G))
     print()
-    print('   latitude    g com rotacao    g medida     diferenca')
     medidos = {0: 9.7803, 15: 9.7838, 30: 9.7932, 45: 9.8062,
                60: 9.8192, 90: 9.8322}
-    for lat in (0, 15, 30, 45, 60, 90):
-        gc = g_efetiva(lat)
-        print('   %6d°     %10.5f     %8.4f     %+8.5f'
-              % (lat, gc, medidos[lat], gc - medidos[lat]))
+    print('   Comparar valores absolutos seria injusto, porque o modelo de uma')
+    print('   linha nao sabe que a Terra e achatada. O que ele preve e a')
+    print('   VARIACAO com a latitude, e e isso que a tabela compara:')
     print()
-    print('   A rotacao sozinha explica a maior parte da variacao, mas nao')
-    print('   toda: o achatamento da Terra responde pelo resto, e por isso a')
-    print('   coluna da diferenca nao e nula. O modelo de uma linha ja acerta')
-    print('   o sinal, a ordem de grandeza e o comportamento com a latitude.')
+    print('   latitude    modelo (g - g_polo)    medido (g - g_polo)   razao')
+    for lat in (0, 15, 30, 45, 60):
+        dm = g_efetiva(lat) - g_efetiva(90)
+        dr = medidos[lat] - medidos[90]
+        print('   %6d°        %+10.5f            %+10.5f        %5.2f'
+              % (lat, dm, dr, dm / dr))
+    print()
+    print('   O modelo explica cerca de dois tercos da variacao medida, com o')
+    print('   comportamento certo em cos^2(lat). O terco que falta e o')
+    print('   achatamento da Terra: o raio no equador e 21 km maior que no')
+    print('   polo, e so isso ja muda g em 0,018 m/s^2.')
+    print()
+    # a fórmula internacional da gravidade, que já inclui o achatamento
+    def g_normal(lat):
+        p = np.radians(lat)
+        return 9.780327 * (1 + 0.0053024 * np.sin(p) ** 2
+                           - 0.0000058 * np.sin(2 * p) ** 2)
+    gf, gh = g_normal(-3.72), g_normal(60.17)
+    m = 70.0
+    print('   Repare no tamanho do efeito. Pela formula internacional da')
+    print('   gravidade, que ja inclui o achatamento:')
+    print('     Fortaleza (3,72° S):  g = %.5f m/s^2' % gf)
+    print('     Helsinque (60,17° N): g = %.5f m/s^2' % gh)
+    print('   Uma balanca calibrada em Fortaleza, levada a Helsinque, marca')
+    print('   %.0f g a mais num corpo de %.0f kg.' % (1000 * m * (gh / gf - 1), m))
     print()
 
     print('=' * 70)

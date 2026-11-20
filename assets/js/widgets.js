@@ -1006,6 +1006,212 @@
     registrarRedesenho(desenhar);
   };
 
+  /* =================================================================
+     3. O mesmo movimento em dois referenciais
+     O ponto do módulo 2 que não se resolve com fórmula: a bola é a
+     mesma, o movimento é o mesmo, e as duas descrições discordam sobre
+     se existe força. O vagão já vem andando quando começa a acelerar, e
+     a bola, no chão liso, apenas conserva a velocidade que tinha. Ver os
+     dois painéis lado a lado resolve em dez segundos o que meia página
+     de texto não resolve.
+     ================================================================= */
+  REGISTRO.referenciais = function (raiz) {
+    var est = { A: 3, t: 1.2, vista: 'ambos', v0: 3 };
+
+    var X0 = 5.0;        // onde o vagão está centrado em t = 0, em metros
+    var COMP = 7.0;      // comprimento do vagão
+    var ALT = 2.2;       // altura do vagão
+    var PAREDE = 3.2;    // distância do centro até a parede de trás
+    var JANELA = 34.0;   // largura do mundo mostrada, em metros
+
+    var corpo = moldura(raiz, 'A bola no vagão: duas descrições do mesmo fato');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'Os dois juntos', v: 'ambos' },
+      { rot: 'Só da plataforma', v: 'plataforma' },
+      { rot: 'Só de dentro', v: 'vagao' }
+    ], 0, function (v) { est.vista = v; desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+    deslizante(c1, 'Aceleração do vagão \\(A\\)', 0, 6, 0.1, est.A,
+      function (v) { est.A = v; desenhar(); },
+      function (v) { return v === 0 ? 'nenhuma (inercial)'
+        : v.toFixed(1).replace('.', ',') + ' m/s²'; });
+    deslizante(c1, 'Tempo \\(t\\)', 0, 2.6, 0.02, est.t,
+      function (v) { est.t = v; desenhar(); },
+      function (v) { return v.toFixed(2).replace('.', ',') + ' s'; });
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'Bola, da plataforma', k: 'a' },
+      { rot: 'Vagão, da plataforma', k: 'b' },
+      { rot: 'Bola, dentro do vagão', k: 'c' },
+      { rot: 'Força sobre a bola', k: 'd' }
+    ]);
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(x, c) {
+      return x.toFixed(c === undefined ? 2 : c).replace('.', ',').replace('-', '\u2212');
+    }
+    /* dentro da matemática a vírgula decimal precisa de chaves: solta,
+       o MathJax a lê como pontuação e abre um espaço depois dela */
+    function fmtm(x, c) {
+      return x.toFixed(c === undefined ? 2 : c).replace('.', '{,}');
+    }
+
+    /* O vagão já anda a v0 e passa a acelerar em t = 0. A bola, no chão
+       liso, não sente força nenhuma: conserva v0. O deslocamento dela
+       DENTRO do vagão é então -A t^2 / 2, até encostar na parede de
+       trás, e a partir daí a parede empurra e os dois andam juntos. */
+    function estado() {
+      var A = est.A, t = est.t, v0 = est.v0;
+      var tp = A > 0 ? Math.sqrt(2 * PAREDE / A) : Infinity;
+      var xv = X0 + v0 * t + 0.5 * A * t * t;
+      var encostou = t >= tp;
+      var rel = encostou ? -PAREDE : -0.5 * A * t * t;
+      return { xv: xv, xb: xv + rel, rel: rel, encostou: encostou, tp: tp };
+    }
+
+    /* Desenha um painel inteiro. 'ancora' diz quem fica parado na tela:
+       o solo (visão da plataforma) ou o vagão (visão de dentro). */
+    function cena(ct, L, ybase, ancora, e) {
+      var esc = (L - 50) / JANELA;
+      var orig = ancora === 'vagao' ? e.xv - X0 : 0;   // deslocamento do mundo
+      function X(u) { return 25 + (u - orig) * esc; }
+      function Y(u) { return ybase - u * esc * 0.9; }
+
+      /* o chão, com marcas de um em um metro: são elas que denunciam
+         quem está se movendo em cada painel */
+      ct.save();
+      ct.strokeStyle = G.COR.grade; ct.lineWidth = 1.4;
+      ct.beginPath(); ct.moveTo(25, Y(0)); ct.lineTo(L - 25, Y(0)); ct.stroke();
+      ct.fillStyle = G.COR.grade;
+      var m0 = Math.floor(orig) - 1;
+      for (var m = m0; m <= m0 + JANELA + 2; m += 1) {
+        var px = X(m);
+        if (px < 25 || px > L - 25) continue;
+        ct.fillRect(px - 1, Y(0), 2, m % 5 === 0 ? 9 : 5);
+      }
+      ct.restore();
+
+      /* o vagão */
+      var xe = e.xv - COMP / 2;
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 2.2;
+      ct.fillStyle = 'rgba(29,95,126,.05)';
+      ct.beginPath();
+      ct.rect(X(xe), Y(ALT), X(xe + COMP) - X(xe), Y(0) - Y(ALT));
+      ct.fill(); ct.stroke();
+      ct.restore();
+      ct.fillStyle = G.COR.suave;
+      [1.4, COMP - 1.4].forEach(function (d) {
+        ct.beginPath(); ct.arc(X(xe + d), Y(0) + 6, 5, 0, 6.2832); ct.fill();
+      });
+      if (est.A > 0) {
+        seta(ct, X(e.xv) - 18, Y(ALT) - 14, X(e.xv) + 26, Y(ALT) - 14,
+             G.COR.suave, 2);
+        rotulo(ct, 'A', X(e.xv) + 38, Y(ALT) - 14, G.COR.suave);
+      }
+
+      /* a bola, e a marca de onde ela começou dentro do vagão */
+      ct.save();
+      ct.strokeStyle = G.COR.grade; ct.lineWidth = 1.2; ct.setLineDash([3, 3]);
+      ct.beginPath(); ct.moveTo(X(e.xv), Y(0)); ct.lineTo(X(e.xv), Y(1.3));
+      ct.stroke(); ct.restore();
+
+      ct.fillStyle = G.COR.bronze;
+      ct.beginPath(); ct.arc(X(e.xb), Y(0.3), 8, 0, 6.2832); ct.fill();
+
+      /* a força: só existe depois que a parede encosta nela */
+      if (e.encostou) {
+        seta(ct, X(e.xb) - 4, Y(0.3), X(e.xb) + 40, Y(0.3), G.COR.vinho, 3);
+        rotulo(ct, 'a parede empurra', X(e.xb) + 58, Y(0.3) - 16, G.COR.vinho,
+               'left');
+      }
+    }
+
+    function desenhar() {
+      var dois = est.vista === 'ambos';
+      var p = G.preparar(cv, dois ? 268 : 168), ct = p.ct, L = p.L;
+      var e = estado();
+
+      function titulo(t, y) {
+        rotulo(ct, t, 25, y, G.COR.tinta, 'left', 'middle',
+               '700 12px system-ui, sans-serif');
+      }
+
+      if (dois) {
+        titulo('Da plataforma: a bola vai em linha reta, a velocidade constante', 22);
+        cena(ct, L, 118, 'solo', e);
+        ct.save();
+        ct.strokeStyle = G.COR.grade; ct.lineWidth = 1;
+        ct.beginPath(); ct.moveTo(25, 136); ct.lineTo(L - 25, 136); ct.stroke();
+        ct.restore();
+        titulo('De dentro do vagão: a mesma bola escorrega para trás', 160);
+        cena(ct, L, 256, 'vagao', e);
+      } else if (est.vista === 'plataforma') {
+        titulo('Da plataforma', 22);
+        cena(ct, L, 150, 'solo', e);
+      } else {
+        titulo('De dentro do vagão', 22);
+        cena(ct, L, 150, 'vagao', e);
+      }
+
+      painel({
+        a: fmt(e.xb - X0) + ' m',
+        b: fmt(e.xv - X0) + ' m',
+        c: fmt(e.rel) + ' m',
+        d: e.encostou ? 'a parede, de verdade'
+                      : (est.A > 0 ? 'nenhuma' : 'nenhuma')
+      });
+
+      var html =
+        '<p>O vagão já vinha a \\(v_0 = 3\\) m/s quando começou a acelerar, e '
+        + 'a bola está num chão liso, sem atrito. Da plataforma, nada a '
+        + 'empurra, de modo que ela simplesmente conserva a velocidade que '
+        + 'tinha: percorre \\(v_0t\\) em linha reta, enquanto o vagão '
+        + 'percorre \\(v_0t + \\frac12At^2\\) e se adianta.</p>'
+        + '<p>De dentro do vagão, a mesma bola aparece deslocada de '
+        + '\\(x\' = -\\frac12At^2 = ' + fmtm(e.rel) + '\\,\\mathrm{m}\\): ela '
+        + '<em>acelera para trás</em>, a \\(-A\\), sem que exista agente algum '
+        + 'que a empurre. Quem insistir em escrever \\(\\vet{F} = m\\vet{a}\\) '
+        + 'ali tem de inventar a força \\(-m\\vet{A}\\). É por isso que ela se '
+        + 'chama força de inércia: ela entra na conta não porque alguma coisa '
+        + 'age sobre a bola, e sim porque o referencial escolhido acelera.</p>';
+
+      if (e.encostou) {
+        html += '<p>Agora a bola encostou na parede de trás, e aqui a história '
+          + 'muda: existe <strong>uma força de verdade</strong>, de contato, '
+          + 'e os dois referenciais concordam sobre ela. Da plataforma, é essa '
+          + 'força que passa a acelerar a bola junto com o vagão; de dentro, é '
+          + 'ela que equilibra a força de inércia e deixa a bola parada contra '
+          + 'a parede. O teste é esse: a força real tem um agente que se pode '
+          + 'apontar, e a de inércia não tem.</p>';
+      } else if (est.A === 0) {
+        html += '<p>Com \\(A = 0\\) o vagão volta a ser um referencial '
+          + 'inercial, e os dois painéis ficam idênticos: a bola fica parada '
+          + 'no lugar dentro do vagão, e não há força nenhuma a inventar. É '
+          + 'essa a classe de referenciais que a primeira lei afirma existir.</p>';
+      } else {
+        html += '<p>Essa força inventada tem uma marca registrada: é '
+          + 'proporcional à massa, exatamente como o peso. Nenhum experimento '
+          + 'feito dentro do vagão, com a janela fechada, a distingue de um '
+          + 'campo gravitacional horizontal. É daí que sai o princípio da '
+          + 'equivalência da seção 2.</p>';
+      }
+
+      texto.innerHTML = html;
+      tipografar(texto);
+    }
+
+    registrarRedesenho(desenhar);
+  };
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {
