@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gravitação: campo, potencial, cascas e marés | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200933">
+<script src="assets/js/comum.js?v=202611200933"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <a href="aula02.html" class="num" title="Módulo 2: As leis de Newton e os referenciais inerciais">2</a>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <a href="aula04.html" class="num" title="Módulo 4: Trabalho, energia e forças conservativas">4</a>
+      <a href="aula05.html" class="num" title="Módulo 5: Momento linear, impulso e o movimento de foguetes">5</a>
+      <span class="grupo">Oscilações</span>
+      <a href="aula06.html" class="num" title="Módulo 6: O oscilador harmônico simples">6</a>
+      <a href="aula07.html" class="num" title="Módulo 7: Oscilações amortecidas">7</a>
+      <a href="aula08.html" class="num" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer">8</a>
+      <span class="grupo">Caos</span>
+      <a href="aula09.html" class="num" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase">9</a>
+      <a href="aula10.html" class="num" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores">10</a>
+      <span class="grupo">Gravitação</span>
+      <a href="aula11.html" class="num ativo" title="Módulo 11: Gravitação: campo, potencial, cascas e marés">11</a>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. De onde veio a lei, e o teste da Lua</a></li>
+    <li><a href="#s2">2. O teorema das cascas, e o túnel pela Terra</a></li>
+    <li><a href="#s3">3. Marés: o que importa é a diferença</a></li>
+    <li><a href="#s4">4. Roche, o dia que cresce, e a medida de G</a></li>
+    <li><a href="#s5">5. No Spyder</a></li>
+    <li><a href="#s6">6. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 11 · Gravitação e forças centrais</p>
+  <h1>Gravitação: campo, potencial, cascas e marés</h1>
+  <p class="subtitulo">A lei cabe numa linha; as consequências não. O teorema das cascas é o que permite tratar planetas como pontos, e as marés mostram o que acontece quando o que importa deixa de ser o campo e passa a ser a sua variação.</p>
+  <h2 id="s1">1. De onde veio a lei, e o teste da Lua</h2>
+
+<p>A lei da gravitação universal cabe numa linha:</p>
+
+\[ \vet{F} = -\frac{GMm}{r^2}\,\vers{r}. \]
+
+<p>O que não cabe numa linha é o que foi preciso para escrevê-la, nem o que
+decorre dela. Vale separar as duas coisas.</p>
+
+<h3>De onde veio o expoente 2</h3>
+
+<p>Ele não foi adivinhado. Tome a terceira lei de Kepler, que era um fato
+observado desde 1619: \(T^2 \propto a^3\). Para uma órbita circular, a força
+centrípeta é</p>
+
+\[ F = \frac{mv^2}{r} = \frac{m}{r}\left(\frac{2\pi r}{T}\right)^2
+     = \frac{4\pi^2mr}{T^2}. \]
+
+<p>Substituindo \(T^2 = ka^3 = kr^3\):</p>
+
+\[ F = \frac{4\pi^2 m}{k\,r^2}. \]
+
+<p>O expoente 2 <em>sai</em> da terceira lei de Kepler, e não é hipótese. O
+que Newton acrescentou foi a universalidade: que a mesma lei vale para a maçã,
+e que a constante \(4\pi^2/k\) é proporcional à massa do corpo central, de modo
+que a força é simétrica nas duas massas.</p>
+
+<h3>O teste da Lua</h3>
+
+<p>A afirmação de que é a <em>mesma</em> força precisa de teste. Se for, a
+aceleração da Lua tem de ser \(g\) reduzida pelo inverso do quadrado:</p>
+
+\[ a_{\text{Lua}} \stackrel{?}{=} g\left(\frac{R_T}{d}\right)^2. \]
+
+<p>O programa faz a conta com os valores modernos:</p>
+
+<div class="saida">
+g (R_T/d)^2 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 2,693837e-03 m/s²<br>
+4 pi^2 d / T^2 (medida) = 2,723330e-03 m/s²<br>
+razao &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <b>1,0109</b>
+</div>
+
+<p>Um por cento de diferença. A tentação é dizer "concorda bem" e seguir
+adiante; a atitude certa é perguntar de onde vem o 1 %, porque os dados têm
+seis algarismos e o erro é mil vezes maior que eles.</p>
+
+<p>Faltam dois termos. Primeiro, o \(g\) medido inclui a rotação da Terra e o
+achatamento, como o módulo 2 mostrou; o \(g\) puramente gravitacional é
+\(GM/R^2 = 9{,}8203\) m/s², contra 9,80665 medido. Segundo, a Lua não orbita a
+Terra: as duas orbitam o centro de massa comum, de modo que a aceleração
+<em>relativa</em> obedece a \(G(M+m)/d^2\), e não \(GM/d^2\). Refazendo:</p>
+
+<div class="saida">
+G (M + m) / d^2 = 2,730751e-03 m/s²<br>
+4 pi^2 d / T^2 &nbsp;= 2,723330e-03 m/s²<br>
+razao &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <b>0,99728</b>
+</div>
+
+<p>Sobram dois décimos de por cento, que é a diferença entre o semieixo maior e
+a distância média usada aqui. A lição vale para o curso inteiro: quando uma
+conta de física erra 1 %, quase sempre falta um termo, e não precisão.</p>
+
+  <h2 id="s2">2. O teorema das cascas, e o túnel pela Terra</h2>
+
+<p>Escrever \(GMm/r^2\) para a Terra e a Lua esconde uma pergunta
+incômoda: \(r\) medido a partir de onde? A Terra tem 6400 km de raio, e os
+pedaços dela estão a distâncias diferentes da Lua. A resposta é o
+<strong>teorema das cascas</strong>, e ele é o motivo de Newton ter adiado os
+<em>Principia</em> por anos.</p>
+
+<div class="bloco def">
+<p class="rotulo">Teorema das cascas</p>
+<p>Uma casca esférica de massa uniforme atrai um ponto <strong>externo</strong>
+como se toda a sua massa estivesse concentrada no centro, e não exerce força
+alguma sobre um ponto <strong>interno</strong>, em qualquer posição dentro
+dela.</p>
+</div>
+
+<div data-widget="gravidade"></div>
+
+<p>O lado externo é cômodo; o interno é surpreendente. Dentro da casca, o campo
+é <em>exatamente</em> nulo em toda parte, e não apenas no centro. O programa
+verifica isso somando anéis, sem usar teorema nenhum:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(r/R\)</th><th>campo calculado</th>
+<th>o que um ponto daria</th></tr></thead>
+<tbody>
+<tr><td>0,300</td><td>\(5\times10^{-20}\)</td><td>\(7\times10^{-10}\)</td></tr>
+<tr><td>0,950</td><td>\(1\times10^{-17}\)</td><td>\(7\times10^{-11}\)</td></tr>
+<tr><td>0,999</td><td>\(3\times10^{-14}\)</td><td>\(7\times10^{-11}\)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>O argumento geométrico é mais bonito que a conta. Fique num ponto qualquer
+dentro da casca e olhe em duas direções opostas, dentro de um cone estreito. O
+pedaço de casca próximo está perto e atrai mais, por \(1/s^2\); mas ele é
+pequeno, e a área interceptada pelo cone cresce com \(s^2\). Os dois efeitos se
+cancelam <strong>exatamente</strong>, em qualquer direção que se olhe. Esse
+cancelamento é uma propriedade do expoente 2: com \(1/r^{2{,}001}\) ele
+falharia, e é por isso que medir o campo dentro de uma casca é um dos testes
+mais sensíveis da lei.</p>
+
+<h3>Dentro de uma esfera maciça</h3>
+
+<p>Uma esfera maciça é uma pilha de cascas. Num ponto a distância \(r\) do
+centro, as cascas externas não fazem nada e as internas agem como um ponto
+central, de modo que só conta a massa \(M(r) = M r^3/R^3\):</p>
+
+\[ g(r) = \frac{GM(r)}{r^2} = \frac{GMr}{R^3} \qquad (r &lt; R). \]
+
+<p>O campo cresce <strong>linearmente</strong> com \(r\) dentro da esfera, o
+que é a lei de Hooke disfarçada. Um corpo largado num túnel que atravessasse a
+Terra pelo centro faria um movimento harmônico simples, com</p>
+
+\[ T = 2\pi\sqrt{\frac{R^3}{GM}} = 84{,}35\ \text{minutos}, \]
+
+<p>que é <em>o mesmo</em> período de um satélite rasante. Não é coincidência:
+as duas contas têm o mesmo \(GM/R^3\), e o satélite rasante é a projeção do
+movimento no túnel vista de fora.</p>
+
+<div class="bloco fisica">
+<p class="rotulo">Onde este módulo para, e onde continua</p>
+<p>A formulação de campo (o fluxo, a lei de Gauss, a equação de Poisson
+\(\nabla^2\Phi = 4\pi G\rho\) e a expansão em multipolos para corpos sem
+simetria) é a unidade de gravitação de <strong>Mecânica Clássica III</strong>,
+junto com a autogravidade e a equação de Lane-Emden. Aqui o teorema das cascas
+foi provado por integração direta, que é como Newton o fez e é o que basta para
+tudo o que vem a seguir.</p>
+</div>
+
+  <h2 id="s3">3. Marés: o que importa é a diferença</h2>
+
+<p>A Lua imprime a você uma aceleração de \(3{,}3\times10^{-5}\) m/s², que é
+três milionésimos de \(g\): sobre uma pessoa de 70 kg, 2,3 mN, o peso de um
+quarto de grama. Ainda assim a Lua move oceanos. A explicação é que o que move o oceano não é o campo
+da Lua, e sim a <strong>diferença</strong> entre o campo em cada ponto e o
+campo no centro da Terra.</p>
+
+<p>A Terra inteira está em queda livre em direção à Lua. No referencial do
+centro da Terra, que é portanto acelerado, aparece a força de inércia do módulo
+2, uniforme e igual a menos o campo no centro. O que sobra é</p>
+
+\[ \vet{a}_{\text{maré}}(\vet{r})
+   = \vet{g}_{\text{Lua}}(\vet{r}) - \vet{g}_{\text{Lua}}(0), \]
+
+<p>e isso é desenhado na segunda vista do componente. Ao longo da linha dos
+centros, expandindo em \(R/d\):</p>
+
+\[ a_{\text{maré}} \simeq \frac{2GmR}{d^3}. \]
+
+<div class="bloco alerta">
+<p class="rotulo">Duas marés, não uma</p>
+<p>O erro mais comum é imaginar que a Lua "puxa a água para si", o que daria
+<em>uma</em> maré alta por dia. O desenho mostra o contrário: os dois lados
+abaulam para fora. O lado próximo é puxado <strong>mais</strong> que o centro e
+se adianta; o lado oposto é puxado <strong>menos</strong> que o centro e fica
+para trás. Como a Terra gira por baixo dos dois abaulamentos, cada ponto passa
+por dois máximos a cada volta.</p>
+</div>
+
+<p>O programa calcula a diferença sem aproximar, nos dois lados:</p>
+
+<div class="saida">
+lado voltado para a Lua:&nbsp;&nbsp;+1,127233e-06 m/s² &nbsp;(para a Lua)<br>
+lado oposto:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+1,072549e-06 m/s² &nbsp;(para longe da Lua)<br>
+aproximacao 2 G m R / d^3: 1,099287e-06 m/s²
+</div>
+
+<p>Os dois lados diferem em 5,1 %, e essa assimetria é real: vem dos termos de
+ordem superior em \(R/d\), que a aproximação despreza. A aproximação cai
+exatamente no meio dos dois, como deve.</p>
+
+<h3>A potência três, e por que a Lua ganha do Sol</h3>
+
+<p>Repare na mudança de expoente. O campo cai com \(d^2\); a maré, que é a
+<em>derivada</em> do campo, cai com \(d^3\). É a primeira vez no curso em que o
+que importa não é o campo, e sim como ele varia no espaço.</p>
+
+<p>Essa potência decide a competição entre a Lua e o Sol. O Sol puxa a Terra
+<strong>178 vezes mais forte</strong> que a Lua. Mas a maré vai como
+\(m/d^3\), e a Lua está 390 vezes mais perto:</p>
+
+\[ \frac{\text{maré lunar}}{\text{maré solar}}
+   = \frac{m_L}{m_S}\left(\frac{d_S}{d_L}\right)^3 = 2{,}18. \]
+
+<p>A terceira vista do componente compõe as duas ao longo de um mês. Os dois
+abaulamentos se somam na sizígia (Lua nova e cheia), dando as marés de água
+viva, e se subtraem na quadratura, dando as águas mortas. A razão entre as duas
+é 2,70, e o período da modulação é <em>meio</em> mês, porque Lua nova e Lua
+cheia produzem exatamente a mesma maré.</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>maré de equilíbrio</th><th>altura no ponto sublunar</th>
+<th>amplitude total</th></tr></thead>
+<tbody>
+<tr><td>lunar</td><td>0,357 m</td><td>0,536 m</td></tr>
+<tr><td>solar</td><td>0,164 m</td><td>0,246 m</td></tr>
+<tr><td>sizígia</td><td></td><td>0,782 m</td></tr>
+<tr><td>quadratura</td><td></td><td>0,290 m</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Esses números são da <strong>maré de equilíbrio</strong>, que supõe um
+oceano global respondendo instantaneamente. O oceano real tem continentes,
+inércia e ressonâncias de bacia, e por isso as marés medidas na costa chegam a
+metros. Os 16 m da baía de Fundy são uma ressonância da bacia, com período
+próprio perto de 12 h, excitada por uma maré de equilíbrio de meio metro: é o
+módulo 8 em escala geográfica, com \(Q\) alto.</p>
+
+  <h2 id="s4">4. Roche, o dia que cresce, e a medida de G</h2>
+
+<p>A maré não só levanta água: ela deforma o próprio satélite. Se a maré que o
+planeta exerce sobre ele vencer a gravidade que o mantém inteiro, ele se
+desmancha. A distância em que isso acontece é o <strong>limite de
+Roche</strong>:</p>
+
+\[ d_{\text{Roche}} \simeq 2{,}44\,R_P
+   \left(\frac{\rho_P}{\rho_s}\right)^{1/3} \quad\text{(satélite fluido)}, \]
+
+<p>com 2,44 trocado por \(2^{1/3} = 1{,}26\) no caso rígido, que resiste mais
+por ter coesão própria. Para o sistema Terra-Lua, o limite fluido fica em 2,9
+raios terrestres, e a Lua está a 60: bem longe de qualquer perigo. Os anéis de
+Saturno, ao contrário, estão <em>dentro</em> do limite de Roche de Saturno, e é
+por isso que são anéis e não uma lua.</p>
+
+<h3>O atrito das marés, e o dia que cresce</h3>
+
+<p>Até aqui a maré foi tratada como estática. Ela não é: a Terra gira sob os
+abaulamentos, e o atrito arrasta o abaulamento alguns graus à frente da linha
+Terra-Lua. Esse abaulamento adiantado puxa a Lua para a frente na órbita, e a
+Lua puxa a Terra para trás na rotação. As consequências são medidas, não
+inferidas:</p>
+
+<ul>
+<li>A Lua se afasta <strong>3,8 cm por ano</strong>, medidos por
+<em>laser ranging</em> nos retrorrefletores deixados pelas missões Apolo.</li>
+<li>O dia aumenta cerca de 1,8 ms por século, o que corais fósseis confirmam:
+os do Devoniano mostram cerca de 400 dias por ano.</li>
+<li>A Lua já perdeu a rotação própria por esse mecanismo, e por isso nos mostra
+sempre a mesma face.</li>
+</ul>
+
+<p>O momento angular total se conserva: o que a Terra perde de rotação, a Lua
+ganha de órbita. É o módulo 5 operando em escala de bilhões de anos.</p>
+
+<h3>Medir G</h3>
+
+<p>Toda a gravitação depende de uma constante que é a pior medida da física.
+\(G\) é conhecida com cinco algarismos; a carga do elétron, com dez. A razão é
+que a gravidade é fraquíssima: não há como blindar, nem como amplificar, e
+qualquer caminhão passando perturba a medida.</p>
+
+<p>Henry Cavendish fez a primeira medida séria em 1798, com uma balança de
+torção: duas esferas pequenas numa haste suspensa por um fio, atraídas por duas
+esferas grandes. A deflexão é minúscula, e a constante de torção do fio se mede
+pelo <em>período</em> de oscilação da haste, que é o módulo 6 trabalhando como
+instrumento.</p>
+
+<div class="bloco fisica">
+<p class="rotulo">O que Cavendish mediu, e o que ele não mediu</p>
+<p>Cavendish nunca falou em \(G\): a constante só foi introduzida décadas
+depois. O título do artigo dele é "Experiments to determine the Density of the
+Earth", e é isso que ele mediu, 5,48 vezes a densidade da água. O valor atual é
+5,514, de modo que ele errou <strong>0,6 %</strong> com equipamento de
+madeira e chumbo. Conhecida a densidade média e o raio, \(G\) sai de
+\(g = \frac{4}{3}\pi G\rho R\), e é nesse sentido que se diz que Cavendish
+"pesou a Terra".</p>
+</div>
+
+  <h2 id="s5">5. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/gravidade.py">
+    <span class="numero">Programa</span>
+    <h3>gravidade.py</h3>
+    <p>Verifica o teorema das cascas por integração direta, calcula o campo
+    dentro de uma esfera maciça, refaz o teste da Lua com as duas correções,
+    e calcula marés, alturas de equilíbrio e o limite de Roche.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>O campo dentro da casca fica dez ordens de grandeza abaixo do que um ponto
+daria, em cinco posições, inclusive a um milésimo da superfície.</li>
+<li>Fora da casca, o campo reproduz \(-GM/r^2\) em \(10^{-19}\).</li>
+<li>O campo dentro da esfera maciça, somando cascas, reproduz \(-GMr/R^3\) em
+\(10^{-26}\), e o potencial no centro é exatamente \(3/2\) do da
+superfície.</li>
+<li>O teste da Lua passa de 1,1 % para 0,27 % de erro com as duas correções.</li>
+<li>A maré de equilíbrio dá 0,357 m, a razão lunar/solar dá 2,18, e os dois
+lados da Terra diferem em 5,1 %.</li>
+</ul>
+
+<div class="bloco ex">
+<p><strong>Para mexer.</strong> Troque o expoente 2 por 2,001 na rotina da
+casca e meça o campo interno: ele deixa de ser nulo, e o tamanho do resíduo diz
+quão sensível é esse teste. Depois calcule a maré que Júpiter exerce sobre a
+Terra, e compare com a da Lua: é a maneira mais rápida de responder, com
+números, à pergunta sobre a influência dos planetas sobre nós.</p>
+</div>
+
+  <h2 id="s6">6. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">11.1  Pesar a Terra com a órbita da Lua</span>
+  <p>Mostre que a lei do inverso do quadrado implica a terceira lei de
+     Kepler na forma \(T^2 = 4\pi^2a^3/G(M+m)\), e use a órbita da Lua
+     (\(a = 384\,399\) km, \(T = 27{,}321661\) dias) para obter a massa da
+     Terra. Compare com o valor aceito e explique a diferença.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A dedução.</b> Para órbita circular, a atração fornece a força
+     centrípeta da aceleração <em>relativa</em> dos dois corpos, que é
+     \(G(M+m)/a^2\) (veja o módulo 5 sobre massa reduzida, e o exercício 12.1
+     para o caso geral):</p>
+     <p>\[ \frac{G(M+m)}{a^2} = \omega^2 a = \frac{4\pi^2a}{T^2}
+        \quad\Longrightarrow\quad
+        T^2 = \frac{4\pi^2a^3}{G(M+m)}. \]</p>
+     <p>A constante de proporcionalidade não é universal: ela depende da massa
+     total do par. É por isso que a terceira lei de Kepler, aplicada aos
+     planetas, dá a massa do Sol, e aplicada às luas de Júpiter dá a massa de
+     Júpiter.</p>
+     <p><b>O número.</b> Com \(T = 2{,}360591\times10^6\) s:</p>
+     <p>\[ M + m = \frac{4\pi^2a^3}{GT^2} = 6{,}030\times10^{24}\ \mathrm{kg}, \]</p>
+     <p>contra \(6{,}046\times10^{24}\) aceito para Terra mais Lua: <b>0,27 %</b>
+     de diferença.</p>
+     <p><b>De onde vem a diferença.</b> Não é da medida: é do modelo. A órbita
+     da Lua não é circular (\(e = 0{,}055\)), de modo que o \(a\) que entra na
+     fórmula é o semieixo maior, e o valor usado aqui é a distância
+     <em>média</em>, que não é a mesma coisa. Além disso o Sol perturba a
+     órbita lunar de modo nada desprezível, a ponto de o mês sideral e o mês
+     anomalístico diferirem em horas.</p>
+     <p><b>O que isso ilustra.</b> Com dados de seis algarismos e uma conta de
+     uma linha, chega-se à massa da Terra com três algarismos certos. Não é
+     pouco: antes de Cavendish, ninguém sabia nem a ordem de grandeza. Mas
+     insistir na quarta casa exige trocar de modelo, e não de régua.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">11.2  O teorema das cascas pelo argumento dos cones</span>
+  <p>Prove, sem integrar, que o campo dentro de uma casca esférica é nulo.
+     Use dois cones opostos a partir de um ponto interno qualquer e mostre que
+     as contribuições se cancelam. Depois explique o que aconteceria se a lei
+     fosse \(1/r^{2+\epsilon}\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A construção.</b> Tome um ponto \(P\) qualquer dentro da casca e
+     um cone duplo estreito, de ângulo sólido \(d\Omega\), com vértice em
+     \(P\). Ele recorta dois pedaços da casca, a distâncias \(s_1\) e
+     \(s_2\).</p>
+     <p><b>As duas áreas.</b> Um cone de ângulo sólido \(d\Omega\) recorta, a
+     distância \(s\), uma área \(dA = s^2\,d\Omega/\cos\alpha\), em que
+     \(\alpha\) é a inclinação da superfície em relação ao plano perpendicular
+     ao eixo do cone. Por simetria da esfera, essa inclinação é
+     <em>a mesma</em> nos dois pedaços: a corda que liga os dois faz ângulos
+     iguais com a superfície nas duas pontas.</p>
+     <p><b>O cancelamento.</b> Com densidade superficial \(\sigma\), as massas
+     são \(dm_i = \sigma s_i^2 d\Omega/\cos\alpha\), e os campos:</p>
+     <p>\[ \frac{G\,dm_1}{s_1^2}
+        = \frac{G\sigma\,d\Omega}{\cos\alpha}
+        = \frac{G\,dm_2}{s_2^2}. \]</p>
+     <p>As distâncias <b>somem</b>. Os dois campos têm o mesmo módulo e
+     sentidos opostos, e se cancelam. Como o ponto \(P\) e a direção do cone
+     eram quaisquer, e como toda a casca é coberta por esses pares, o campo
+     total é nulo em qualquer ponto interno.</p>
+     <p><b>Por que o expoente 2 é essencial.</b> O cancelamento acontece
+     porque a massa cresce com \(s^2\) exatamente na mesma medida em que o
+     campo cai com \(1/s^2\). Com \(1/s^{2+\epsilon}\), o campo de cada pedaço
+     seria \(G\sigma\,d\Omega\,s^{-\epsilon}/\cos\alpha\), e o pedaço
+     <em>próximo</em> venceria. Sobraria um campo residual apontando para a
+     parede mais perto, proporcional a \(\epsilon\) em primeira ordem.</p>
+     <p><b>A consequência experimental.</b> Isso faz do interior de uma casca
+     um dos lugares mais sensíveis para testar a lei. O mesmo argumento vale
+     palavra por palavra para a lei de Coulomb, e é exatamente assim que os
+     melhores limites sobre o expoente elétrico foram obtidos: medindo campo
+     dentro de condutores ocos, desde Cavendish e Maxwell. Para a gravidade os
+     limites são muito piores, porque a força é fraca demais.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">11.3  O túnel pela Terra, e um túnel torto</span>
+  <p>Mostre que um corpo largado num túnel que atravessa a Terra pelo
+     centro faz um movimento harmônico simples e calcule o período. Depois
+     mostre o resultado notável: um túnel reto <em>qualquer</em>, mesmo sem
+     passar pelo centro, dá o mesmo período.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Pelo centro.</b> Dentro da esfera maciça, pelo teorema das
+     cascas, só a massa interna conta:</p>
+     <p>\[ F = -\frac{GM(r)m}{r^2} = -\frac{GMm}{R^3}r = -kr, \]</p>
+     <p>que é a lei de Hooke com \(k = GMm/R^3\). Logo</p>
+     <p>\[ T = 2\pi\sqrt{\frac{m}{k}} = 2\pi\sqrt{\frac{R^3}{GM}}
+        = 5061\ \mathrm{s} = 84{,}35\ \text{minutos}. \]</p>
+     <p>A viagem de um lado ao outro leva metade disso, 42 min, e não depende
+     da massa do viajante.</p>
+     <p><b>O túnel torto.</b> Seja um túnel reto cuja menor distância ao centro
+     é \(b\), e seja \(x\) a posição ao longo do túnel, medida do ponto mais
+     próximo do centro. A distância ao centro é \(r = \sqrt{b^2+x^2}\), e a
+     força gravitacional tem módulo \(GMm r/R^3\), apontando para o centro. A
+     componente ao longo do túnel é essa força vezes \(x/r\):</p>
+     <p>\[ F_x = -\frac{GMm}{R^3}\,r\,\frac{x}{r} = -\frac{GMm}{R^3}\,x. \]</p>
+     <p>O \(r\) <b>cancela</b>, e sobra exatamente a mesma constante elástica.
+     O período é o mesmo 84,35 min para qualquer túnel reto, passando pelo
+     centro ou não, longo ou curto.</p>
+     <p><b>Por que isso é especial.</b> Esse cancelamento só acontece porque o
+     campo interno é <em>linear</em> em \(r\), o que por sua vez só acontece
+     porque a densidade é uniforme e a lei é a do inverso do quadrado. Numa
+     Terra com núcleo denso (que é o caso real) ele falha, e o período depende
+     do túnel. O número real, com o modelo PREM de densidade, fica perto de
+     38 min para o túnel pelo centro, e não 42.</p>
+     <p><b>O parentesco com o satélite.</b> O período de um satélite rasante é
+     \(2\pi\sqrt{R^3/GM}\), o mesmo número. A razão é que o movimento no túnel
+     é a <em>projeção</em> do movimento circular rasante sobre o diâmetro, e a
+     projeção de um movimento circular uniforme é um harmônico simples de mesmo
+     período.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">11.4  Júpiter, o obstetra e as marés</span>
+  <p>Obtenha \(a_{\text{maré}} \simeq 2GmR/d^3\) expandindo a diferença de
+     campos em \(R/d\). Use a fórmula para comparar a maré que Júpiter exerce
+     sobre a Terra com a da Lua, e a maré que a Lua exerce sobre um recém
+     nascido com a do obstetra que o segura.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A expansão.</b> Ao longo da linha dos centros, no lado próximo,
+     a diferença entre o campo a distância \(d-R\) e a distância \(d\) é</p>
+     <p>\[ \frac{Gm}{(d-R)^2} - \frac{Gm}{d^2}
+        = \frac{Gm}{d^2}\left[\left(1-\frac{R}{d}\right)^{-2} - 1\right]. \]</p>
+     <p>Com \(R \ll d\), \((1-x)^{-2} \simeq 1+2x\):</p>
+     <p>\[ a_{\text{maré}} \simeq \frac{2GmR}{d^3}. \]</p>
+     <p>No lado distante a mesma conta dá o mesmo módulo, com o sinal trocado
+     em relação ao centro: os dois lados abaulam para fora.</p>
+     <p><b>Júpiter contra a Lua.</b> A razão é</p>
+     <p>\[ \frac{m_J}{m_L}\left(\frac{d_L}{d_J}\right)^3
+        = \frac{1{,}898\times10^{27}}{7{,}342\times10^{22}}
+          \left(\frac{3{,}844\times10^{8}}{6{,}29\times10^{11}}\right)^3
+        = 5{,}9\times10^{-6}. \]</p>
+     <p>Júpiter, na melhor oposição possível, produz sobre a Terra uma maré
+     <b>seis milionésimos</b> da lunar, isto é, uns dois micrômetros de água.
+     A conta vale para os outros planetas, com resultados ainda menores.</p>
+     <p><b>A Lua contra o obstetra.</b> Agora o corpo que sofre a maré é um
+     bebê, com \(R \simeq 0{,}10\) m:</p>
+     <p>\[ a_{\text{Lua}} = \frac{2Gm_L(0{,}10)}{d_L^3}
+        = 1{,}7\times10^{-14}\ \mathrm{m/s^2}, \]</p>
+     <p>\[ a_{\text{obstetra}} = \frac{2G(70\ \mathrm{kg})(0{,}10)}{(1\ \mathrm{m})^3}
+        = 9{,}3\times10^{-10}\ \mathrm{m/s^2}. \]</p>
+     <p>O obstetra a um metro exerce sobre o recém-nascido uma força de maré
+     <b>54 mil vezes maior</b> que a da Lua. Quem leva a sério a influência
+     gravitacional dos astros sobre pessoas precisa, para ser coerente,
+     levar muito mais a sério a influência de quem está no mesmo
+     quarto.</p>
+     <p><b>Por que a Lua move oceanos, então.</b> Porque o oceano tem 12 mil km
+     de extensão, e não 10 cm: a maré é proporcional a \(R\). E porque a maré
+     age de modo <em>coerente</em> e periódico sobre a bacia inteira, por
+     bilhões de ciclos, o que permite ressonância. Força pequena e persistente,
+     na frequência certa, é o assunto do módulo 8.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">11.5  A balança de Cavendish, com números</span>
+  <p>Uma balança de torção tem duas esferas de 0,73 kg nas pontas de uma
+     haste de 1,86 m, suspensa por um fio, e o período de oscilação torsional é
+     420 s. Duas esferas de 158 kg são aproximadas a 22,5 cm dos centros das
+     pequenas. Calcule a deflexão de equilíbrio e mostre como \(G\) sai dessas
+     medidas. Por que o período entra na conta?</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Por que o período.</b> A constante de torção \(\kappa\) do fio é
+     pequena demais para ser medida aplicando torques conhecidos. Mas ela
+     determina o período das oscilações livres da haste, pelo módulo 6:</p>
+     <p>\[ T_0 = 2\pi\sqrt{\frac{I}{\kappa}}
+        \quad\Longrightarrow\quad
+        \kappa = \frac{4\pi^2I}{T_0^2}. \]</p>
+     <p>Cronometrar sete minutos é fácil; medir \(10^{-4}\) N·m/rad
+     diretamente, não. O oscilador funciona aqui como <em>instrumento</em>, e
+     essa é a ideia central do experimento.</p>
+     <p><b>Os números.</b> Com \(L = 0{,}93\) m de braço,</p>
+     <p>\[ I = 2mL^2 = 1{,}263\ \mathrm{kg\,m^2},
+        \qquad \kappa = \frac{4\pi^2(1{,}263)}{420^2}
+        = 2{,}83\times10^{-4}\ \mathrm{N\,m/rad}. \]</p>
+     <p>A força sobre cada esfera pequena e o torque total:</p>
+     <p>\[ F = \frac{GMm}{b^2} = 1{,}52\times10^{-7}\ \mathrm{N},
+        \qquad \tau = 2FL = 2{,}83\times10^{-7}\ \mathrm{N\,m}, \]</p>
+     <p>\[ \theta = \frac{\tau}{\kappa} = 1{,}00\times10^{-3}\ \mathrm{rad}
+        = 0{,}057^\circ, \]</p>
+     <p>o que desloca cada esfera em <b>0,93 mm</b>. Essa é a medida inteira:
+     menos de um milímetro, com duas toneladas de chumbo e um fio de
+     torção.</p>
+     <p><b>Isolando \(G\).</b> Juntando tudo,</p>
+     <p>\[ G = \frac{2\pi^2 I\,b^2\,\theta}{T_0^2\,M\,m\,L}, \]</p>
+     <p>e substituindo os números acima devolve \(6{,}674\times10^{-11}\), como
+     tem de ser: a fórmula é apenas a conta anterior reorganizada.</p>
+     <p><b>O que Cavendish realmente publicou.</b> O artigo se chama
+     "Experiments to determine the Density of the Earth", e o resultado é
+     5,48 vezes a densidade da água, contra 5,514 aceito hoje: erro de
+     <b>0,6 %</b>. A constante \(G\) nem existia como conceito; ela foi
+     introduzida décadas depois. Conhecida a densidade média e o raio, \(G\)
+     sai de \(g = \frac43\pi G\rho R\), e é nesse sentido que se diz que
+     Cavendish pesou a Terra.</p>
+     <p><b>Por que \(G\) continua mal medida.</b> Hoje \(G\) é conhecida com
+     cinco algarismos, e a carga do elétron com dez. A gravidade não pode ser
+     blindada nem amplificada, e qualquer massa que se mexa nas redondezas
+     entra na medida. Medidas independentes de alta qualidade ainda discordam
+     entre si por mais do que as barras de erro de cada uma, o que é um
+     problema em aberto.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">11.6  A Lua se afasta, e o dia cresce</span>
+  <p>O atrito das marés adianta o abaulamento em relação à linha
+     Terra-Lua. Explique por que isso afasta a Lua e freia a Terra. Depois use
+     o recuo medido, 3,8 cm por ano, e a conservação do momento angular para
+     prever o aumento do dia, e compare com o observado.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Por que o abaulamento se adianta.</b> A Terra gira em 24 h e a
+     Lua leva 27 dias para dar a volta, de modo que a rotação arrasta o
+     abaulamento <em>para a frente</em> da linha Terra-Lua. O atrito impede que
+     ele se realinhe instantaneamente, e o resultado é um bojo adiantado alguns
+     graus.</p>
+     <p><b>As duas consequências.</b> Esse bojo adiantado está mais perto da
+     Lua de um lado que do outro, e portanto puxa a Lua <em>para a frente</em>
+     na órbita: torque positivo, que aumenta o momento angular orbital e afasta
+     a Lua. Pela terceira lei, a Lua puxa o bojo para trás, freando a rotação
+     da Terra. Momento angular sai da rotação e entra na órbita, e o total se
+     conserva.</p>
+     <p><b>A conta.</b> O momento angular orbital é
+     \(L_{\text{orb}} = m\sqrt{G(M+m)a}\), de modo que</p>
+     <p>\[ \der{L_{\text{orb}}}{t}
+        = \frac{m}{2}\sqrt{\frac{G(M+m)}{a}}\;\der{a}{t}
+        = 1{,}43\times10^{24}\ \mathrm{J\,s\ por\ ano} \]</p>
+     <p>com \(da/dt = 3{,}8\) cm/ano. Esse momento angular sai da rotação
+     terrestre, com \(I = 0{,}3307\,MR^2 = 8{,}02\times10^{37}\)
+     kg·m² (o coeficiente é menor que \(2/5\) porque a Terra tem o núcleo
+     denso):</p>
+     <p>\[ \der{\omega}{t} = -\frac{1}{I}\der{L_{\text{orb}}}{t}
+        = -1{,}78\times10^{-14}\ \mathrm{rad/s\ por\ ano}, \]</p>
+     <p>\[ \der{T_{\text{dia}}}{t} = -\frac{2\pi}{\omega^2}\der{\omega}{t}
+        = 2{,}1\ \mathrm{ms\ por\ século}. \]</p>
+     <p><b>A comparação.</b> O aumento do dia efetivamente observado, pelos
+     registros de eclipses antigos, é de cerca de <b>1,8 ms por século</b>. A
+     previsão acima dá 2,1, e a diferença não é erro de conta: a Terra também
+     está <em>acelerando</em> a rotação por outro motivo, o reajuste do manto
+     depois do degelo da última era glacial, que aproxima massa do eixo e
+     diminui \(I\). Os dois efeitos se subtraem.</p>
+     <p><b>O registro fóssil.</b> Corais do Devoniano, há 380 milhões de anos,
+     mostram cerca de 400 bandas de crescimento diário por banda anual: o ano
+     tinha o mesmo comprimento e o dia era mais curto, com umas 22 h.
+     Extrapolar 1,8 ms/século para 380 milhões de anos dá a mesma ordem, e
+     essa é uma das confirmações mais bonitas que a mecânica celeste tem,
+     porque vem da paleontologia.</p>
+     <p><b>Onde isso termina.</b> O processo só para quando o dia igualar o
+     mês, com a Terra mostrando sempre a mesma face à Lua, o que levaria
+     dezenas de bilhões de anos (mais do que a vida restante do Sol). A Lua já
+     chegou lá, e é por isso que nos mostra sempre a mesma face. Plutão e
+     Caronte completaram os dois lados do processo.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="aula10.html"><small>Módulo anterior</small>← 10. Caos determinístico</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611200933"></script>
+</body>
+</html>

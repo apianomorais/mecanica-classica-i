@@ -3772,6 +3772,348 @@
   };
 
 
+  /* =================================================================
+     11. Gravitação
+     A primeira vista mostra o que o teorema das cascas produz: campo
+     nulo dentro da casca e linear dentro da esfera maciça. A segunda é
+     a razão de este componente existir: o campo de maré desenhado como
+     ele é, isto é, a DIFERENÇA entre o campo local e o do centro, que
+     aponta para fora nos dois lados. A terceira compõe Lua e Sol ao
+     longo de um mês.
+     ================================================================= */
+  REGISTRO.gravidade = function (raiz) {
+    var est = { d: 60, fase: 0, vista: 'cascas' };
+
+    /* tudo em raios terrestres e massas/distâncias relativas */
+    var RAZAO_MASSA_SOL = 1.98847e30 / 7.342e22;      // massa do Sol / da Lua
+    var D_SOL_EM_LUNAS = 1.495979e11 / 3.84399e8;     // distâncias
+
+    var corpo = moldura(raiz, 'Cascas, buracos e marés');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'Dentro e fora', v: 'cascas' },
+      { rot: 'O campo de maré', v: 'mare' },
+      { rot: 'Lua, Sol e o mês', v: 'mes' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', ',').replace('-', '\u2212');
+    }
+    function fmtm(v, c) {
+      var s = v.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(s)) s = s.slice(1);
+      return s.replace('.', '{,}');
+    }
+
+    function montar() {
+      c1.innerHTML = '';
+      if (est.vista === 'mare') {
+        deslizante(c1, 'Distância do satélite', 8, 60, 1, est.d,
+          function (v) { est.d = v; desenhar(); },
+          function (v) { return fmt(v, 0) + ' raios do planeta'; });
+      } else if (est.vista === 'mes') {
+        deslizante(c1, 'Fase da Lua', 0, 29.5, 0.5, est.fase,
+          function (v) { est.fase = v; desenhar(); },
+          function (v) {
+            var f = v / 29.5;
+            var nome = f < 0.03 || f > 0.97 ? 'nova'
+                     : Math.abs(f - 0.25) < 0.03 ? 'quarto crescente'
+                     : Math.abs(f - 0.5) < 0.03 ? 'cheia'
+                     : Math.abs(f - 0.75) < 0.03 ? 'quarto minguante' : '';
+            return fmt(v, 1) + ' dias' + (nome ? ' (' + nome + ')' : '');
+          });
+      }
+      tipografar(c1);
+    }
+
+    /* ---------------- vista 1: dentro e fora ---------------- */
+    function vistaCascas() {
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: 3, ymin: 0, ymax: 1.25, divY: 5,
+        marcasX: G.marcasLineares(0, 3, 6, 1),
+        rotX: 'distância ao centro, em raios R', rotY: 'campo, em GM/R²',
+        formataY: function (v) { return fmt(v, 2); }
+      });
+      var ct = g.ct;
+
+      /* a esfera maciça: linear dentro, inverso do quadrado fora */
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.8;
+      ct.beginPath();
+      for (var i = 0; i <= 600; i++) {
+        var r = 3 * i / 600;
+        var y = r < 1 ? r : 1 / (r * r);
+        ct.lineTo(g.X(r), g.Y(y));
+      }
+      ct.stroke(); ct.restore();
+
+      /* a casca fina: zero dentro, degrau na superfície */
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 2.4; ct.setLineDash([6, 4]);
+      ct.beginPath();
+      ct.moveTo(g.X(0), g.Y(0)); ct.lineTo(g.X(1), g.Y(0));
+      ct.stroke();
+      ct.beginPath();
+      for (var j = 0; j <= 400; j++) {
+        var r2 = 1 + 2 * j / 400;
+        ct.lineTo(g.X(r2), g.Y(1 / (r2 * r2)));
+      }
+      ct.stroke(); ct.restore();
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 2.4; ct.setLineDash([2, 3]);
+      ct.beginPath(); ct.moveTo(g.X(1), g.Y(0)); ct.lineTo(g.X(1), g.Y(1));
+      ct.stroke(); ct.restore();
+
+      rotulo(ct, 'esfera maciça', g.X(0.55), g.Y(0.55) - 14, G.COR.mestra);
+      rotulo(ct, 'casca fina: nada dentro', g.X(0.5), g.Y(0.06) - 13,
+             G.COR.vinho);
+      rotulo(ct, 'fora, as duas coincidem: GM/r²', g.X(2.1),
+             g.Y(1 / (2.1 * 2.1)) - 15, G.COR.suave);
+
+      ct.save();
+      ct.fillStyle = 'rgba(29,95,126,.06)';
+      ct.fillRect(g.x0, g.y0, g.X(1) - g.x0, g.y1 - g.y0);
+      ct.restore();
+
+      rotulos(['Dentro da casca', 'Dentro da esfera', 'Fora, as duas',
+               'Túnel pelo centro da Terra']);
+      painel({
+        a: 'exatamente zero',
+        b: 'cresce como r',
+        c: 'GM/r², idêntico',
+        d: '84,35 min'
+      });
+
+      texto.innerHTML =
+        '<p>O <strong>teorema das cascas</strong> diz duas coisas, e as duas '
+        + 'são surpreendentes. Fora de uma casca esférica, o campo é o de um '
+        + 'ponto com toda a massa no centro: é por isso que se pode falar da '
+        + 'distância "até a Terra" sem dizer até que parte dela. '
+        + '<strong>Dentro</strong>, o campo é exatamente nulo, em toda parte, '
+        + 'e não apenas no centro.</p>'
+        + '<p>O cancelamento interno é o lado difícil. Olhe de um ponto '
+        + 'qualquer dentro da casca em duas direções opostas: o pedaço '
+        + 'próximo está perto, e atrai mais, mas é pequeno; o pedaço distante '
+        + 'é grande na mesma proporção. A área de cada cone cresce com o '
+        + 'quadrado da distância, exatamente na medida em que o campo cai, e '
+        + 'os dois efeitos se anulam em qualquer direção. O programa confirma '
+        + 'isso por integração direta: dez ordens de grandeza abaixo do campo '
+        + 'que um ponto daria.</p>'
+        + '<p>Numa esfera maciça, só a massa <em>interna</em> ao ponto conta, '
+        + 'e ela cresce com \\(r^3\\): o campo vale '
+        + '\\(GMr/R^3\\) e cresce <strong>linearmente</strong>. Isso é a lei '
+        + 'de Hooke, de modo que um corpo largado num túnel pelo centro da '
+        + 'Terra oscilaria harmonicamente, com período '
+        + '\\(2\\pi\\sqrt{R^3/GM} = 84{,}35\\) min: o mesmo período de um '
+        + 'satélite rasante, porque as duas contas têm o mesmo '
+        + '\\(GM/R^3\\).</p>'
+        + '<p>Newton atrasou os <em>Principia</em> por anos até conseguir '
+        + 'provar o teorema geometricamente. Sem ele, não faria sentido '
+        + 'escrever \\(GMm/r^2\\) para dois corpos do tamanho de planetas.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: o campo de maré ---------------- */
+    function vistaMare() {
+      var d = est.d;                 // em raios do planeta
+      var p = G.preparar(cv, 330), ct = p.ct, L = p.L, A = p.A;
+      var cx = L * 0.42, cy = A / 2, R = Math.min(A * 0.3, 120);
+
+      /* o planeta */
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.4;
+      ct.fillStyle = 'rgba(29,95,126,.05)';
+      ct.beginPath(); ct.arc(cx, cy, R, 0, 6.2832); ct.fill(); ct.stroke();
+      ct.restore();
+
+      /* o campo de maré: diferença entre o campo local e o do centro,
+         calculada sem aproximação */
+      var maxa = 0, i, dados = [];
+      for (i = 0; i < 24; i++) {
+        var th = 2 * Math.PI * i / 24;
+        var x = Math.cos(th), y = Math.sin(th);      // em raios do planeta
+        var dx = d - x, dy = -y;
+        var s3 = Math.pow(dx * dx + dy * dy, 1.5);
+        var ax = dx / s3 - 1 / (d * d);
+        var ay = dy / s3;
+        var m = Math.hypot(ax, ay);
+        maxa = Math.max(maxa, m);
+        dados.push([x, y, ax, ay, m]);
+      }
+      dados.forEach(function (q) {
+        var esc = 46 / maxa;
+        var x0 = cx + q[0] * R, y0 = cy - q[1] * R;
+        seta(ct, x0, y0, x0 + q[2] * esc, y0 - q[3] * esc,
+             q[4] > 0.55 * maxa ? G.COR.vinho : G.COR.suave, 2);
+      });
+
+      /* a direção do satélite */
+      seta(ct, cx + R + 60, cy, cx + R + 110, cy, G.COR.bronze, 2.5);
+      rotulo(ct, 'satélite, a ' + fmt(d, 0) + ' raios', cx + R + 120, cy,
+             G.COR.bronze, 'left');
+
+      rotulo(ct, 'maré alta', cx + R + 18, cy - 20, G.COR.vinho, 'left');
+      rotulo(ct, 'maré alta', cx - R - 18, cy - 20, G.COR.vinho, 'right');
+      rotulo(ct, 'maré baixa', cx, cy - R - 22, G.COR.suave);
+
+      /* a maré, em unidades da maré lunar atual */
+      var rel = Math.pow(60.3 / d, 3);
+      rotulos(['Maré, relativa à atual', 'Altura de equilíbrio',
+               'Cai com', 'Se a distância dobrar']);
+      painel({
+        a: fmt(rel, 2) + '×',
+        b: fmt(0.357 * rel, 3) + ' m',
+        c: '1/d³',
+        d: fmt(1 / 8, 3) + '× <small>(oito vezes menor)</small>'
+      });
+
+      texto.innerHTML =
+        '<p>As setas são o <strong>campo de maré</strong>: a diferença entre '
+        + 'o campo do satélite em cada ponto e o campo dele no centro do '
+        + 'planeta. No referencial do centro, é isso que sobra, e é isso que '
+        + 'a água sente.</p>'
+        + '<p>O desenho explica as <strong>duas</strong> marés altas por dia. '
+        + 'O lado voltado para o satélite é puxado <em>mais</em> que o '
+        + 'centro, e se adianta; o lado oposto é puxado <em>menos</em> que o '
+        + 'centro, e fica para trás. Os dois abaulam para fora, em sentidos '
+        + 'opostos, e o planeta gira por baixo dos dois abaulamentos. Nos '
+        + 'lados, o campo aponta para dentro, e ali é maré baixa.</p>'
+        + '<p>A maré é a <em>derivada</em> do campo, e por isso cai com '
+        + '\\(1/d^3\\) e não com \\(1/d^2\\): dobrar a distância divide a '
+        + 'maré por oito. É essa potência que decide a disputa entre a Lua e '
+        + 'o Sol, na vista seguinte.</p>'
+        + '<p>Aproxime o satélite e veja a maré disparar. Abaixo do '
+        + '<strong>limite de Roche</strong>, perto de 2,9 raios para um corpo '
+        + 'fluido de densidade parecida, a maré vence a gravidade própria do '
+        + 'satélite e o desmancha. Os anéis de Saturno estão dentro desse '
+        + 'limite, e é por isso que são anéis e não uma lua.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: Lua, Sol e o mês ---------------- */
+    function vistaMes() {
+      var hl = 0.357, hs = 0.164;       // alturas de equilíbrio, em metros
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: 29.5,
+        ymin: 0, ymax: 1.1 * 1.5 * (hl + hs), divY: 4,
+        marcasX: G.marcasLineares(0, 29.5, 6, 0),
+        rotX: 'dias desde a Lua nova', rotY: 'amplitude da maré (m)',
+        formataY: function (v) { return fmt(v, 2); }
+      });
+      var ct = g.ct;
+
+      /* as duas marés se somam como vetores de bojo: o ângulo entre os
+         eixos lunar e solar é a fase, e o bojo resultante tem amplitude
+         dada pela soma dos quadrupolos */
+      function amplitude(dia) {
+        var fase = 2 * Math.PI * dia / 29.5;
+        /* os bojos são quadrupolos: somam-se com o dobro do ângulo */
+        var x = hl + hs * Math.cos(2 * fase);
+        var y = hs * Math.sin(2 * fase);
+        return 1.5 * Math.hypot(x, y);
+      }
+
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.8;
+      ct.beginPath();
+      for (var i = 0; i <= 600; i++) {
+        var dia = 29.5 * i / 600;
+        ct.lineTo(g.X(dia), g.Y(amplitude(dia)));
+      }
+      ct.stroke(); ct.restore();
+
+      /* as quatro fases */
+      [[0, 'nova'], [7.4, 'crescente'], [14.75, 'cheia'], [22.1, 'minguante']]
+        .forEach(function (m) {
+          ct.save();
+          ct.strokeStyle = G.COR.grade; ct.lineWidth = 1.2;
+          ct.beginPath(); ct.moveTo(g.X(m[0]), g.y0); ct.lineTo(g.X(m[0]), g.y1);
+          ct.stroke(); ct.restore();
+          rotulo(ct, m[1], g.X(m[0]), g.y0 + 14, G.COR.suave);
+        });
+
+      /* a maré só da Lua, para comparar */
+      ct.save();
+      ct.strokeStyle = G.COR.clara; ct.lineWidth = 1.6; ct.setLineDash([5, 4]);
+      ct.beginPath();
+      ct.moveTo(g.x0, g.Y(1.5 * hl)); ct.lineTo(g.x1, g.Y(1.5 * hl));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'só a Lua', g.x1 - 10, g.Y(1.5 * hl) - 13, G.COR.suave,
+             'right');
+
+      var a = amplitude(est.fase);
+      ct.fillStyle = G.COR.bronze;
+      ct.beginPath(); ct.arc(g.X(est.fase), g.Y(a), 6, 0, 6.2832); ct.fill();
+
+      rotulos(['Amplitude agora', 'Sizígia (nova e cheia)',
+               'Quadratura', 'Razão entre as duas']);
+      painel({
+        a: fmt(a, 3) + ' m',
+        b: fmt(1.5 * (hl + hs), 3) + ' m',
+        c: fmt(1.5 * (hl - hs), 3) + ' m',
+        d: fmt((hl + hs) / (hl - hs), 2) + '×'
+      });
+
+      texto.innerHTML =
+        '<p>O Sol puxa a Terra <strong>178 vezes mais forte</strong> que a '
+        + 'Lua, e ainda assim faz menos da metade da maré. A razão é a '
+        + 'potência três: a maré vai como \\(m/d^3\\), e a Lua, muito mais '
+        + 'perto, ganha a disputa. O programa mede 0,357 m para a maré lunar '
+        + 'de equilíbrio contra 0,164 m para a solar, uma razão de '
+        + '<strong>2,18</strong>.</p>'
+        + '<p>Os dois abaulamentos se somam, e a soma depende do ângulo entre '
+        + 'eles, isto é, da fase da Lua. Na <strong>sizígia</strong> (Lua '
+        + 'nova e cheia) os eixos coincidem e as marés somam: são as marés de '
+        + 'água viva. Na <strong>quadratura</strong> (quartos) eles ficam '
+        + 'perpendiculares e as marés se subtraem: águas mortas. A razão '
+        + 'entre as duas é '
+        + fmtm((hl + hs) / (hl - hs), 2) + ', e é isso que a curva mostra, '
+        + 'com dois máximos e dois mínimos por mês.</p>'
+        + '<p>Repare que o período da modulação é <em>meio</em> mês, e não um '
+        + 'mês: os abaulamentos são simétricos, de modo que Lua nova e Lua '
+        + 'cheia produzem a mesma maré. Pela mesma razão, os bojos se compõem '
+        + 'com o <em>dobro</em> do ângulo de fase, que é como a curva foi '
+        + 'calculada.</p>'
+        + '<p>Nada disso explica marés de metros, que é o que se mede na '
+        + 'costa. A maré de equilíbrio supõe um oceano global respondendo '
+        + 'instantaneamente; o oceano real tem continentes, inércia e '
+        + 'ressonâncias de bacia. Os 16 m da baía de Fundy são uma '
+        + 'ressonância da bacia, excitada por uma maré de equilíbrio de meio '
+        + 'metro. É o módulo 8 em escala geográfica, com \\(Q\\) alto.</p>';
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'cascas') vistaCascas();
+      else if (est.vista === 'mare') vistaMare();
+      else vistaMes();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {
