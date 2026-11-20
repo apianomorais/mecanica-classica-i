@@ -1554,6 +1554,341 @@
   };
 
 
+  /* =================================================================
+     5. O foguete: o logaritmo, a queima e os estágios
+     As três perguntas que o módulo 5 responde, cada uma numa vista:
+     por que a razão de massas precisa ser absurda, o que a gravidade
+     cobra enquanto o motor queima, e por que ninguém põe carga em
+     órbita com um estágio só. A conta dos estágios idênticos é a mesma
+     forma fechada que o foguete.py confere contra uma busca numérica.
+     ================================================================= */
+  REGISTRO.foguete = function (raiz) {
+    var est = { ve: 2942, razao: 5, taxa: 400, eps: 0.10, vista: 'equacao' };
+
+    var G0 = 9.80665;
+    var ORBITA = 9400;        // delta-v típico para a órbita baixa, com perdas
+    var M0 = 50000, MF = 10000;
+
+    function dv(ve, r) { return ve * Math.log(r); }
+
+    /* n estágios idênticos, com a mesma fração estrutural: cada um
+       multiplica a massa pela mesma razão. */
+    function dvEstagios(ve, eps, razaoCarga, n) {
+      var r = Math.pow(razaoCarga, 1 / n);
+      return n * ve * Math.log(r / (1 + eps * (r - 1)));
+    }
+
+    var corpo = moldura(raiz, 'O foguete, e por que ele é quase todo tanque');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'A equação', v: 'equacao' },
+      { rot: 'Durante a queima', v: 'queima' },
+      { rot: 'Estágios', v: 'estagios' }
+    ], 0, function (v) { est.vista = v; montar(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(l) {
+      l.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(x, c) {
+      var v = x.toFixed(c === undefined ? 0 : c);
+      return v.replace('.', ',').replace('-', '\u2212');
+    }
+
+    /* A G.curva limita y ao intervalo do quadro, o que desenha um traço
+       reto colado na borda quando a função sai dele. Aqui o trecho de
+       fora é simplesmente interrompido. */
+    function tracar(g, f, cor, esp, tracejado) {
+      var ct = g.ct, dentro = false;
+      ct.save();
+      ct.strokeStyle = cor; ct.lineWidth = esp || 2;
+      if (tracejado) ct.setLineDash(tracejado);
+      ct.beginPath();
+      for (var i = 0; i <= 500; i++) {
+        var x = g.xmin + (g.xmax - g.xmin) * i / 500, y = f(x);
+        if (!isFinite(y) || y < g.ymin || y > g.ymax) { dentro = false; continue; }
+        if (!dentro) { ct.moveTo(g.X(x), g.Y(y)); dentro = true; }
+        else ct.lineTo(g.X(x), g.Y(y));
+      }
+      ct.stroke(); ct.restore();
+    }
+    function fmtm(x, c) {
+      return x.toFixed(c === undefined ? 0 : c).replace('.', '{,}');
+    }
+
+    /* cada vista pede deslizantes diferentes, de modo que eles são
+       refeitos na troca */
+    function montar() {
+      c1.innerHTML = '';
+      deslizante(c1, 'Velocidade de exaustão \\(v_e\\)', 1800, 4600, 1, est.ve,
+        function (v) { est.ve = v; desenhar(); },
+        function (v) { return fmt(v) + ' m/s (Isp ' + fmt(v / G0) + ' s)'; });
+      if (est.vista === 'equacao') {
+        deslizante(c1, 'Razão de massas \\(m_0/m_f\\)', 1.2, 25, 0.1, est.razao,
+          function (v) { est.razao = v; desenhar(); },
+          function (v) { return fmt(v, 1); });
+      } else if (est.vista === 'queima') {
+        deslizante(c1, 'Taxa de queima', 100, 1600, 10, est.taxa,
+          function (v) { est.taxa = v; desenhar(); },
+          function (v) { return fmt(v) + ' kg/s'; });
+      } else {
+        deslizante(c1, 'Fração estrutural \\(\\epsilon\\)', 0.04, 0.25, 0.005,
+          est.eps, function (v) { est.eps = v; desenhar(); },
+          function (v) { return fmt(100 * v, 1) + ' %'; });
+      }
+      tipografar(c1);
+    }
+
+    /* ---------------- vista 1: a equação ---------------- */
+    function vistaEquacao() {
+      var g = G.eixos(cv, {
+        altura: 290, xmin: 1, xmax: 25, ymin: 0, ymax: 12000,
+        divY: 6, marcasX: G.marcasLineares(1, 25, 6, 0),
+        rotX: 'razão de massas (massa inicial sobre massa final)',
+        rotY: 'Δv  (km/s)',
+        formataY: function (v) { return fmt(v / 1000, 1); }
+      });
+      var ct = g.ct;
+
+      /* a faixa de delta-v que a órbita baixa exige */
+      ct.save();
+      ct.fillStyle = 'rgba(29,95,126,.07)';
+      ct.fillRect(g.x0, g.y0, g.x1 - g.x0, g.Y(ORBITA) - g.y0);
+      ct.restore();
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.6; ct.setLineDash([6, 4]);
+      ct.beginPath(); ct.moveTo(g.x0, g.Y(ORBITA)); ct.lineTo(g.x1, g.Y(ORBITA));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'órbita baixa: 9400 m/s, com perdas',
+             g.x0 + 10, g.Y(ORBITA) - 12, G.COR.vinho, 'left');
+
+      /* duas referências químicas fixas, para a escolhida ter contexto */
+      tracar(g, function (r) { return dv(2942, r); }, G.COR.clara, 1.4, [5, 4]);
+      tracar(g, function (r) { return dv(4414, r); }, G.COR.clara, 1.4, [5, 4]);
+      rotulo(ct, 'querosene, 2942', g.X(20.5), g.Y(dv(2942, 20.5)) + 15,
+             G.COR.suave);
+      rotulo(ct, 'hidrogênio, 4414', g.X(9.2), g.Y(dv(4414, 9.2)) - 13,
+             G.COR.suave);
+      tracar(g, function (r) { return dv(est.ve, r); }, G.COR.mestra, 2.8);
+
+      var y = dv(est.ve, est.razao);
+      ct.save();
+      ct.strokeStyle = G.COR.bronze; ct.lineWidth = 1.2; ct.setLineDash([3, 3]);
+      ct.beginPath();
+      ct.moveTo(g.X(est.razao), g.y1); ct.lineTo(g.X(est.razao), g.Y(y));
+      ct.lineTo(g.x0, g.Y(y));
+      ct.stroke(); ct.restore();
+      ct.fillStyle = G.COR.bronze;
+      ct.beginPath(); ct.arc(g.X(est.razao), g.Y(y), 6, 0, 6.2832); ct.fill();
+
+      var propelente = 1 - 1 / est.razao;
+      rotulos(['Δv alcançado', 'Propelente', 'O que não é propelente',
+               'Razão para 9400 m/s']);
+      painel({
+        a: fmt(y) + ' m/s',
+        b: fmt(100 * propelente, 1) + ' % da massa',
+        c: fmt(100 / est.razao, 1) + ' %',
+        d: fmt(Math.exp(ORBITA / est.ve), 1) + ' : 1'
+      });
+
+      texto.innerHTML =
+        '<p>A curva é \\(\\Delta v = v_e\\ln(m_0/m_f)\\), e o logaritmo é o '
+        + 'vilão de toda a engenharia espacial. Com a razão escolhida, '
+        + '\\(' + fmtm(est.razao, 1) + '\\), o propelente é '
+        + fmt(100 * propelente, 1) + ' % da massa que sai do chão, e sobram '
+        + fmt(100 / est.razao, 1) + ' % para tanque, motor, estrutura e '
+        + 'carga útil, tudo junto.</p>'
+        + '<p>Para dobrar o \\(\\Delta v\\) não basta dobrar o propelente: é '
+        + 'preciso <strong>elevar ao quadrado</strong> a razão de massas. De '
+        + '10 para 100, de 20 para 400. Só há duas saídas, e as duas aparecem '
+        + 'nas outras vistas: aumentar \\(v_e\\), que é química, e parar de '
+        + 'carregar tanque vazio, que é estagiamento.</p>'
+        + '<p>A linha tracejada em vinho são os 9400 m/s que a órbita baixa '
+        + 'exige, já contando as perdas por gravidade e arrasto. Com o '
+        + '\\(v_e\\) escolhido, chegar lá pede uma razão de '
+        + fmt(Math.exp(ORBITA / est.ve), 1) + ' para 1, isto é, uma máquina '
+        + 'em que tudo o que não é combustível cabe em '
+        + fmt(100 / Math.exp(ORBITA / est.ve), 1) + ' % da massa.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 2: durante a queima ---------------- */
+    function vistaQueima() {
+      var tq = (M0 - MF) / est.taxa;
+      var g = G.eixos(cv, {
+        altura: 290, xmin: 0, xmax: tq, ymin: 0,
+        ymax: Math.max(1000, 1.15 * est.ve * Math.log(M0 / MF)),
+        divY: 5, marcasX: G.marcasLineares(0, tq, 5, 0),
+        rotX: 'tempo desde a ignição (s)', rotY: 'velocidade (km/s)',
+        formataY: function (v) { return fmt(v / 1000, 1); }
+      });
+      var ct = g.ct;
+
+      function vIdeal(t) { return est.ve * Math.log(M0 / (M0 - est.taxa * t)); }
+      tracar(g, vIdeal, G.COR.clara, 2.2, [6, 4]);
+      tracar(g, function (t) { return vIdeal(t) - G0 * t; }, G.COR.mestra, 2.8);
+
+      /* a perda, como faixa entre as duas curvas */
+      ct.save();
+      ct.fillStyle = 'rgba(140,47,57,.10)';
+      ct.beginPath();
+      var n = 160, i;
+      for (i = 0; i <= n; i++) {
+        var t = tq * i / n;
+        ct.lineTo(g.X(t), g.Y(Math.min(g.ymax, vIdeal(t))));
+      }
+      for (i = n; i >= 0; i--) {
+        var t2 = tq * i / n;
+        ct.lineTo(g.X(t2), g.Y(Math.max(0, vIdeal(t2) - G0 * t2)));
+      }
+      ct.closePath(); ct.fill(); ct.restore();
+
+      rotulo(ct, 'sem gravidade', g.X(0.62 * tq), g.Y(vIdeal(0.62 * tq)) - 14,
+             G.COR.suave);
+      rotulo(ct, 'o que sobra', g.X(0.78 * tq),
+             g.Y(vIdeal(0.78 * tq) - G0 * 0.78 * tq) + 16, G.COR.mestra);
+      rotulo(ct, 'perda por gravidade', g.X(0.34 * tq),
+             (g.Y(vIdeal(0.34 * tq)) + g.Y(vIdeal(0.34 * tq) - G0 * 0.34 * tq)) / 2,
+             G.COR.vinho);
+
+      var ideal = est.ve * Math.log(M0 / MF);
+      var tw = est.ve * est.taxa / (M0 * G0);
+      var aFim = est.ve * est.taxa / MF / G0;
+      rotulos(['Δv ideal', 'Perda, g·t', 'Empuxo / peso na partida',
+               'Aceleração no fim']);
+      painel({
+        a: fmt(ideal) + ' m/s',
+        b: fmt(G0 * tq) + ' m/s',
+        c: fmt(tw, 2) + (tw < 1 ? ' <small>não decola</small>' : ''),
+        d: fmt(aFim, 1) + ' g'
+      });
+
+      texto.innerHTML =
+        '<p>Enquanto o motor queima, a gravidade desconta \\(g\\) de cada '
+        + 'segundo de aceleração, e a conta é direta: a perda vale exatamente '
+        + '\\(g\\,t_q = ' + fmtm(G0 * tq) + '\\) m/s, a área em rosa. Por isso '
+        + 'queimar depressa rende mais: o mesmo propelente, gasto em menos '
+        + 'tempo, entrega mais velocidade.</p>'
+        + '<p>O limite não é da física, é da estrutura e da tripulação. Com a '
+        + 'taxa escolhida, a aceleração no fim da queima chega a '
+        + fmt(aFim, 1) + ' g, porque o empuxo é constante e a massa só '
+        + 'diminui. É por isso que os motores são estrangulados ou desligados '
+        + 'antes do fim, e não por falta de combustível.</p>'
+        + '<p>No outro extremo há um piso: se o empuxo não vence o peso, o '
+        + 'foguete não sai do chão. O cartão mostra a razão empuxo/peso na '
+        + 'partida, e abaixo de 1 a curva desta tela descreve um veículo que '
+        + 'fica na plataforma gastando propelente.</p>';
+      tipografar(texto);
+    }
+
+    /* ---------------- vista 3: estágios ---------------- */
+    function vistaEstagios() {
+      var g = G.eixos(cv, {
+        altura: 290, xmin: 0.2, xmax: 12, ymin: 0, ymax: 16000,
+        divY: 8, marcasX: G.marcasLineares(0.2, 12, 5, 1),
+        rotX: 'carga útil, em % da massa total', rotY: 'Δv  (km/s)',
+        formataY: function (v) { return fmt(v / 1000, 0); }
+      });
+      var ct = g.ct;
+
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.6; ct.setLineDash([6, 4]);
+      ct.beginPath(); ct.moveTo(g.x0, g.Y(ORBITA)); ct.lineTo(g.x1, g.Y(ORBITA));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'órbita baixa', g.x1 - 52, g.Y(ORBITA) - 12, G.COR.vinho);
+
+      var cores = [G.COR.clara, G.COR.mestra, G.COR.bronze];
+      [1, 2, 3].forEach(function (n, i) {
+        tracar(g, function (pc) {
+          return dvEstagios(est.ve, est.eps, 100 / pc, n);
+        }, cores[i], n === 1 ? 2 : 2.6);
+        /* cada rótulo num x diferente, à esquerda, onde as três curvas
+           ainda estão bem separadas */
+        var xr = [2.6, 1.5, 0.75][i];
+        rotulo(ct, n === 1 ? '1 estágio' : n + ' estágios', g.X(xr),
+               g.Y(dvEstagios(est.ve, est.eps, 100 / xr, n)) + (i ? -14 : 15),
+               cores[i]);
+      });
+
+      /* o teto de um estágio só, com carga útil nula */
+      var teto = est.ve * Math.log(1 / est.eps);
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.1; ct.setLineDash([3, 3]);
+      ct.beginPath(); ct.moveTo(g.x0, g.Y(teto)); ct.lineTo(g.x1, g.Y(teto));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'teto de um estágio: vₑ ln(1/ε) = ' + fmt(teto),
+             g.X(3.2), g.Y(teto) + 15, G.COR.suave, 'left');
+
+      /* a carga útil que cada arranjo leva à órbita baixa */
+      function cargaParaOrbita(n) {
+        var a = 0.01, b = 60;          // em porcentagem
+        if (dvEstagios(est.ve, est.eps, 100 / a, n) < ORBITA) return null;
+        for (var i = 0; i < 60; i++) {
+          var m = (a + b) / 2;
+          if (dvEstagios(est.ve, est.eps, 100 / m, n) > ORBITA) a = m; else b = m;
+        }
+        return a;
+      }
+      var c1p = cargaParaOrbita(1), c2p = cargaParaOrbita(2),
+          c3p = cargaParaOrbita(3);
+      rotulos(['Carga à órbita, 1 estágio', 'com 2 estágios',
+               'com 3 estágios', 'Teto de um estágio só']);
+      painel({
+        a: c1p ? fmt(c1p, 2) + ' %' : 'nenhuma',
+        b: c2p ? fmt(c2p, 2) + ' %' : 'nenhuma',
+        c: c3p ? fmt(c3p, 2) + ' %' : 'nenhuma',
+        d: fmt(teto) + ' m/s'
+      });
+
+      texto.innerHTML =
+        '<p>Com \\(\\epsilon = ' + fmtm(100 * est.eps, 1) + '\\) %, um estágio '
+        + 'só não passa de \\(v_e\\ln(1/\\epsilon) = ' + fmtm(teto) + '\\) m/s '
+        + '<em>nem com carga útil nula</em>, porque o tanque vazio e o motor '
+        + 'vão junto até o fim. É a linha cinza pontilhada, e ela não depende '
+        + 'da carga: é um teto, e nenhuma engenharia de tanque o levanta sem '
+        + 'mexer em \\(\\epsilon\\).</p>'
+        + '<p>O que o estagiamento faz é parar de carregar tanque vazio no '
+        + 'meio do caminho. Cada estágio descartado tira do veículo uma massa '
+        + 'que não serve mais para nada, e o ganho aparece justamente onde a '
+        + 'carga útil é pequena, que é o caso real.</p>'
+        + (c1p
+            ? '<p>Neste ajuste, um estágio só ainda chegaria à órbita com '
+              + fmt(c1p, 2) + ' % de carga, o que é otimismo de tanque.</p>'
+            : '<p>Neste ajuste, <strong>um estágio só não chega à órbita com '
+              + 'carga nenhuma</strong>: a curva de um estágio passa inteira '
+              + 'abaixo da linha vinho. Dois estágios levam '
+              + (c2p ? fmt(c2p, 2) + ' %' : 'nada') + ' e três levam '
+              + (c3p ? fmt(c3p, 2) + ' %' : 'nada') + ' da massa total. '
+              + 'É essa diferença, e não a elegância, que explica por que '
+              + 'todo foguete que já pôs carga em órbita tinha estágios.</p>');
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'equacao') vistaEquacao();
+      else if (est.vista === 'queima') vistaQueima();
+      else vistaEstagios();
+    }
+
+    montar();
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {

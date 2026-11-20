@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Momento linear, impulso e o movimento de foguetes | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200136">
+<script src="assets/js/comum.js?v=202611200136"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <a href="aula02.html" class="num" title="Módulo 2: As leis de Newton e os referenciais inerciais">2</a>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <a href="aula04.html" class="num" title="Módulo 4: Trabalho, energia e forças conservativas">4</a>
+      <a href="aula05.html" class="num ativo" title="Módulo 5: Momento linear, impulso e o movimento de foguetes">5</a>
+      <span class="grupo">Oscilações</span>
+      <span class="num pendente" title="Módulo 6: O oscilador harmônico simples · em preparação">6</span>
+      <span class="num pendente" title="Módulo 7: Oscilações amortecidas · em preparação">7</span>
+      <span class="num pendente" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer · em preparação">8</span>
+      <span class="grupo">Caos</span>
+      <span class="num pendente" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase · em preparação">9</span>
+      <span class="num pendente" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores · em preparação">10</span>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. O momento linear, e por que ele vem antes</a></li>
+    <li><a href="#s2">2. Impulso: a força média que de fato importa</a></li>
+    <li><a href="#s3">3. A equação do foguete, com o sistema certo</a></li>
+    <li><a href="#s4">4. O que a gravidade cobra durante a queima</a></li>
+    <li><a href="#s5">5. Por que todo foguete tem estágios</a></li>
+    <li><a href="#s6">6. Massa variável mal contada: a corrente</a></li>
+    <li><a href="#s7">7. No Spyder</a></li>
+    <li><a href="#s8">8. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 5 · Mecânica newtoniana</p>
+  <h1>Momento linear, impulso e o movimento de foguetes</h1>
+  <p class="subtitulo">F = dp/dt é a forma original da segunda lei, e F = ma é o caso particular de massa constante. Tudo o que este módulo tem de difícil, do foguete à corrente que cai sobre a mesa, mora exatamente nessa distinção.</p>
+  <h2 id="s1">1. O momento linear, e por que ele vem antes</h2>
+
+<p>Newton não escreveu \(\vet{F} = m\vet{a}\). O que está nos
+<em>Principia</em> é que a força é a taxa de variação da
+<em>quantidade de movimento</em>, que hoje chamamos de momento linear:</p>
+
+\[ \vet{p} = m\vet{v}, \qquad \vet{F} = \der{\vet{p}}{t}. \]
+
+<p>Quando a massa não muda, a derivada passa por ela e sai
+\(\vet{F} = m\vet{a}\), que é a forma usada em tudo o que fizemos até o
+módulo 4. A diferença parece pedante até o primeiro problema de massa
+variável, e aí ela decide tudo.</p>
+
+<p>Há um motivo mais fundo para começar pelo momento. Tome dois corpos que
+interagem apenas entre si. Pela terceira lei, \(\vet{F}_{12} = -\vet{F}_{21}\),
+de modo que</p>
+
+\[ \der{}{t}\left(\vet{p}_1 + \vet{p}_2\right)
+   = \vet{F}_{12} + \vet{F}_{21} = 0. \]
+
+<p>O momento total de um sistema isolado é constante, e a conta não pediu
+nada sobre a natureza da força: nem que seja conservativa, nem que se conheça
+sua forma, nem que o choque seja elástico. Basta que as forças internas venham
+em pares opostos. É por isso que a conservação do momento sobrevive a colisões
+em que a energia mecânica não se conserva, e é por isso que ela resolve
+problemas que a energia não resolve.</p>
+
+<div class="destaque">
+<p><strong>De onde vem, de verdade.</strong> A conservação do momento é mais
+profunda que a terceira lei, que, como vimos no módulo 2, falha entre cargas
+em movimento. O teorema de
+<a href="https://pt.wikipedia.org/wiki/Emmy_Noether">Emmy Noether</a> mostra
+que ela decorre de uma simetria: as leis da física são as mesmas aqui e dois
+metros adiante. Homogeneidade do espaço dá momento conservado, do mesmo jeito
+que homogeneidade do tempo dá energia conservada. Essa é a razão de essas duas
+leis sobreviverem intactas à relatividade e à mecânica quântica, enquanto
+\(\vet{F} = m\vet{a}\) não sobrevive a nenhuma das duas.</p>
+</div>
+
+  <h2 id="s2">2. Impulso: a força média que de fato importa</h2>
+
+<p>Integrando \(\vet{F} = d\vet{p}/dt\) no tempo:</p>
+
+\[ \vet{J} = \int_{t_a}^{t_b}\vet{F}\,dt = \vet{p}_b - \vet{p}_a. \]
+
+<p>Esse é o teorema do impulso, e ele é ao tempo o que o teorema do trabalho
+e da energia é ao espaço. Os dois saem da mesma equação integrada em variáveis
+diferentes, e respondem perguntas diferentes.</p>
+
+<p>O programa chuta uma bola de futebol com uma força que sobe e desce em
+\(\sen^2\) durante 12 ms, com 2400 N de pico:</p>
+
+<div class="saida">
+impulso J = F0 T / 2 = <b>14,400000 N s</b><br>
+momento final m v&nbsp;&nbsp;&nbsp;&nbsp;= <b>14,400000 kg m/s</b><br>
+diferenca&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 8e&minus;11<br>
+velocidade de saida&nbsp;&nbsp;= <b>33,5 m/s = 121 km/h</b>
+</div>
+
+<p>Repare no que determina a velocidade de saída: a <strong>média da força no
+tempo</strong>, 1200 N, metade do pico. A média na distância daria outro
+número e responderia outra pergunta, a da energia. Quem quer chutar mais forte
+não precisa de mais força de pico, precisa de mais impulso, que é força vezes
+tempo de contato. É por isso que a técnica de acompanhar a bola com o pé
+funciona.</p>
+
+<h3>O mesmo teorema, lido ao contrário</h3>
+
+<p>Numa parada, \(\Delta p\) está dado: é a quantidade de movimento que se
+tinha e que precisa acabar. O que se pode escolher é o tempo. Como
+\(\bar{F} = \Delta p/\Delta t\), estender o tempo é a única maneira de reduzir
+a força. Uma pessoa de 75 kg a 50 km/h carrega \(J = 1050\) N·s, e tudo o que
+muda de um caso para o outro é o denominador:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>Como a parada acontece</th><th>\(\Delta t\)</th>
+<th>força média</th><th>em unidades de peso</th></tr></thead>
+<tbody>
+<tr><td>contra uma superfície rígida</td><td>2 ms</td><td>525 kN</td>
+<td>714 \(g\)</td></tr>
+<tr><td>contra um airbag</td><td>50 ms</td><td>21 kN</td><td>29 \(g\)</td></tr>
+<tr><td>com a zona de deformação do carro</td><td>300 ms</td><td>3,5 kN</td>
+<td>4,8 \(g\)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>O airbag não absorve energia nem amortece no sentido vago da palavra: ele
+<strong>compra tempo</strong>. Quinze vezes mais tempo, quinze vezes menos
+força. É o mesmo princípio do joelho que dobra ao cair, do capacete, da luva de
+<em>baseball</em> que recua no momento de pegar a bola, e da embalagem que
+protege o que está dentro.</p>
+
+  <h2 id="s3">3. A equação do foguete, com o sistema certo</h2>
+
+<p>Aqui o cuidado com o sistema deixa de ser filosofia. A tentação é escrever
+\(\vet{F} = m(t)\vet{a}\) para o foguete, com a massa diminuindo, e isso está
+errado. O erro não é de conta: é de pergunta. A segunda lei vale para um
+sistema fixo de partículas, e o foguete sozinho não é um sistema fixo, porque
+está jogando pedaços de si para trás.</p>
+
+<p>O jeito certo é tomar como sistema <strong>o foguete mais o gás que ele
+está prestes a expelir</strong>, que é um sistema de massa constante, e
+comparar dois instantes. No instante \(t\), massa \(m\) com velocidade \(v\).
+No instante \(t + dt\), massa \(m + dm\) (com \(dm &lt; 0\)) a \(v + dv\), mais
+a massa \(-dm\) expelida, que sai com velocidade \(v - v_e\) vista do solo, já
+que \(v_e\) é medida em relação ao foguete:</p>
+
+\[ p(t) = mv, \qquad
+   p(t+dt) = (m+dm)(v+dv) + (-dm)\left(v - v_e\right). \]
+
+<p>A diferença, descartando o produto \(dm\,dv\), que é de segunda ordem:</p>
+
+\[ dp = m\,dv + v_e\,dm. \]
+
+<p>Sem forças externas, \(dp = 0\), e sobra a equação do foguete:</p>
+
+\[ m\der{v}{t} = -v_e\der{m}{t}. \]
+
+<p>O lado direito é positivo, porque \(dm/dt &lt; 0\): é o
+<strong>empuxo</strong>, e ele vale a velocidade de exaustão vezes a vazão de
+massa. Repare que nada aqui precisa de ar para empurrar. O foguete acelera
+porque joga massa para trás, e isso funciona igualmente bem no vácuo, o que
+custou a <a href="https://pt.wikipedia.org/wiki/Robert_Goddard">Robert
+Goddard</a> um editorial de jornal, em 1920, explicando-lhe que ele não
+entendia o ensino médio. O <em>New York Times</em> publicou a retratação em
+1969, com a Apolo 11 a caminho da Lua.</p>
+
+<h3>A integração, e o logaritmo</h3>
+
+<p>Separando as variáveis e integrando entre o início e o fim da queima:</p>
+
+\[ \int_{v_0}^{v_f} dv = -v_e\int_{m_0}^{m_f}\frac{dm}{m}
+   \quad\Longrightarrow\quad
+   \Delta v = v_e\ln\frac{m_0}{m_f}. \]
+
+<p>É a equação de
+<a href="https://pt.wikipedia.org/wiki/Konstantin_Tsiolkovsky">Tsiolkovsky</a>,
+escrita em 1903 por um professor de matemática surdo de província, e ela
+continua sendo a restrição que decide todo projeto de foguete. O programa
+confere a dedução contra a integração numérica passo a passo:</p>
+
+<div class="saida">
+Tsiolkovsky&nbsp;&nbsp;ve ln(m0/mf) = <b>4734,966338 m/s</b><br>
+integracao numerica&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <b>4734,966337 m/s</b>
+</div>
+
+<p>O que a fórmula diz é brutal. O \(\Delta v\) cresce com o
+<strong>logaritmo</strong> da razão de massas, de modo que dobrar a velocidade
+final exige elevar ao quadrado a razão: de 10 para 100. Com querosene e
+oxigênio líquido, \(v_e \simeq 2942\) m/s, a órbita baixa pede cerca de
+9400 m/s contando as perdas, o que dá uma razão de massas de 24 para 1. Isto
+é: 96 % da máquina que sai do chão precisa ser combustível, e todo o resto
+(tanques, motores, estrutura, carga) tem de caber nos 4 % restantes.</p>
+
+  <h2 id="s4">4. O que a gravidade cobra durante a queima</h2>
+
+<p>A dedução acima ignorou a gravidade. Com ela, a equação fica</p>
+
+\[ m\der{v}{t} = -v_e\der{m}{t} - mg, \]
+
+<p>e o termo novo integra trivialmente, porque não depende da massa:</p>
+
+\[ \Delta v = v_e\ln\frac{m_0}{m_f} - g\,t_q. \]
+
+<p>A perda vale exatamente \(g\) vezes o tempo de queima, e o programa
+confirma isso em todas as taxas testadas. Daí uma conclusão que surpreende:
+<strong>queimar depressa rende mais</strong>. O mesmo propelente, gasto em
+metade do tempo, entrega metade da perda.</p>
+
+<div data-widget="foguete"></div>
+
+<p>O limite para queimar depressa não é da física. É que o empuxo é constante
+enquanto a massa só diminui, de modo que a aceleração cresce durante toda a
+queima. Com a taxa mais alta do programa, ela terminaria em 48 \(g\), o que
+desmontaria o veículo e mataria a tripulação. É por isso que os motores da
+Saturno V eram desligados em sequência perto do fim do primeiro estágio, e não
+por falta de combustível.</p>
+
+<p>No outro extremo há um piso, que a terceira coluna do widget mostra. Se o
+empuxo não vence o peso, o foguete não decola: ele fica na plataforma gastando
+propelente, e a equação continua valendo, só que descrevendo um veículo
+parado. A razão empuxo/peso na partida precisa passar de 1, e na prática fica
+entre 1,2 e 1,5, porque empuxo demais também custa motor.</p>
+
+  <h2 id="s5">5. Por que todo foguete tem estágios</h2>
+
+<p>Um estágio só tem um teto, e ele é fácil de ver. Chame de
+\(\epsilon\) a <strong>fração estrutural</strong>: a massa de tanques, motores
+e estrutura dividida pela massa do estágio cheio. Mesmo com carga útil
+<em>nula</em>, o foguete termina a queima carregando \(\epsilon m_0\), de modo
+que</p>
+
+\[ \Delta v_{\max} = v_e\ln\frac{1}{\epsilon}. \]
+
+<p>Com \(\epsilon = 0{,}10\), que já é bom, e querosene, isso dá 6774 m/s. Os
+9400 m/s da órbita baixa estão fora de alcance, e não por pouco. Nenhum
+foguete de um estágio só jamais colocou carga em órbita, e a razão não é
+falta de engenharia: é essa linha.</p>
+
+<p>A saída é parar de carregar tanque vazio. Com \(n\) estágios de mesma
+fração estrutural e mesmo \(v_e\), o melhor arranjo é o de estágios
+idênticos, cada um multiplicando a massa pela mesma razão
+\(r = \left(m_0/m_{\text{carga}}\right)^{1/n}\), e o resultado é</p>
+
+\[ \Delta v = n\,v_e\ln\frac{r}{1 + \epsilon\left(r-1\right)}. \]
+
+<p>Vale a pena desconfiar dessa fórmula fechada. O programa calcula o caso de
+dois estágios de outro jeito, varrendo todas as divisões possíveis de massa
+entre eles e ficando com a melhor, e compara:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>carga útil</th><th>1 estágio</th><th>2 estágios (busca)</th>
+<th>3 estágios</th><th>ganho de 1 para 2</th></tr></thead>
+<tbody>
+<tr><td>5000 kg</td><td>4886</td><td>5622</td><td>5810</td><td>+15,1 %</td></tr>
+<tr><td>2000 kg</td><td>5870</td><td>7490</td><td>7917</td><td>+27,6 %</td></tr>
+<tr><td>1000 kg</td><td>6287</td><td>8718</td><td>9411</td><td>+38,7 %</td></tr>
+<tr><td>500 kg</td><td>6521</td><td>9772</td><td>10808</td><td>+49,9 %</td></tr>
+<tr><td>200 kg</td><td>6670</td><td>10897</td><td>12491</td><td>+63,4 %</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A busca numérica e a forma fechada discordam em 0,002 m/s na pior das cinco
+linhas, o que é erro de varredura. São dois caminhos independentes para o
+mesmo número.</p>
+
+<p>Leia a terceira linha com atenção: com 1000 kg de carga, três estágios dão
+9411 m/s, que passa de raspão dos 9400 necessários. Está tudo ali, o
+desconforto inteiro do negócio: 50 toneladas na plataforma para pôr uma
+tonelada em órbita, e ainda assim por margem de 11 m/s.</p>
+
+<p>Repare também que o ganho do estagiamento <em>cresce</em> quando a carga
+útil encolhe. O motivo é direto: o que o estagiamento evita é carregar tanque
+vazio, e quanto maior a parte da massa final que é tanque vazio, mais há a
+ganhar em jogá-lo fora.</p>
+
+  <h2 id="s6">6. Massa variável mal contada: a corrente</h2>
+
+<p>Fica a impressão de que massa variável é assunto de foguete. Não é, e o
+contraexemplo mais barato é uma corrente caindo sobre uma mesa.</p>
+
+<p>Uma corrente de densidade linear \(\mu\) é solta do repouso, com a ponta
+tocando a mesa. Quando um comprimento \(x\) já se acumulou, qual é a força que
+a mesa faz?</p>
+
+<p>A resposta ingênua é o peso do que já caiu, \(\mu g x\). Ela esquece que a
+mesa não apenas <em>sustenta</em> os elos parados: ela também
+<strong>para</strong> os elos que chegam. O trecho que ainda cai está em queda
+livre, de modo que chega com \(v^2 = 2gx\), e num intervalo \(dt\) a mesa
+precisa zerar o momento de uma massa \(\mu v\,dt\):</p>
+
+\[ N = \underbrace{\mu g x}_{\text{peso do que parou}}
+     + \underbrace{\mu v^2}_{\text{momento que chega}}
+     = \mu g x + 2\mu g x = 3\mu g x. \]
+
+<p>Três vezes o peso do que já caiu, durante toda a queda. O programa não
+confia nessa conta: ele aplica \(\vet{F} = d\vet{p}/dt\) à corrente
+<em>inteira</em>, que tem massa fixa, e isola a normal,</p>
+
+\[ \mu L g - N = \der{p}{t}, \qquad p = \mu\left(L-x\right)v, \]
+
+<p>o que é um caminho inteiramente independente. As duas contas coincidem em
+\(3\times10^{-10}\) N ao longo de toda a queda.</p>
+
+<div class="destaque">
+<p><strong>A pergunta que sempre funciona.</strong> Diante de qualquer problema
+de massa variável, não pergunte qual é a massa agora. Pergunte: qual é o meu
+sistema, ele é fixo, e com que velocidade a massa entra ou sai dele? A
+corrente e o foguete parecem opostos (um recebe massa parada, o outro expele
+massa rápida) e são o mesmo problema com sinais trocados. O vagão que recolhe
+areia, do exercício 5.4, é a terceira versão.</p>
+</div>
+
+  <h2 id="s7">7. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/foguete.py">
+    <span class="numero">Programa</span>
+    <h3>foguete.py</h3>
+    <p>Confere o teorema do impulso, deduz e verifica Tsiolkovsky, mede a
+    perda por gravidade, compara um estágio com dois e três, e resolve a
+    corrente que cai pelo balanço de momento.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>O impulso \(F_0T/2\) e o momento final \(mv\) coincidem em
+\(8\times10^{-11}\), e a força média no tempo dá exatamente metade do pico.</li>
+<li>Tsiolkovsky e a integração numérica da equação do foguete coincidem em
+\(10^{-6}\) m/s.</li>
+<li>A perda por gravidade é igual a \(g\,t_q\) em todas as cinco taxas, com
+todas as casas.</li>
+<li>O ótimo de dois estágios obtido por busca e a forma fechada dos estágios
+idênticos discordam em 0,002 m/s.</li>
+<li>A normal da corrente calculada por \(dp/dt\) e a fórmula \(3\mu g x\)
+coincidem em \(3\times10^{-10}\) N.</li>
+</ul>
+
+<div class="bloco ex">
+<p><strong>Para mexer.</strong> Troque a vazão do foguete por uma que
+<em>diminui</em> com o tempo, de modo a manter a aceleração constante em
+3 \(g\), e veja o que acontece com o tempo de queima e com a perda por
+gravidade. Depois refaça a tabela de estágios com \(\epsilon = 0{,}06\), que é
+o que tanques de alumínio-lítio modernos alcançam, e descubra se um estágio só
+chega à órbita nesse caso.</p>
+</div>
+
+  <h2 id="s8">8. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">5.1  O airbag não absorve energia: ele compra tempo</span>
+  <p>Uma pessoa de 75 kg viaja a 50 km/h. Calcule o impulso que precisa
+     ser aplicado para pará-la e, a partir dele, a força média em três
+     situações: parada contra uma superfície rígida em 2 ms, contra um airbag
+     em 50 ms, e com a zona de deformação do carro trabalhando por 300 ms.
+     Explique por que a energia cinética é a mesma nos três casos e ainda
+     assim só um deles é sobrevivível.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O impulso.</b> \(v = 50/3{,}6 = 13{,}9\) m/s, de modo que</p>
+     <p>\[ J = m v = 75 \times 13{,}9 = 1050\ \mathrm{N\,s}. \]</p>
+     <p>Esse número não depende de como a parada acontece. É a quantidade de
+     movimento que existe e que precisa ser retirada, e nenhum dispositivo a
+     diminui.</p>
+     <p><b>As três forças.</b> \(\bar{F} = J/\Delta t\):</p>
+     <div class="tabela-rolavel">
+     <table>
+     <thead><tr><th>situação</th><th>\(\Delta t\)</th><th>\(\bar F\)</th>
+     <th>em pesos do corpo</th></tr></thead>
+     <tbody>
+     <tr><td>superfície rígida</td><td>2 ms</td><td>525 kN</td><td>714 \(g\)</td></tr>
+     <tr><td>airbag</td><td>50 ms</td><td>21 kN</td><td>29 \(g\)</td></tr>
+     <tr><td>zona de deformação</td><td>300 ms</td><td>3,5 kN</td><td>4,8 \(g\)</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p><b>Por que só um sobrevive.</b> O corpo humano não é danificado por
+     energia e sim por <em>força por unidade de área</em>: ossos quebram em
+     tensão, órgãos se rompem em desaceleração. A tolerância fica na casa de
+     algumas dezenas de \(g\) por frações de segundo. Os 714 \(g\) da primeira
+     linha são letais; os 4,8 \(g\) da terceira são um susto.</p>
+     <p><b>A lição de projeto.</b> Como \(J\) está fixo, a única variável de
+     projeto é \(\Delta t\). Airbag, capacete, joelho que dobra ao cair, luva
+     que recua ao pegar a bola, embalagem de isopor: todos fazem a mesma
+     coisa, que é esticar o tempo da parada. Nenhum deles "absorve o impacto"
+     no sentido vago da expressão.</p>
+     <p><b>Um detalhe que costuma passar.</b> O airbag também espalha a força
+     por uma área muito maior que a do volante, e as duas coisas se somam. A
+     pressão cai pelo tempo e pela área ao mesmo tempo.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">5.2  A dedução de Tsiolkovsky, com o sistema certo</span>
+  <p>Deduza a equação do foguete tomando como sistema o foguete
+     <em>mais</em> o gás prestes a ser expelido, e explique em uma frase por
+     que escrever \(F = m(t)a\) para o foguete sozinho está errado. Depois
+     mostre que, no referencial que se move com o foguete num dado instante, o
+     empuxo vale \(v_e\,|dm/dt|\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O sistema.</b> Em \(t\), um corpo único de massa \(m\) com
+     velocidade \(v\): \(p(t) = mv\). Em \(t+dt\), duas partes: o foguete, com
+     massa \(m + dm\) (e \(dm &lt; 0\)) a \(v + dv\), e o gás expelido, de massa
+     \(-dm\), que sai a \(v_e\) <em>em relação ao foguete</em>, isto é, a
+     \(v - v_e\) em relação ao solo:</p>
+     <p>\[ p(t+dt) = (m+dm)(v+dv) + (-dm)(v - v_e). \]</p>
+     <p><b>A diferença.</b> Expandindo e cancelando \(mv\):</p>
+     <p>\[ dp = m\,dv + v\,dm + dm\,dv - v\,dm + v_e\,dm
+            = m\,dv + v_e\,dm, \]</p>
+     <p>com \(dm\,dv\) descartado por ser de segunda ordem. Sem forças
+     externas, \(dp = 0\) e</p>
+     <p>\[ m\,dv = -v_e\,dm \quad\Longrightarrow\quad
+        \int_{0}^{\Delta v}dv = -v_e\int_{m_0}^{m_f}\frac{dm}{m}
+        \quad\Longrightarrow\quad \Delta v = v_e\ln\frac{m_0}{m_f}. \]</p>
+     <p><b>Por que \(F = m(t)a\) está errado.</b> Porque a segunda lei nessa
+     forma vale para um conjunto fixo de partículas, e o foguete sozinho não é
+     um: ele perde partículas o tempo todo, e o momento que elas levam embora
+     não aparece em lugar nenhum da equação. Usar \(m(t)\) ali é contrabandear
+     a variação de massa para dentro de uma fórmula que supôs massa
+     constante.</p>
+     <p><b>O empuxo.</b> Reescrevendo a equação como
+     \(m\,dv/dt = -v_e\,dm/dt\), o lado direito é positivo, já que
+     \(dm/dt &lt; 0\), e tem dimensão de força:</p>
+     <p>\[ E = v_e\left|\der{m}{t}\right|. \]</p>
+     <p>Essa é a leitura prática: o empuxo é a velocidade de exaustão vezes a
+     vazão de massa. Um motor que expele 400 kg/s a 2942 m/s entrega 1,18 MN,
+     esteja no vácuo ou não, encostado numa parede ou não. Não há nada em que
+     empurrar, e é justamente esse o ponto.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">5.3  O teto de um estágio só</span>
+  <p>Com \(v_e = 2942\) m/s e fração estrutural \(\epsilon = 0{,}10\),
+     mostre que um foguete de um estágio não chega aos 9400 m/s da órbita
+     baixa <em>nem com carga útil nula</em>. Depois use a fórmula dos estágios
+     idênticos para achar a maior carga útil, em porcentagem da massa total,
+     que dois e três estágios conseguem colocar em órbita.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O teto.</b> Com carga útil nula, a massa final é a estrutura,
+     \(\epsilon m_0\), de modo que</p>
+     <p>\[ \Delta v_{\max} = v_e\ln\frac{m_0}{\epsilon m_0}
+        = v_e\ln\frac{1}{\epsilon}
+        = 2942\ln 10 = 6774\ \mathrm{m/s}. \]</p>
+     <p>Faltam 2600 m/s, e não há carga útil negativa. Repare no que esse
+     resultado tem de implacável: ele não depende do tamanho do foguete.
+     Construir um dez vezes maior não muda nada, porque \(m_0\) cancela. O
+     único jeito de levantar essa linha é melhorar \(\epsilon\) ou
+     \(v_e\).</p>
+     <p><b>Com \(n\) estágios idênticos.</b> Cada um multiplica a massa pela
+     mesma razão \(r = (m_0/m_c)^{1/n}\), e</p>
+     <p>\[ \Delta v = n\,v_e\ln\frac{r}{1+\epsilon(r-1)}. \]</p>
+     <p>Igualando a 9400 m/s e resolvendo numericamente para a fração de carga
+     útil \(m_c/m_0\):</p>
+     <div class="tabela-rolavel">
+     <table>
+     <thead><tr><th>estágios</th><th>carga útil máxima</th>
+     <th>massa na plataforma por tonelada em órbita</th></tr></thead>
+     <tbody>
+     <tr><td>1</td><td>nenhuma</td><td>impossível</td></tr>
+     <tr><td>2</td><td>1,29 %</td><td>77 t</td></tr>
+     <tr><td>3</td><td>2,01 %</td><td>50 t</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p><b>A leitura.</b> Passar de dois para três estágios melhora a carga em
+     56 %, mas passar de um para dois é a diferença entre impossível e
+     possível. Os ganhos seguintes encolhem: quatro estágios dariam 2,3 %, e o
+     ganho já não paga a complexidade de mais um conjunto de motores, junções
+     e eventos de separação, cada um dos quais pode falhar.</p>
+     <p><b>Por que o foguete reutilizável muda a conversa.</b> Ele não melhora
+     nenhum desses números: ao contrário, guardar propelente para o pouso e
+     carregar pernas e grades piora \(\epsilon\) e come carga útil. A aposta é
+     econômica, e não física: aceitar menos carga por lançamento em troca de
+     não jogar fora a máquina.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">5.4  O vagão que recolhe areia</span>
+  <p>Um vagão de 10 000 kg desliza sem atrito a 5,0 m/s sob uma esteira
+     que despeja areia parada dentro dele a 50 kg/s. Encontre a velocidade
+     depois de 60 s, a força horizontal que seria preciso aplicar para manter
+     a velocidade constante, e a energia mecânica perdida. Diga para onde ela
+     foi.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A velocidade.</b> Nenhuma força horizontal externa age sobre o
+     conjunto vagão mais areia, de modo que o momento horizontal se conserva.
+     A areia entra com velocidade horizontal nula:</p>
+     <p>\[ M v_0 = \left(M + \lambda t\right)v
+        \quad\Longrightarrow\quad
+        v(t) = \frac{M v_0}{M + \lambda t}. \]</p>
+     <p>Com \(t = 60\) s, a massa vai a 13 000 kg e
+     \(v = 50000/13000 = 3{,}846\) m/s. A integração numérica passo a passo
+     dá 3,846154 m/s, o mesmo número.</p>
+     <p><b>A força para manter a velocidade.</b> Se \(v\) é constante,</p>
+     <p>\[ F = \der{p}{t} = v\der{m}{t} = \lambda v_0
+        = 50 \times 5{,}0 = 250\ \mathrm{N}. \]</p>
+     <p>Note que a força não acelera coisa alguma: ela existe apenas para
+     acelerar a areia nova, de zero até \(v_0\), e é essa a diferença entre
+     \(F = dp/dt\) e \(F = ma\) neste problema.</p>
+     <p><b>A energia.</b> Inicial: \(\frac12 \times 10000 \times 25
+     = 125{,}0\) kJ. Final: \(\frac12 \times 13000 \times 3{,}846^2
+     = 96{,}2\) kJ. Perderam-se <b>28,8 kJ</b>, isto é, 23 % do total.</p>
+     <p><b>Para onde ela foi.</b> Para o atrito entre a areia e o piso do
+     vagão, enquanto cada punhado é arrastado de zero até a velocidade do
+     vagão. A areia chega parada e precisa ser acelerada; o processo é
+     exatamente tão dissipativo quanto uma colisão perfeitamente inelástica, e
+     é o que é. O momento se conserva e a energia mecânica não, e esse é o
+     padrão sempre que massa é incorporada ao sistema sem deslizar livremente
+     depois.</p>
+     <p><b>Compare com o foguete.</b> Lá a massa <em>sai</em> com velocidade
+     alta e a energia mecânica do conjunto <em>aumenta</em>, às custas da
+     química do propelente. Aqui a massa <em>entra</em> parada e a energia
+     mecânica diminui. São o mesmo problema com o sinal de \(dm\) trocado.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">5.5  A corrente que cai, e os três pesos</span>
+  <p>Uma corrente de densidade linear \(\mu\) é solta do repouso com a
+     ponta encostada na mesa. Mostre que, quando um comprimento \(x\) já se
+     acumulou, a mesa exerce \(N = 3\mu g x\). Confirme o resultado aplicando
+     \(F = dp/dt\) à corrente inteira, e diga quanto vale a força máxima para
+     uma corrente de 2,0 m e 1,5 kg/m.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O caminho direto.</b> O trecho que ainda cai está em queda
+     livre (nada o segura), de modo que, quando \(x\) já caiu,
+     \(v^2 = 2gx\). A mesa faz duas coisas ao mesmo tempo:</p>
+     <ul>
+     <li>sustenta o peso do que já parou: \(\mu g x\);</li>
+     <li>zera o momento do que chega. Em \(dt\), uma massa \(\mu v\,dt\) chega
+     com velocidade \(v\) e para, o que exige \(dp/dt = \mu v^2\).</li>
+     </ul>
+     <p>\[ N = \mu g x + \mu v^2 = \mu g x + 2\mu g x = 3\mu g x. \]</p>
+     <p><b>A confirmação independente.</b> Aplique a segunda lei à corrente
+     inteira, que tem massa fixa \(\mu L\). As forças externas sobre ela são o
+     peso total e a normal:</p>
+     <p>\[ \mu L g - N = \der{p}{t}, \qquad p = \mu\left(L - x\right)v, \]</p>
+     <p>já que só o trecho suspenso tem momento. Derivando, com
+     \(\dot{x} = v\) e \(\dot{v} = g\):</p>
+     <p>\[ \der{p}{t} = \mu\left[-v^2 + (L-x)g\right]
+        = \mu\left[(L-x)g - 2gx\right], \]</p>
+     <p>\[ N = \mu L g - \mu(L-x)g + 2\mu g x = \mu g x + 2\mu g x = 3\mu g x. \]</p>
+     <p>Os dois caminhos coincidem, e o segundo nunca precisou separar a
+     corrente em pedaços. O programa faz essa conta numericamente e acha
+     \(3\times10^{-10}\) N de diferença.</p>
+     <p><b>O número.</b> Com \(L = 2{,}0\) m e \(\mu = 1{,}5\) kg/m, a força é
+     máxima no instante em que o último elo chega:</p>
+     <p>\[ N_{\max} = 3 \times 1{,}5 \times 9{,}81 \times 2{,}0
+        = 88{,}3\ \mathrm{N}, \]</p>
+     <p>contra um peso total de 29,4 N. No fim da queda, a mesa sente
+     <b>três vezes</b> o peso da corrente inteira, e um milissegundo depois
+     sente apenas o peso. É por isso que uma corrente derrubada faz muito mais
+     barulho do que a sua massa sugere.</p>
+     <p><b>Um teste de honestidade.</b> Quem escrever \(N = m(t)g\) com
+     \(m(t) = \mu x\) acha um terço da resposta. O erro não está na álgebra:
+     está em ter esquecido de perguntar com que velocidade a massa chega.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">5.6  O homem que anda no barco</span>
+  <p>Um homem de 80 kg está numa das pontas de um barco de 120 kg e 4,0 m,
+     parado em água sem atrito. Ele caminha até a outra ponta. Quanto o barco
+     se desloca em relação à água, e quanto o homem se desloca? Depois explique
+     por que a resposta não depende de quão depressa ele anda.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O argumento.</b> Não há força horizontal externa, e o sistema
+     parte do repouso, de modo que o momento total é zero o tempo todo. Mas
+     momento nulo é a mesma coisa que centro de massa parado:</p>
+     <p>\[ \vet{p}_{\text{total}} = M_{\text{total}}\,\vet{v}_{CM} = 0
+        \quad\Longrightarrow\quad \vet{v}_{CM} = 0
+        \quad\Longrightarrow\quad x_{CM} = \text{constante}. \]</p>
+     <p><b>A conta.</b> Chame de \(d_b\) o deslocamento do barco (para trás) e
+     de \(d_h\) o do homem (para a frente), ambos em relação à água. Um anda
+     sobre o outro, de modo que \(d_h + d_b = L\). Com o centro de massa
+     parado,</p>
+     <p>\[ m_h d_h = m_b d_b
+        \quad\Longrightarrow\quad
+        d_b = \frac{m_h}{m_h + m_b}L
+        = \frac{80}{200}\times 4{,}0 = 1{,}6\ \mathrm{m}, \]</p>
+     <p>e \(d_h = 2{,}4\) m. O homem caminhou 4,0 m <em>sobre o barco</em> e
+     apenas 2,4 m em relação à água.</p>
+     <p><b>Por que a velocidade não importa.</b> Porque a conclusão veio de
+     uma lei de conservação, que só compara o estado inicial com o final. Se
+     ele anda devagar, o barco desliza devagar; se corre, o barco anda
+     depressa e por menos tempo. O produto é o mesmo. Ele pode até parar no
+     meio do caminho, tomar café e seguir: o resultado final é 1,6 m.</p>
+     <p><b>Onde isso aparece de novo.</b> O mesmo argumento diz que um
+     astronauta solto, sem nada para jogar, não consegue voltar à nave por
+     mais que se contorça, e que o foguete do resto do módulo acelera sem
+     empurrar coisa alguma: o centro de massa do conjunto, foguete mais gases,
+     segue exatamente onde seguiria. O módulo 13 retoma o centro de massa como
+     ferramenta de cálculo, e não apenas de argumento.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="aula04.html"><small>Módulo anterior</small>← 4. Trabalho e energia</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611200136"></script>
+</body>
+</html>
