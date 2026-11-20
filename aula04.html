@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trabalho, energia e forças conservativas | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200122">
+<script src="assets/js/comum.js?v=202611200122"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <a href="aula02.html" class="num" title="Módulo 2: As leis de Newton e os referenciais inerciais">2</a>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <a href="aula04.html" class="num ativo" title="Módulo 4: Trabalho, energia e forças conservativas">4</a>
+      <span class="num pendente" title="Módulo 5: Momento linear, impulso e o movimento de foguetes · em preparação">5</span>
+      <span class="grupo">Oscilações</span>
+      <span class="num pendente" title="Módulo 6: O oscilador harmônico simples · em preparação">6</span>
+      <span class="num pendente" title="Módulo 7: Oscilações amortecidas · em preparação">7</span>
+      <span class="num pendente" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer · em preparação">8</span>
+      <span class="grupo">Caos</span>
+      <span class="num pendente" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase · em preparação">9</span>
+      <span class="num pendente" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores · em preparação">10</span>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. Trabalho, e a pergunta que ele responde</a></li>
+    <li><a href="#s2">2. Quatro maneiras de dizer a mesma coisa</a></li>
+    <li><a href="#s3">3. A energia potencial e a primeira integral</a></li>
+    <li><a href="#s4">4. Lendo o movimento inteiro no gráfico de U</a></li>
+    <li><a href="#s5">5. O atrito, e a energia que não some</a></li>
+    <li><a href="#s6">6. A energia sobrevive ao integrador?</a></li>
+    <li><a href="#s7">7. No Spyder</a></li>
+    <li><a href="#s8">8. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 4 · Mecânica newtoniana</p>
+  <h1>Trabalho, energia e forças conservativas</h1>
+  <p class="subtitulo">O trabalho de uma força depende do caminho, e as forças para as quais ele não depende ganharam nome. Daí sai a energia potencial, e com ela a possibilidade de ler o movimento inteiro no gráfico de U sem resolver equação nenhuma.</p>
+  <h2 id="s1">1. Trabalho, e a pergunta que ele responde</h2>
+
+<p>Integrar a segunda lei no tempo, como fizemos no módulo 3, dá a trajetória
+inteira, e é a resposta mais completa que existe. O preço é que ela só sai
+passo a passo, e há perguntas que não precisam dela. Com que velocidade o
+bloco chega ao fim do plano? Até onde sobe o carrinho? A montanha-russa fecha
+o <em>looping</em>? Nenhuma dessas pergunta <em>quando</em>, e é essa a brecha
+que o conceito de trabalho explora.</p>
+
+<p>O trabalho de uma força ao longo de um deslocamento é a integral de linha</p>
+
+\[ W_{a\to b} = \int_{a}^{b} \vet{F}\cdot d\vet{r}, \]
+
+<p>em que \(d\vet{r}\) é o deslocamento infinitesimal <strong>ao longo do
+caminho percorrido</strong>. O produto escalar já diz uma parte da física:
+a componente da força perpendicular ao movimento não realiza trabalho nenhum.
+É por isso que a normal de um plano, a tração de um pêndulo e a força
+magnética sobre uma carga ficam todas de fora da conta de energia, por mais
+intensas que sejam.</p>
+
+<h3>O teorema do trabalho e da energia cinética</h3>
+
+<p>Tome a segunda lei e multiplique escalarmente por \(d\vet{r} = \vet{v}\,dt\):</p>
+
+\[ \vet{F}\cdot d\vet{r} = m\der{\vet{v}}{t}\cdot\vet{v}\,dt
+   = \frac{m}{2}\der{(\vet{v}\cdot\vet{v})}{t}\,dt
+   = d\!\left(\frac{mv^2}{2}\right). \]
+
+<p>Integrando dos dois lados entre dois instantes:</p>
+
+\[ W_{a\to b} = T_b - T_a, \qquad T = \frac{mv^2}{2}. \]
+
+<p>Esse resultado vale para <strong>qualquer</strong> força: elástica,
+gravitacional, de atrito, de arrasto, de contato. Não é preciso que a força
+seja conservativa, nem que se conheça energia potencial nenhuma. É apenas a
+segunda lei reescrita, e é por isso que ele é o ponto de partida e não a
+conclusão.</p>
+
+<div class="destaque">
+<p><strong>O que o teorema não resolve.</strong> Ele troca a integral no tempo
+por uma integral no espaço, e essa integral ainda depende do caminho que o
+corpo percorreu. Para calcular \(W\) é preciso saber a trajetória, que é
+justamente o que se queria evitar. A saída vem na próxima seção, e só para
+algumas forças.</p>
+</div>
+
+  <h2 id="s2">2. Quatro maneiras de dizer a mesma coisa</h2>
+
+<p>Pegue a força \(\vet{F} = (y^2,\,2xy)\) e calcule o trabalho de \((0,0)\) a
+\((1,1)\) por três caminhos diferentes: a reta, o caminho em duas pernas (todo
+o \(x\) primeiro, depois todo o \(y\)) e um arco. O programa faz as três
+integrais:</p>
+
+<div class="saida">
+Forca CONSERVATIVA  F = (y^2, 2xy),  vinda de U = -x y^2<br>
+&nbsp;&nbsp;reta&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;W = <b>+1,0000000000</b><br>
+&nbsp;&nbsp;duas pernas&nbsp;&nbsp;&nbsp;&nbsp;W = <b>+1,0000000000</b><br>
+&nbsp;&nbsp;arco&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;W = <b>+1,0000000000</b>
+</div>
+
+<p>Agora troque a força por \(\vet{F} = (-y,\,x)\), que não é um bicho exótico:
+é a força que gira, o campo de velocidades de um corpo rígido. Os mesmos três
+caminhos, entre os mesmos dois pontos:</p>
+
+<div class="saida">
+Forca com ROTACIONAL  F = (-y, x)<br>
+&nbsp;&nbsp;reta&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;W = <b>+0,0000000000</b><br>
+&nbsp;&nbsp;duas pernas&nbsp;&nbsp;&nbsp;&nbsp;W = <b>+1,0000000000</b><br>
+&nbsp;&nbsp;arco&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;W = <b>&minus;0,8912676813</b>
+</div>
+
+<p>Três respostas diferentes para a mesma pergunta, e nenhuma delas está
+errada. Mudou o caminho, mudou o trabalho. Perguntar quanto vale \(W\) entre
+dois pontos, para essa força, é uma pergunta malformulada: falta dizer por
+onde.</p>
+
+<p>As forças para as quais a pergunta <em>está</em> bem formulada ganharam
+nome: são as <strong>forças conservativas</strong>. E sobre elas há quatro
+afirmações que são a mesma afirmação, escrita de quatro maneiras:</p>
+
+<div class="cartoes">
+  <div class="cartao">
+    <span class="numero">1</span>
+    <h3>O caminho não importa</h3>
+    <p>\(W_{a\to b}\) é o mesmo por qualquer caminho que ligue \(a\) a \(b\).</p>
+  </div>
+  <div class="cartao">
+    <span class="numero">2</span>
+    <h3>O circuito fechado dá zero</h3>
+    <p>\(\oint \vet{F}\cdot d\vet{r} = 0\) em qualquer curva fechada.</p>
+  </div>
+  <div class="cartao">
+    <span class="numero">3</span>
+    <h3>Existe um potencial</h3>
+    <p>Existe \(U(\vet{r})\) tal que \(\vet{F} = -\nabla U\).</p>
+  </div>
+  <div class="cartao">
+    <span class="numero">4</span>
+    <h3>O rotacional é nulo</h3>
+    <p>\(\rot{\vet{F}} = 0\) em toda a região.</p>
+  </div>
+</div>
+
+<p>A ida de 1 para 2 é imediata: um caminho fechado é a ida por um caminho e a
+volta por outro, e se os dois trabalhos de ida são iguais, a soma com a volta
+invertida dá zero. A ida de 2 para 3 é a construção de \(U\): fixe um ponto
+\(O\) e defina \(U(\vet{r}) = -\int_{O}^{\vet{r}}\vet{F}\cdot d\vet{r}\); a
+definição só faz sentido porque 2 garante que a escolha do caminho não muda o
+resultado. A ida de 3 para 4 é o cálculo vetorial do módulo 1, já que
+\(\rot{(\nabla U)} = 0\) sempre. E a volta de 4 para 2 é o
+<a href="https://pt.wikipedia.org/wiki/Teorema_de_Green">teorema de Green</a>,
+ou o de Stokes em três dimensões.</p>
+
+<p>O programa verifica as quatro na mesma força. O rotacional de
+\((y^2,2xy)\), calculado por diferenças finitas em três pontos quaisquer, dá
+\(10^{-11}\), que é o erro da diferença finita; o de \((-y,x)\) dá exatamente
+2 em todos eles. E o trabalho numa volta fechada de raio 1:</p>
+
+<div class="saida">
+conservativa:&nbsp;&nbsp;&nbsp;W = <b>&minus;2,220e&minus;16</b><br>
+com rotacional: W = <b>+6,283185</b>&nbsp;&nbsp;&nbsp;contra 2 pi = 6,283185
+</div>
+
+<p>Repare no \(2\pi\): é o rotacional, 2, vezes a área do círculo, \(\pi\). O
+teste local e o teste global carregam a mesma informação, e o teorema de Green
+é o cambista entre os dois.</p>
+
+<div class="destaque">
+<p><strong>A letra miúda do passo 4 para o 2.</strong> O teorema de Green exige
+que a região onde a força está definida não tenha buracos. Num plano com um
+ponto removido, a força \(\vet{F} = (-y,\,x)/(x^2+y^2)\) tem rotacional nulo
+em todo lugar onde está definida, e ainda assim dá \(2\pi\) numa volta em
+torno da origem. É o mesmo ponto geométrico que aparece no
+<a href="https://pt.wikipedia.org/wiki/Efeito_Aharonov-Bohm">efeito
+Aharonov-Bohm</a>, e por isso o critério 4 é condição suficiente apenas em
+regiões simplesmente conexas.</p>
+</div>
+
+  <h2 id="s3">3. A energia potencial e a primeira integral</h2>
+
+<p>Para uma força conservativa, o trabalho entre dois pontos é a diferença de
+uma função que só depende da posição:</p>
+
+\[ W_{a\to b} = -\left[U(b) - U(a)\right] = U(a) - U(b). \]
+
+<p>Juntando com o teorema do trabalho e da energia cinética, que vale sempre:</p>
+
+\[ T_b - T_a = U(a) - U(b) \quad\Longrightarrow\quad
+   T_a + U(a) = T_b + U(b) \equiv E. \]
+
+<p>A conservação da energia mecânica não é um princípio novo que se acrescenta
+a Newton. Ela é uma <strong>primeira integral</strong> da equação de
+movimento: uma combinação de posição e velocidade cuja derivada no tempo é
+nula, obtida integrando a segunda lei uma vez. Daí a utilidade prática: ela
+troca uma equação diferencial de segunda ordem por uma de primeira ordem, e
+muitas vezes isso basta para responder o que se perguntou.</p>
+
+<p>O sinal de menos na definição de \(U\) é convenção, mas é uma convenção com
+motivo: ela faz a energia potencial crescer quando se empurra o corpo contra a
+força, de modo que \(U\) mede o quanto se <em>investiu</em> no sistema. Com
+ela, a força sai do potencial por</p>
+
+\[ \vet{F} = -\nabla U, \qquad\text{e em uma dimensão}\qquad F = -\der{U}{x}. \]
+
+<p>A energia potencial é definida a menos de uma constante, porque só
+diferenças aparecem na física. Mudar o nível zero muda \(U\) e \(E\) juntos,
+sem mexer em força nenhuma. Os três casos de sempre:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>Força</th><th>Expressão</th><th>Energia potencial</th>
+<th>Zero usual</th></tr></thead>
+<tbody>
+<tr><td>Peso, perto do chão</td><td>\(-mg\vers{y}\)</td><td>\(mgy\)</td>
+<td>o chão</td></tr>
+<tr><td>Mola, lei de Hooke</td><td>\(-kx\)</td><td>\(\frac12kx^2\)</td>
+<td>a mola relaxada</td></tr>
+<tr><td>Gravitação</td><td>\(-\dfrac{GMm}{r^2}\vers{r}\)</td>
+<td>\(-\dfrac{GMm}{r}\)</td><td>o infinito</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Na terceira linha o zero no infinito não é escolha estética: é a única que
+torna \(U\) finita em todo ponto e ainda deixa a forma simples. O sinal
+negativo que sobra diz que é preciso <em>fornecer</em> energia para afastar os
+dois corpos, e é desse negativo que sai a ideia de energia de ligação, que
+reaparece do átomo ao sistema solar.</p>
+
+  <h2 id="s4">4. Lendo o movimento inteiro no gráfico de U</h2>
+
+<p>Em uma dimensão, com \(E\) fixo, a conservação da energia vira</p>
+
+\[ \frac{m}{2}\left(\der{x}{t}\right)^2 = E - U(x). \]
+
+<p>O lado esquerdo não pode ser negativo. Essa única observação já dá quase
+tudo o que se quer saber sobre o movimento, <strong>sem resolver equação
+alguma</strong>, apenas olhando o gráfico de \(U\) com uma reta horizontal na
+altura \(E\):</p>
+
+<ul>
+<li>Onde \(U(x) &gt; E\), o movimento é <strong>proibido</strong>. O corpo
+nunca chega ali.</li>
+<li>Onde \(U(x) = E\), a velocidade é nula: são os <strong>pontos de
+retorno</strong>. O corpo chega, para e volta.</li>
+<li>Entre dois pontos de retorno, o movimento é <strong>oscilatório</strong>,
+confinado, e se repete indefinidamente.</li>
+<li>Nos mínimos de \(U\), a força é nula e o equilíbrio é
+<strong>estável</strong>, porque qualquer deslocamento gera força de volta.
+Nos máximos, a força também é nula, e o equilíbrio é
+<strong>instável</strong>.</li>
+<li>A velocidade é máxima onde \(U\) é mínima, e o corpo anda devagar perto dos
+pontos de retorno. É por isso que a maior parte do tempo de uma oscilação é
+gasta perto dos extremos.</li>
+</ul>
+
+<p>O componente abaixo é esse gráfico, para o poço duplo
+\(U(x) = x^4 - 2x^2\). Mova a energia e veja o que muda.</p>
+
+<div data-widget="energia"></div>
+
+<p>Dois regimes aparecem. Com \(E &lt; 0\) o corpo fica preso em um dos dois
+poços, e qual deles depende só de onde começou: a barreira em \(x = 0\) é
+intransponível. Com \(E &gt; 0\) os dois poços se juntam num único movimento,
+que varre os dois lados. A transição em \(E = 0\) é brusca, e o período diverge
+exatamente ali, porque o corpo passa cada vez mais devagar pelo topo da
+barreira, onde a força é nula.</p>
+
+<h3>O período sai do gráfico</h3>
+
+<p>O gráfico de \(U\) dá mais do que a descrição qualitativa: dá o período, em
+número. Isolando a velocidade e separando as variáveis,</p>
+
+\[ \der{x}{t} = \sqrt{\frac{2\left[E - U(x)\right]}{m}}
+   \quad\Longrightarrow\quad
+   T = \int_{x_1}^{x_2}\sqrt{\frac{2m}{E - U(x)}}\;dx, \]
+
+<p>com \(x_1\) e \(x_2\) os dois pontos de retorno. O integrando diverge nos
+extremos, mas a divergência é integrável, e uma troca de variável
+\(x = \frac{x_1+x_2}{2} + \frac{x_2-x_1}{2}\sen\theta\) a cancela por
+completo. O resultado é uma integral sobre a <strong>posição</strong>, não
+sobre o tempo: o período sai sem que se tenha resolvido a equação de
+movimento.</p>
+
+<p>Vale a pena medir se isso é verdade mesmo. O programa calcula o período
+dos dois jeitos, pela quadratura acima e integrando a equação de movimento até
+o corpo voltar:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(E\)</th><th>retorno interno</th><th>retorno externo</th>
+<th>\(T\) por quadratura</th><th>\(T\) integrado</th><th>diferença</th></tr></thead>
+<tbody>
+<tr><td>\(-0{,}90\)</td><td>0,82691</td><td>1,14727</td><td>2,265540924</td>
+<td>2,265540924</td><td>\(6\times10^{-11}\)</td></tr>
+<tr><td>\(-0{,}75\)</td><td>0,70711</td><td>1,22474</td><td>2,342840168</td>
+<td>2,342840168</td><td>\(1\times10^{-10}\)</td></tr>
+<tr><td>\(-0{,}50\)</td><td>0,54120</td><td>1,30656</td><td>2,518927047</td>
+<td>2,518927047</td><td>\(8\times10^{-12}\)</td></tr>
+<tr><td>\(-0{,}25\)</td><td>0,36603</td><td>1,36603</td><td>2,831474417</td>
+<td>2,831474417</td><td>\(4\times10^{-12}\)</td></tr>
+<tr><td>\(-0{,}10\)</td><td>0,22653</td><td>1,39595</td><td>3,261573298</td>
+<td>3,261573298</td><td>\(2\times10^{-11}\)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Nove casas em comum entre dois cálculos que não têm nada em comum. E repare
+na coluna do período: ele <em>cresce</em> com a energia. Isso é o oposto do que
+acontece no oscilador harmônico, em que o período não depende da amplitude, e
+é o primeiro sintoma da não linearidade, que volta no módulo 9.</p>
+
+<p>No fundo do poço, porém, o harmônico é recuperado. Expandindo \(U\) em torno
+do mínimo em \(x = 1\),</p>
+
+\[ U(x) \simeq U(1) + \frac12 U''(1)\,(x-1)^2, \qquad U''(1) = 8, \]
+
+<p>que é uma mola de constante \(k = U''(1)\), com período
+\(2\pi/\sqrt{U''/m} = 2{,}221441\). É para esse número que a coluna da
+quadratura caminha quando \(E\) se aproxima do fundo, \(-1\), e a tabela
+mostra justamente isso. Qualquer mínimo de qualquer potencial é um oscilador
+harmônico para amplitudes pequenas, e é por isso que o módulo 6 gasta um
+módulo inteiro com uma única equação.</p>
+
+  <h2 id="s5">5. O atrito, e a energia que não some</h2>
+
+<p>O atrito e o arrasto do módulo 3 não são conservativos, e agora dá para
+dizer isso com precisão em vez de por decreto. O trabalho do atrito cinético
+sobre um bloco que percorre um caminho de comprimento \(\ell\) vale</p>
+
+\[ W_{\text{at}} = -\mu N \ell, \]
+
+<p>e \(\ell\) é o comprimento do caminho, não a distância entre os extremos.
+Vá de \(a\) até \(b\) e volte: o deslocamento total é zero, e o trabalho do
+atrito é \(-2\mu N d\), que não é zero. O critério 2 falha, e com ele os
+outros três: não existe função \(U\) cuja diferença dê esse trabalho, porque o
+resultado depende de quanto se andou e não de onde se está.</p>
+
+<p>Com forças não conservativas presentes, a conta de energia fica</p>
+
+\[ \left(T_b + U_b\right) - \left(T_a + U_a\right) = W_{\text{nc}}, \]
+
+<p>em que \(W_{\text{nc}}\) é o trabalho das forças que sobraram, tipicamente
+negativo. A energia mecânica diminui, e aqui convém ser honesto sobre o que
+isso quer dizer. A energia não desapareceu: ela foi para o movimento
+desordenado das moléculas das duas superfícies, que é o que se chama calor. Do
+ponto de vista microscópico, todas as forças fundamentais são conservativas; a
+dissipação é o que resta quando se descreve um sistema de \(10^{23}\) graus de
+liberdade com apenas um. Essa frase é o ponto de partida da Física
+Estatística, e é por isso que a irreversibilidade não aparece em nenhuma
+equação deste curso, embora apareça em toda experiência de laboratório.</p>
+
+<div class="destaque">
+<p><strong>Um atalho que costuma sair errado.</strong> No atrito entre dois
+corpos que deslizam um sobre o outro, o trabalho da força sobre um deles
+<em>não</em> é o simétrico do trabalho sobre o outro, mesmo que as forças
+sejam um par de ação e reação. Os dois pontos de aplicação percorrem
+distâncias diferentes, e a diferença entre os dois trabalhos é exatamente o
+calor gerado na interface. Esse é o exercício 4.6.</p>
+</div>
+
+  <h2 id="s6">6. A energia sobrevive ao integrador?</h2>
+
+<p>O módulo 3 terminou com uma promessa: dizer por que alguém usaria o método
+de Euler-Cromer, que tem a mesma ordem do método de Euler e, no lançamento de
+projétil, errava mais. A resposta está na energia, e só aparece em integrações
+longas.</p>
+
+<p>O programa integra um oscilador harmônico por duzentos períodos, com quatro
+métodos e o mesmo passo, e acompanha a energia. Para separar as duas coisas
+que se confundem, ele mede o desvio da energia nos vinte primeiros períodos e
+nos vinte últimos, em separado:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>Método</th><th>\(E_{\text{final}}/E_0 - 1\)</th>
+<th>desvio nos 20 primeiros períodos</th>
+<th>nos 20 últimos</th></tr></thead>
+<tbody>
+<tr><td>Euler</td><td>\(+2{,}9\times10^{5}\)</td><td>\(2{,}5\)</td>
+<td>\(2{,}9\times10^{5}\)</td></tr>
+<tr><td>Euler-Cromer</td><td>\(+1{,}8\times10^{-5}\)</td>
+<td>\(5{,}0\times10^{-3}\)</td><td>\(5{,}0\times10^{-3}\)</td></tr>
+<tr><td>Verlet</td><td>\(-8{,}3\times10^{-11}\)</td>
+<td>\(2{,}5\times10^{-5}\)</td><td>\(2{,}5\times10^{-5}\)</td></tr>
+<tr><td>RK4</td><td>\(-1{,}7\times10^{-9}\)</td>
+<td>\(1{,}7\times10^{-10}\)</td><td>\(1{,}7\times10^{-9}\)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Leia as duas últimas colunas antes da primeira. No Euler-Cromer e no
+<a href="https://pt.wikipedia.org/wiki/Integra%C3%A7%C3%A3o_de_Verlet">Verlet</a>
+o desvio é o <strong>mesmo</strong> no começo e no fim: a energia oscila, com
+amplitude fixa, e não vai a lugar nenhum. No Euler ele cresce sem limite, de
+2,5 para \(3\times10^{5}\). E no RK4 ele cresce também, exatamente dez vezes
+de um trecho para o outro, que é a razão dos tempos: a perda é
+<strong>linear no tempo</strong>, lenta mas sistemática, e o sinal negativo da
+primeira coluna diz para que lado.</p>
+
+<p>Essa é a diferença entre precisão e estrutura. O RK4 é, de longe, o mais
+preciso dos quatro: o erro na posição depois de uma volta é milhões de vezes
+menor que o dos outros. Mas ele não preserva a área no espaço de fase, e por
+isso dissipa, devagar e para sempre. O Euler-Cromer e o Verlet são
+<strong>simpléticos</strong>: preservam exatamente essa estrutura, e em troca
+mantêm a energia presa numa faixa estreita por quanto tempo for. Quem integra
+órbitas planetárias por milhões de anos escolhe o segundo grupo, e aceita o
+erro de fase que vem junto.</p>
+
+<div class="destaque">
+<p><strong>Por que o Euler ganha energia.</strong> Num passo do método de
+Euler explícito aplicado ao oscilador, a amplitude no espaço de fase é
+multiplicada por \(\sqrt{1+\omega^2\Delta t^2}\), que é maior que 1 para
+qualquer passo. Em \(N\) passos isso dá
+\((1+\omega^2\Delta t^2)^{N/2}\), um crescimento exponencial. Com
+\(\Delta t = 0{,}01\) e 125 663 passos, o fator previsto é \(e^{6{,}28}\) em
+amplitude, ou \(2{,}9\times10^{5}\) em energia, que é exatamente o que a
+tabela mostra. O método não erra por descuido: ele erra de um jeito previsível,
+e dá para prever o erro antes de rodar.</p>
+</div>
+
+  <h2 id="s7">7. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/energia.py">
+    <span class="numero">Programa</span>
+    <h3>energia.py</h3>
+    <p>Calcula o trabalho por três caminhos, testa o rotacional e o circuito
+    fechado, lê o movimento no gráfico de \(U\) com o período por quadratura e
+    mede a deriva de energia de quatro integradores.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>Os três caminhos dão o mesmo trabalho para a força conservativa, e esse
+valor coincide com \(-\Delta U\) em dez casas.</li>
+<li>Para a força com rotacional, a diferença entre o caminho reto e o de duas
+pernas vale exatamente 1, que é o rotacional, 2, vezes a área do triângulo
+entre os dois caminhos, \(1/2\). O teorema de Green em números.</li>
+<li>O trabalho numa volta fechada de raio 1 dá \(10^{-16}\) para a
+conservativa e \(2\pi\) para a outra, com seis casas certas.</li>
+<li>O período por quadratura e o período integrado coincidem em
+\(10^{-10}\) nos cinco valores de energia.</li>
+<li>O desvio de energia do Euler-Cromer e do Verlet é idêntico nos vinte
+primeiros e nos vinte últimos períodos; o do RK4 cresce por um fator dez, que
+é a razão dos tempos.</li>
+</ul>
+
+<div class="bloco ex">
+<p><strong>Para mexer.</strong> Troque o poço duplo por
+\(U(x) = -U_0\,\mathrm{sech}^2(x/a)\), que é um poço só, e veja o período
+divergir quando \(E \to 0^-\) pelo mesmo motivo de sempre: o corpo leva um
+tempo infinito para chegar ao ponto de retorno quando ele coincide com um
+máximo de \(U\). Depois mude o passo da seção 4 de \(0{,}01\) para \(0{,}05\) e
+confira se a previsão \((1+\omega^2\Delta t^2)^{N/2}\) continua acertando o
+erro do Euler.</p>
+</div>
+
+  <h2 id="s8">8. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">4.1  As três integrais, no papel</span>
+  <p>Para a força \(\vet{F} = (-y,\,x)\), calcule à mão o trabalho de
+     \((0,0)\) a \((1,1)\) pela reta e pelo caminho em duas pernas, e confirme
+     os valores que o programa imprime. Depois mostre que a diferença entre os
+     dois é o fluxo do rotacional pela área entre eles, e explique por que
+     nenhuma função \(U(x,y)\) pode existir para essa força.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Pela reta.</b> Parametrize \(x = s\), \(y = s\), com \(s\) de 0
+     a 1, de modo que \(d\vet{r} = (1,1)\,ds\):</p>
+     <p>\[ W = \int_0^1 (-s,\,s)\cdot(1,1)\,ds = \int_0^1 (-s + s)\,ds = 0. \]</p>
+     <p>O integrando é nulo ponto a ponto: ao longo da diagonal, essa força é
+     perpendicular ao deslocamento em todo lugar.</p>
+     <p><b>Pelas duas pernas.</b> Na primeira, \(y = 0\) e
+     \(d\vet{r} = (dx,0)\), de modo que \(\vet{F}\cdot d\vet{r} = -y\,dx = 0\).
+     Na segunda, \(x = 1\) e \(d\vet{r} = (0,dy)\), de modo que
+     \(\vet{F}\cdot d\vet{r} = x\,dy = dy\):</p>
+     <p>\[ W = 0 + \int_0^1 dy = 1. \]</p>
+     <p><b>A diferença e o teorema de Green.</b> O caminho fechado formado pela
+     ida em duas pernas e pela volta em linha reta encerra o triângulo de
+     vértices \((0,0)\), \((1,0)\) e \((1,1)\), de área \(1/2\). Como
+     \(\rot{\vet{F}} = \partial_x(x) - \partial_y(-y) = 2\), constante,</p>
+     <p>\[ \oint \vet{F}\cdot d\vet{r} = \iint 2\,dA = 2\cdot\frac12 = 1, \]</p>
+     <p>que é exatamente a diferença \(1 - 0\) entre os dois caminhos.</p>
+     <p><b>Por que não existe \(U\).</b> Se existisse, teríamos
+     \(F_x = -\partial U/\partial x\) e \(F_y = -\partial U/\partial y\). As
+     derivadas cruzadas de uma função suave comutam, de modo que seria preciso
+     ter \(\partial F_x/\partial y = \partial F_y/\partial x\), isto é,
+     \(-1 = +1\). A exigência não é sobre a força ser estranha: é sobre a
+     igualdade das derivadas cruzadas, e essa força simplesmente não a
+     satisfaz.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">4.2  Prever o erro do Euler antes de rodar</span>
+  <p>No oscilador harmônico \(\ddot{x} = -\omega^2 x\), escreva um passo do
+     método de Euler explícito como uma matriz \(2\times2\) agindo em
+     \((x,\,v/\omega)\) e mostre que ela multiplica a distância à origem do
+     espaço de fase por \(\sqrt{1+\omega^2\Delta t^2}\) a cada passo. Use isso
+     para prever a razão \(E_{\text{final}}/E_0\) depois de 200 períodos com
+     \(\omega = 1\) e \(\Delta t = 0{,}01\), e compare com o que o programa
+     mede.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A matriz.</b> Um passo de Euler explícito é
+     \(x_{n+1} = x_n + \Delta t\,v_n\) e
+     \(v_{n+1} = v_n - \Delta t\,\omega^2 x_n\). Escrevendo
+     \(u = v/\omega\) para que as duas coordenadas tenham a mesma dimensão, e
+     chamando \(\varepsilon = \omega\Delta t\),</p>
+     <p>\[ \begin{pmatrix} x_{n+1} \\ u_{n+1}\end{pmatrix}
+        = \begin{pmatrix} 1 & \varepsilon \\ -\varepsilon & 1\end{pmatrix}
+          \begin{pmatrix} x_n \\ u_n\end{pmatrix}. \]</p>
+     <p><b>O que ela faz.</b> Essa matriz é
+     \(\sqrt{1+\varepsilon^2}\) vezes uma matriz de rotação de ângulo
+     \(\arctg\varepsilon\). Ela gira o ponto no espaço de fase, que é o que se
+     espera, e ao mesmo tempo o afasta da origem pelo fator
+     \(\sqrt{1+\varepsilon^2} &gt; 1\). Como
+     \(E = \frac{m\omega^2}{2}(x^2 + u^2)\) é proporcional ao quadrado da
+     distância à origem, a energia é multiplicada por \(1+\varepsilon^2\) em
+     cada passo. O crescimento não depende do sinal de nada nem da fase: é
+     geométrico e inevitável.</p>
+     <p><b>A previsão.</b> Em 200 períodos há
+     \(N = 200\cdot 2\pi/\Delta t = 125\,663\) passos, de modo que</p>
+     <p>\[ \frac{E_N}{E_0} = \left(1+\varepsilon^2\right)^{N}
+        = \left(1{,}0001\right)^{125663} = 2{,}86551\times10^{5}. \]</p>
+     <p>O programa mede \(2{,}86551\times10^{5}\). A previsão e a medida
+     coincidem nos <b>nove dígitos</b> impressos, o que diz uma coisa útil
+     sobre erro numérico: ele raramente é aleatório. Quase sempre tem fórmula,
+     e quando tem, dá para decidir o passo antes de gastar a primeira hora de
+     processamento.</p>
+     <p><b>Para onde isso aponta.</b> Expandindo,
+     \(\left(1+\varepsilon^2\right)^{N} \simeq e^{N\varepsilon^2}
+     = e^{\omega^2\Delta t\,t}\): o erro cresce exponencialmente no tempo, com
+     taxa proporcional ao passo. Dividir o passo por dez não divide o erro por
+     dez; muda o expoente. É por isso que, para integrações longas, mexer no
+     passo é remédio fraco e trocar de método é remédio forte.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">4.3  O looping, e o ponto em que o carrinho desgruda</span>
+  <p>Um carrinho é solto do repouso de uma altura \(h\) numa pista lisa que
+     termina num <em>looping</em> circular vertical de raio \(R\). Encontre a
+     menor altura que permite completar a volta. Depois, soltando-o de
+     \(h = 2R\), ache o ponto exato em que ele perde contato com a pista.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A condição no topo.</b> No alto do <em>looping</em>, o peso e a
+     normal apontam os dois para o centro:</p>
+     <p>\[ N + mg = \frac{mv^2}{R}. \]</p>
+     <p>A pista empurra, mas não puxa, de modo que \(N \ge 0\). O caso limite é
+     \(N = 0\), em que a gravidade sozinha faz o papel de força centrípeta:
+     \(v_{\text{topo}}^2 = gR\). Note que o carrinho precisa estar
+     <em>andando</em> no topo, e depressa; a intuição de "chegar lá com
+     velocidade zero" descreve um carrinho que já caiu antes.</p>
+     <p><b>A energia.</b> Pista lisa, só o peso trabalha:</p>
+     <p>\[ mgh = mg(2R) + \frac{mv_{\text{topo}}^2}{2}
+        = 2mgR + \frac{mgR}{2}
+        \quad\Longrightarrow\quad h_{\min} = \frac{5R}{2}. \]</p>
+     <p>Com \(R = 3\) m dá \(h = 7{,}5\) m, e o resultado não depende da massa.</p>
+     <p><b>Soltando de \(h = 2R\).</b> Aí ele não completa a volta. Seja
+     \(\varphi\) o ângulo medido a partir do topo, com o carrinho na altura
+     \(y = R + R\cos\varphi\). A componente radial do peso é
+     \(mg\cos\varphi\), e a condição de contato é</p>
+     <p>\[ mg\cos\varphi - N = \frac{mv^2}{R}, \qquad
+        v^2 = 2g\left(h - y\right). \]</p>
+     <p>Com \(N = 0\) e \(h = 2R\):</p>
+     <p>\[ gR\cos\varphi = 2g\left(2R - R - R\cos\varphi\right)
+        \quad\Longrightarrow\quad 3\cos\varphi = 2, \]</p>
+     <p>de modo que \(\cos\varphi = 2/3\), \(\varphi = 48{,}2^\circ\) e
+     \(y = 5R/3\). Com \(R = 3\) m, ele desgruda a 5,00 m do chão, a dois
+     terços do caminho até o topo, e dali em diante descreve uma parábola
+     dentro do <em>looping</em>. É o mesmo cálculo que decide se um satélite
+     rasante continua em órbita ou cai.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">4.4  Qualquer mínimo é uma mola</span>
+  <p>O potencial de Lennard-Jones entre dois átomos neutros é
+     \(U(r) = 4\epsilon\left[(\sigma/r)^{12} - (\sigma/r)^{6}\right]\).
+     Encontre a distância de equilíbrio e a profundidade do poço, e obtenha a
+     frequência das pequenas oscilações em torno do mínimo. Aplique ao
+     argônio, com \(\epsilon/k_B = 120\) K, \(\sigma = 3{,}4\) Å e massa
+     atômica 39,95 u, lembrando que num par de átomos iguais a massa que entra
+     na conta é a reduzida, \(\mu = m/2\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O mínimo.</b> Derivando e igualando a zero:</p>
+     <p>\[ \der{U}{r} = 4\epsilon\left[-\frac{12\sigma^{12}}{r^{13}}
+        + \frac{6\sigma^{6}}{r^{7}}\right] = 0
+        \quad\Longrightarrow\quad r_0 = 2^{1/6}\sigma = 1{,}1225\,\sigma, \]</p>
+     <p>e substituindo, \(U(r_0) = -\epsilon\). A profundidade do poço é o
+     próprio \(\epsilon\), que é por isso que ele aparece com esse nome na
+     fórmula.</p>
+     <p><b>A curvatura.</b> Derivando mais uma vez e avaliando em \(r_0\):</p>
+     <p>\[ k = U''(r_0) = \frac{72\,\epsilon}{2^{1/3}\sigma^2}
+        = 57{,}1464\,\frac{\epsilon}{\sigma^2}. \]</p>
+     <p>Perto do fundo, \(U \simeq -\epsilon + \frac12 k (r-r_0)^2\): uma mola,
+     com \(\omega = \sqrt{k/\mu}\). Nada no argumento usou a forma particular
+     do Lennard-Jones, e é isso que torna o resultado interessante: todo
+     mínimo liso de todo potencial é uma mola para amplitudes pequenas.</p>
+     <p><b>No argônio.</b> Com
+     \(\epsilon = 120\,k_B = 1{,}657\times10^{-21}\) J,
+     \(\sigma = 3{,}4\times10^{-10}\) m e
+     \(\mu = 39{,}95\,\mathrm{u}/2 = 3{,}317\times10^{-26}\) kg:</p>
+     <p>\[ \omega = \sqrt{\frac{57{,}15\,\epsilon}{\mu\sigma^2}}
+        = 4{,}97\times10^{12}\ \mathrm{rad/s},
+        \qquad f = 7{,}91\times10^{11}\ \mathrm{Hz}, \]</p>
+     <p>o que corresponde a um período de 1,26 ps e a um número de onda de
+     26 cm⁻¹, bem dentro do infravermelho distante. É assim que se mede \(k\)
+     na prática: não empurrando átomos com uma régua, e sim olhando em que
+     frequência eles absorvem.</p>
+     <p><b>Um aviso sobre a amplitude.</b> À temperatura ambiente, a energia
+     térmica típica \(k_BT\) vale 2,5 vezes a profundidade do poço do argônio.
+     O par simplesmente não fica ligado, e é por isso que o argônio é gás. A
+     aproximação harmônica descreve o fundo do poço, e dizer em que
+     temperatura o fundo do poço importa é outra conversa, que pertence à
+     Física Estatística.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">4.5  Velocidade de escape, sem foguete</span>
+  <p>Use a conservação da energia com \(U = -GMm/r\) para obter a
+     velocidade de escape de um corpo lançado da superfície de um planeta.
+     Calcule para a Terra e para a Lua, e diga até que altura sobe um projétil
+     lançado da Terra com metade da velocidade de escape.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A conta.</b> Escapar é chegar ao infinito com velocidade nula,
+     isto é, ter energia mecânica total igual a zero:</p>
+     <p>\[ \frac{mv_e^2}{2} - \frac{GMm}{R} = 0
+        \quad\Longrightarrow\quad v_e = \sqrt{\frac{2GM}{R}}. \]</p>
+     <p>A massa do projétil sai da conta, e a direção do lançamento não
+     aparece: energia é escalar. Um tiro para cima e um tiro na horizontal
+     escapam com a mesma rapidez, desde que nenhum dos dois esbarre no
+     planeta.</p>
+     <p><b>Os números.</b> Terra, com
+     \(M = 5{,}972\times10^{24}\) kg e \(R = 6371\) km:
+     \(v_e = 11{,}19\) km/s. Lua, com
+     \(M = 7{,}342\times10^{22}\) kg e \(R = 1737\) km:
+     \(v_e = 2{,}38\) km/s, quase cinco vezes menor. É essa diferença que
+     permitiu ao módulo lunar subir com um motor pequeno, e é ela que explica
+     por que a Lua não tem atmosfera: as moléculas mais leves atingem
+     \(2{,}4\) km/s com facilidade na temperatura do dia lunar.</p>
+     <p><b>Com metade da velocidade.</b> Agora a energia é negativa, e o corpo
+     volta. No ponto mais alto a velocidade é nula:</p>
+     <p>\[ \frac{v_e^2}{8} - \frac{GM}{R} = -\frac{GM}{r_{\max}}
+        \quad\Longrightarrow\quad \frac{1}{r_{\max}}
+        = \frac{1}{R}-\frac{1}{4R} = \frac{3}{4R}, \]</p>
+     <p>de modo que \(r_{\max} = 4R/3\) e a altura é \(R/3 = 2124\) km. Metade
+     da velocidade não dá um terço do caminho ao infinito, dá 2124 km: a
+     relação entre velocidade e alcance é tudo menos linear, e é ela que torna
+     o lançamento espacial um problema difícil.</p>
+     <p><b>Cuidado com a leitura.</b> Esses 11,19 km/s não são a velocidade com
+     que um foguete viaja. Um foguete acelera durante minutos e nunca chega
+     perto disso na baixa atmosfera, onde o arrasto o destruiria. A velocidade
+     de escape é a velocidade de um corpo <em>lançado de uma vez</em>, como
+     uma bala de canhão, que é exatamente o cenário que Newton desenhou.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">4.6  O atrito que esquenta: dois trabalhos que não se cancelam</span>
+  <p>Um bloco de 2,0 kg está sobre uma prancha de 5,0 kg, que desliza sem
+     atrito no chão. Entre o bloco e a prancha, \(\mu_c = 0{,}30\). Uma força
+     horizontal de 40 N puxa a prancha. Mostre que os dois escorregam um sobre
+     o outro, calcule o trabalho do atrito sobre cada um ao fim de 1,0 s e
+     mostre que a soma dos dois não é nula. Diga o que é essa diferença.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Escorregam?</b> Se andassem juntos, a aceleração comum seria
+     \(a = 40/7 = 5{,}71\ \mathrm{m/s^2}\), e seria preciso que o atrito
+     fornecesse \(m_1a = 11{,}4\) N ao bloco. O máximo disponível é
+     \(\mu m_1 g = 5{,}88\) N. Não dá: escorregam. (A força mínima para isso é
+     \((m_1+m_2)\mu g = 20{,}6\) N.)</p>
+     <p><b>As acelerações.</b> Sobre o bloco age apenas o atrito, para a frente,
+     que é a reação ao arrasto que ele exerce na prancha:</p>
+     <p>\[ a_1 = \mu g = 2{,}942\ \mathrm{m/s^2}, \qquad
+        a_2 = \frac{F - \mu m_1 g}{m_2} = 6{,}823\ \mathrm{m/s^2}. \]</p>
+     <p><b>Os deslocamentos em 1,0 s.</b>
+     \(d_1 = 1{,}471\) m e \(d_2 = 3{,}412\) m, de modo que a prancha escorregou
+     \(\Delta = 1{,}941\) m sob o bloco.</p>
+     <p><b>Os dois trabalhos.</b> A força de atrito tem o mesmo módulo
+     \(f = 5{,}884\) N nos dois corpos, e sentidos opostos, mas os pontos de
+     aplicação percorrem distâncias diferentes:</p>
+     <p>\[ W_{\text{bloco}} = +f\,d_1 = +8{,}655\ \mathrm{J}, \qquad
+        W_{\text{prancha}} = -f\,d_2 = -20{,}074\ \mathrm{J}. \]</p>
+     <p>\[ W_{\text{bloco}} + W_{\text{prancha}} = -11{,}418\ \mathrm{J}
+        = -f\,\Delta. \]</p>
+     <p><b>O que é essa diferença.</b> É o calor gerado na interface, e a
+     fórmula \(Q = f\Delta\) é geral: o calor do atrito é a força vezes o
+     <em>escorregamento relativo</em>, não vezes o deslocamento de nenhum dos
+     dois. Conferindo o balanço: a força externa realizou
+     \(F d_2 = 136{,}464\) J, a energia cinética do conjunto ao fim de 1 s é
+     \(125{,}046\) J, e a diferença é 11,418 J, o mesmo número.</p>
+     <p><b>A lição.</b> Pares de ação e reação sempre têm forças simétricas, e
+     nem sempre têm trabalhos simétricos. Os trabalhos só se cancelam quando os
+     dois pontos de aplicação têm o mesmo deslocamento, que é o caso do
+     contato sem escorregamento. Quando há escorregamento, a soma dos
+     trabalhos internos é exatamente a energia que deixa a mecânica e vira
+     agitação molecular.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="aula03.html"><small>Módulo anterior</small>← 3. Forças e arrasto</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611200122"></script>
+</body>
+</html>

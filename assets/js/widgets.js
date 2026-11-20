@@ -1212,6 +1212,348 @@
     registrarRedesenho(desenhar);
   };
 
+  /* =================================================================
+     4. O diagrama de energia do poço duplo
+     Tudo o que a seção 4 do módulo afirma em palavras (região proibida,
+     pontos de retorno, equilíbrio estável e instável, período que
+     cresce com a energia e diverge na separatriz) está aqui em três
+     vistas da MESMA função U(x) = x^4 - 2x^2. A terceira calcula o
+     período pela mesma quadratura do programa, de modo que o aluno vê
+     a integral e o resultado dela ao mesmo tempo.
+     ================================================================= */
+  REGISTRO.energia = function (raiz) {
+    var est = { E: -0.5, x: 0.5, vista: 'diagrama' };
+
+    function U(x) { return x * x * x * x - 2 * x * x; }
+    function dU(x) { return 4 * x * x * x - 4 * x; }
+
+    /* Pontos de retorno. Para E < 0 há dois poços separados e devolvemos
+       o da direita; para E > 0 o movimento é um só, de -b a +b. */
+    function retornos(E) {
+      if (E >= 0) {
+        var b = Math.sqrt(1 + Math.sqrt(1 + E));
+        return { a: -b, b: b, preso: false };
+      }
+      var r = Math.sqrt(1 + E);
+      return { a: Math.sqrt(1 - r), b: Math.sqrt(1 + r), preso: true };
+    }
+
+    /* A mesma quadratura do energia.py: regra do ponto médio depois da
+       substituição que cancela a divergência nos pontos de retorno. */
+    function periodo(E, n) {
+      n = n || 4000;
+      var t = retornos(E), a = t.a, b = t.b;
+      var meio = (a + b) / 2, semi = (b - a) / 2;
+      var passo = Math.PI / n, soma = 0;
+      for (var i = 0; i < n; i++) {
+        var th = -Math.PI / 2 + passo * (i + 0.5);
+        var x = meio + semi * Math.sin(th);
+        var d = E - U(x);
+        if (d <= 0) continue;
+        soma += Math.sqrt(2 / d) * semi * Math.cos(th);
+      }
+      return soma * passo;
+    }
+
+    var corpo = moldura(raiz, 'O movimento inteiro, lido no gráfico de U(x)');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'Diagrama de energia', v: 'diagrama' },
+      { rot: 'Espaço de fase', v: 'fase' },
+      { rot: 'O período', v: 'periodo' }
+    ], 0, function (v) { est.vista = v; desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+    deslizante(c1, 'Energia \\(E\\)', -0.99, 1.5, 0.01, est.E,
+      function (v) { est.E = v; desenhar(); },
+      function (v) { return v.toFixed(2).replace('.', ','); });
+    var slX = deslizante(c1, 'Onde está o corpo', 0, 1, 0.005, 0.5,
+      function (v) { est.x = v; desenhar(); },
+      function () { return posicao().toFixed(2).replace('.', ','); });
+
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'Pontos de retorno', k: 'a' },
+      { rot: 'Energia cinética aqui', k: 'b' },
+      { rot: 'Velocidade aqui', k: 'c' },
+      { rot: 'Período', k: 'd' }
+    ]);
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(x, c) {
+      var v = x.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(v)) v = v.slice(1);        // nada de "−0,0"
+      return v.replace('.', ',').replace('-', '−');
+    }
+    /* dentro da matemática a vírgula decimal precisa de chaves, senão o
+       MathJax a lê como pontuação e abre um espaço depois dela */
+    function fmtm(x, c) {
+      var v = x.toFixed(c === undefined ? 2 : c);
+      if (/^-0(\.0*)?$/.test(v)) v = v.slice(1);
+      return v.replace('.', '{,}');
+    }
+
+    /* O deslizante de posição anda entre os pontos de retorno, de modo
+       que o corpo nunca é colocado numa região proibida. */
+    function posicao() {
+      var t = retornos(est.E);
+      return t.a + est.x * (t.b - t.a);
+    }
+
+    function desenhaDiagrama() {
+      var t = retornos(est.E), x = posicao();
+      var g = G.eixos(cv, {
+        altura: 300, xmin: -1.75, xmax: 1.75, ymin: -1.2, ymax: 1.6,
+        divY: 7, marcasX: G.marcasLineares(-1.5, 1.5, 6, 1),
+        rotX: 'x', rotY: 'energia',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+
+      /* a região proibida: onde U fica acima de E */
+      var ct = g.ct;
+      ct.save();
+      ct.fillStyle = 'rgba(140,47,57,.07)';
+      var passo = (g.xmax - g.xmin) / 400;
+      for (var u = g.xmin; u < g.xmax; u += passo) {
+        if (U(u) > est.E) {
+          ct.fillRect(g.X(u), g.y0, Math.ceil(g.X(u + passo) - g.X(u)) + 1,
+                      g.y1 - g.y0);
+        }
+      }
+      ct.restore();
+
+      /* A G.curva limita y ao intervalo, o que desenha um traço reto
+         colado no topo do quadro onde a função sai dele. Aqui o trecho
+         de fora é simplesmente interrompido. */
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.6;
+      ct.beginPath();
+      var dentro = false;
+      for (var i = 0; i <= 600; i++) {
+        var xx = g.xmin + (g.xmax - g.xmin) * i / 600, yy = U(xx);
+        if (yy < g.ymin || yy > g.ymax) { dentro = false; continue; }
+        if (!dentro) { ct.moveTo(g.X(xx), g.Y(yy)); dentro = true; }
+        else ct.lineTo(g.X(xx), g.Y(yy));
+      }
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'U(x)', g.X(-1.33), g.Y(U(-1.33)) - 15, G.COR.mestra);
+
+      /* a reta da energia, e a cinética como barra vertical */
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 2;
+      ct.beginPath(); ct.moveTo(g.x0, g.Y(est.E)); ct.lineTo(g.x1, g.Y(est.E));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'E', g.x0 + 14, g.Y(est.E) - 11, G.COR.vinho);
+
+      ct.save();
+      ct.strokeStyle = G.COR.bronze; ct.lineWidth = 7; ct.lineCap = 'butt';
+      ct.beginPath(); ct.moveTo(g.X(x), g.Y(U(x))); ct.lineTo(g.X(x), g.Y(est.E));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'T', g.X(x) + 16, (g.Y(U(x)) + g.Y(est.E)) / 2, G.COR.bronze);
+
+      /* o corpo, sobre a curva */
+      ct.fillStyle = G.COR.tinta;
+      ct.beginPath(); ct.arc(g.X(x), g.Y(U(x)), 7, 0, 6.2832); ct.fill();
+
+      /* os pontos de retorno */
+      [t.a, t.b].forEach(function (p) {
+        ct.fillStyle = G.COR.vinho;
+        ct.beginPath(); ct.arc(g.X(p), g.Y(est.E), 4.5, 0, 6.2832); ct.fill();
+      });
+      if (t.preso) {
+        [-t.a, -t.b].forEach(function (p) {
+          ct.fillStyle = G.COR.clara;
+          ct.beginPath(); ct.arc(g.X(p), g.Y(est.E), 4.5, 0, 6.2832); ct.fill();
+        });
+      }
+      rotulo(ct, 'região proibida', g.X(0), g.Y(1.3), G.COR.vinho);
+    }
+
+    function desenhaFase() {
+      var g = G.eixos(cv, {
+        altura: 300, xmin: -1.75, xmax: 1.75, ymin: -2.6, ymax: 2.6,
+        divY: 4, marcasX: G.marcasLineares(-1.5, 1.5, 6, 1),
+        rotX: 'x', rotY: 'velocidade',
+        formataY: function (v) { return fmt(v, 1); }
+      });
+      var ct = g.ct;
+
+      /* uma família de órbitas de fundo, para a órbita atual ter contexto */
+      [-0.85, -0.6, -0.35, -0.12, 0.3, 0.8, 1.4].forEach(function (E) {
+        orbita(g, E, G.COR.grade === '#e5eaee' ? '#cfd8de' : G.COR.clara, 1.2);
+      });
+      orbita(g, 0, G.COR.vinho, 2, [6, 4]);        // a separatriz
+      orbita(g, est.E, G.COR.mestra, 2.8);
+
+      var x = posicao(), v2 = 2 * (est.E - U(x));
+      if (v2 > 0) {
+        ct.fillStyle = G.COR.bronze;
+        ct.beginPath(); ct.arc(g.X(x), g.Y(Math.sqrt(v2)), 6, 0, 6.2832);
+        ct.fill();
+      }
+      [-1, 1].forEach(function (s) {
+        ct.fillStyle = G.COR.suave;
+        ct.beginPath(); ct.arc(g.X(s), g.Y(0), 3.5, 0, 6.2832); ct.fill();
+      });
+      ct.fillStyle = G.COR.vinho;
+      ct.beginPath(); ct.arc(g.X(0), g.Y(0), 3.5, 0, 6.2832); ct.fill();
+
+      /* rótulos colados nas próprias curvas, com halo branco: uma caixa
+         de legenda no canto cairia justamente em cima das órbitas de
+         energia alta, que passam por todos os cantos do quadro */
+      rotulo(ct, 'separatriz, E = 0', g.X(0.62), g.Y(1.08), G.COR.vinho);
+      /* no ponto mais baixo da órbita, que é onde ela passa pelo fundo
+         do poço e onde não há mais nada desenhado */
+      var xf = est.E < 0 ? 1.0 : 0.0;
+      var vf = Math.sqrt(Math.max(0, 2 * (est.E - U(xf))));
+      rotulo(ct, 'a órbita escolhida', g.X(xf), g.Y(-vf) + 15, G.COR.mestra);
+    }
+
+    /* v = +- sqrt(2(E - U)), desenhada nos dois ramos */
+    function orbita(g, E, cor, esp, tracejado) {
+      var ct = g.ct, n = 600;
+      ct.save();
+      ct.strokeStyle = cor; ct.lineWidth = esp;
+      if (tracejado) ct.setLineDash(tracejado);
+      [1, -1].forEach(function (s) {
+        var desenhando = false;
+        ct.beginPath();
+        for (var i = 0; i <= n; i++) {
+          var x = g.xmin + (g.xmax - g.xmin) * i / n;
+          var d = 2 * (E - U(x));
+          if (d < 0) { desenhando = false; continue; }
+          var px = g.X(x), py = g.Y(s * Math.sqrt(d));
+          if (!desenhando) { ct.moveTo(px, py); desenhando = true; }
+          else ct.lineTo(px, py);
+        }
+        ct.stroke();
+      });
+      ct.restore();
+    }
+
+    function desenhaPeriodo() {
+      var g = G.eixos(cv, {
+        altura: 300, xmin: -1, xmax: 1.5, ymin: 0, ymax: 9,
+        divY: 6, marcasX: G.marcasLineares(-1, 1.5, 5, 1),
+        rotX: 'energia E', rotY: 'período T',
+        formataY: function (v) { return fmt(v, 0); }
+      });
+      var ct = g.ct;
+
+      /* o limite harmônico do fundo do poço: 2 pi / sqrt(U''(1)) */
+      var Th = 2 * Math.PI / Math.sqrt(8);
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.2; ct.setLineDash([5, 4]);
+      ct.beginPath(); ct.moveTo(g.x0, g.Y(Th)); ct.lineTo(g.x1, g.Y(Th));
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'limite harmônico, 2,221', g.X(1.12), g.Y(Th) - 13, G.COR.suave);
+
+      /* os dois ramos, separados pela divergência em E = 0 */
+      function ramo(a, b) {
+        ct.beginPath();
+        var n = 220, primeiro = true;
+        for (var i = 0; i <= n; i++) {
+          var E = a + (b - a) * i / n;
+          var T = periodo(E, 1200);
+          if (!isFinite(T) || T > 40) { primeiro = true; continue; }
+          var px = g.X(E), py = g.Y(Math.min(T, g.ymax));
+          if (primeiro) { ct.moveTo(px, py); primeiro = false; }
+          else ct.lineTo(px, py);
+        }
+        ct.stroke();
+      }
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.6;
+      ramo(-0.995, -0.004);
+      ramo(0.004, 1.5);
+      ct.restore();
+
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.4; ct.setLineDash([4, 4]);
+      ct.beginPath(); ct.moveTo(g.X(0), g.y0); ct.lineTo(g.X(0), g.y1);
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'separatriz', g.X(0) + 46, g.y0 + 16, G.COR.vinho);
+
+      var T0 = periodo(est.E, 4000);
+      if (isFinite(T0) && T0 < g.ymax) {
+        ct.fillStyle = G.COR.bronze;
+        ct.beginPath(); ct.arc(g.X(est.E), g.Y(T0), 6, 0, 6.2832); ct.fill();
+      }
+      rotulo(ct, 'T(E), pela quadratura', g.X(0.95), g.Y(4.6), G.COR.mestra);
+    }
+
+    function desenhar() {
+      /* o deslizante de posição só faz sentido na primeira vista */
+      slX.parentNode.style.display = est.vista === 'periodo' ? 'none' : '';
+
+      if (est.vista === 'diagrama') desenhaDiagrama();
+      else if (est.vista === 'fase') desenhaFase();
+      else desenhaPeriodo();
+
+      var t = retornos(est.E), x = posicao();
+      var T = Math.max(0, est.E - U(x));
+      var per = periodo(est.E, 4000);
+      painel({
+        a: fmt(t.a) + ' e ' + fmt(t.b) + (t.preso ? ' *' : ''),
+        b: fmt(T) + ' <small>de ' + fmt(est.E + 1) + '</small>',
+        c: fmt(Math.sqrt(2 * T)),
+        d: isFinite(per) ? fmt(per, 3) : 'infinito'
+      });
+
+      var html;
+      if (est.E < 0) {
+        html = '<p>Com \\(E = ' + fmtm(est.E) + ' &lt; 0\\) o corpo está '
+          + '<strong>preso num dos dois poços</strong>, e qual deles depende '
+          + 'apenas de onde ele começou: a barreira em \\(x = 0\\) é alta '
+          + 'demais. Ele vai e volta entre \\(x = ' + fmtm(t.a) + '\\) e '
+          + '\\(x = ' + fmtm(t.b) + '\\), que são os pontos onde a reta da '
+          + 'energia corta a curva de \\(U\\) e a barra bronze desaparece. '
+          + 'O poço da esquerda tem os pontos simétricos, e é por isso que o '
+          + 'cartão vem com um asterisco.</p>';
+      } else {
+        html = '<p>Com \\(E = ' + fmtm(est.E) + ' &gt; 0\\) o corpo tem '
+          + 'energia de sobra para passar por cima da barreira, e os dois '
+          + 'poços viram <strong>um movimento só</strong>, de '
+          + '\\(x = ' + fmtm(t.a) + '\\) a \\(x = ' + fmtm(t.b) + '\\). Ele '
+          + 'acelera descendo para cada poço e desacelera subindo a barreira, '
+          + 'sem nunca parar no meio.</p>';
+      }
+      if (est.vista === 'diagrama') {
+        html += '<p>A barra bronze é a energia cinética, \\(T = E - U(x)\\): '
+          + 'toda a distância entre a curva e a reta. Ela é máxima no fundo do '
+          + 'poço, onde \\(U\\) é mínima, e some exatamente nos pontos de '
+          + 'retorno. A região em rosa é proibida, e não por ser difícil de '
+          + 'alcançar: ali \\(T\\) seria negativa, o que é o mesmo que uma '
+          + 'velocidade imaginária.</p>';
+      } else if (est.vista === 'fase') {
+        html += '<p>No espaço de fase, cada energia é uma curva fechada, e o '
+          + 'movimento percorre essa curva para sempre. As duas órbitas de '
+          + '\\(E &lt; 0\\) são separadas; as de \\(E &gt; 0\\) envolvem as '
+          + 'duas. A curva vinho, em \\(E = 0\\), é a <strong>separatriz</strong>: '
+          + 'ela passa pelo ponto de equilíbrio instável em \\(x = 0\\) e leva '
+          + 'um tempo infinito para chegar lá, que é a razão de o período '
+          + 'divergir ali.</p>';
+      } else if (est.vista === 'periodo') {
+        html += '<p>O período cresce com a energia e diverge na separatriz, '
+          + 'pelos dois lados. Isso é o contrário do oscilador harmônico, em '
+          + 'que o período não depende da amplitude, e é o primeiro sintoma '
+          + 'da não linearidade. No fundo do poço, porém, o harmônico volta: '
+          + 'a curva tende à linha tracejada, \\(2\\pi/\\sqrt{U\'\'(1)} = '
+          + '2{,}221\\), que é o período da mola equivalente.</p>';
+      }
+      texto.innerHTML = html;
+      tipografar(texto);
+    }
+
+    registrarRedesenho(desenhar);
+  };
+
+
   /* ---------- inicialização ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (n) {
