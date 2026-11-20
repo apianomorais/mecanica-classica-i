@@ -144,41 +144,77 @@ LISTA = [
      opera perto de uma ressonância das moléculas de água e não em qualquer
      frequência.</p>''' ),
 
-    ('8.5  A função de Green e o degrau',
-     r'''Verifique que \(G(t) = e^{-\gamma t}\sen(\omega_1t)/\omega_1\) para
-     \(t\ge0\) é a resposta a um impulso unitário, isto é, que satisfaz a
-     equação homogênea com \(G(0)=0\) e \(\dot G(0)=1\). Use a convolução para
-     obter a resposta a uma força que liga de repente e permanece,
-     \(f(t) = f_0\) para \(t\ge0\), no caso sem amortecimento, e interprete o
-     resultado.''',
-     r'''<p><b>Por que essas condições iniciais.</b> Integre a equação de
-     \(-\epsilon\) a \(+\epsilon\) em torno do impulso. O termo
-     \(\ddot{x}\) dá o salto de \(\dot{x}\), os termos em \(\dot{x}\) e \(x\)
-     dão contribuição nula no limite por serem finitos, e o impulso unitário dá
-     1. Logo a velocidade salta de 0 para 1 e a posição não salta. Um impulso é
-     uma martelada: muda o momento, não a posição.</p>
-     <p>Com \(G = e^{-\gamma t}\sen(\omega_1t)/\omega_1\) tem-se
-     \(G(0)=0\) e</p>
-     <p>\[ \dot G = e^{-\gamma t}\left[\cos\omega_1 t
-        - \frac{\gamma}{\omega_1}\sen\omega_1 t\right]
-        \quad\Longrightarrow\quad \dot G(0) = 1. \]</p>
-     <p>E a função é solução da homogênea, porque é exatamente a forma
-     subamortecida do módulo 7. As três exigências são atendidas.</p>
-     <p><b>O degrau, sem amortecimento.</b> Com \(\gamma = 0\),
-     \(\omega_1 = \omega_0\) e \(f(s) = f_0\) para \(s \ge 0\):</p>
-     <p>\[ x(t) = \int_0^t \frac{\sen\omega_0(t-s)}{\omega_0}f_0\,ds
-        = \frac{f_0}{\omega_0^2}\left(1-\cos\omega_0 t\right). \]</p>
-     <p><b>A interpretação.</b> Chamando \(x_{\text{est}} = f_0/\omega_0^2 =
-     F_0/k\) a deformação estática, o resultado é</p>
-     <p>\[ x(t) = x_{\text{est}}\left(1-\cos\omega_0 t\right), \]</p>
-     <p>que oscila entre 0 e <b>duas vezes</b> a deformação estática. Aplicar
-     uma carga de repente deforma a estrutura o dobro do que a mesma carga
-     deformaria se fosse depositada devagar.</p>
-     <p>Esse fator 2 é a versão mais limpa da armadilha da seção 3, e é o
-     mesmo que aparece no transiente perto da ressonância. Com amortecimento, a
-     oscilação decai e sobra \(x_{\text{est}}\), mas o <em>pico</em> continua
-     próximo do dobro se \(Q\) for alto. Engenharia estrutural chama isso de
-     fator de amplificação dinâmica, e projeta com ele.</p>''' ),
+    ('8.5  A rampa: aplicar devagar, e o que devagar quer dizer',
+     r'''O exemplo resolvido mostrou que uma carga aplicada de repente
+     deforma o dobro do que a mesma carga aplicada devagar deformaria.
+     Quantifique "devagar": para uma força que sobe linearmente de zero a
+     \(f_0\) em um tempo \(\tau\) e depois fica constante, mostre que o fator
+     de amplificação dinâmica vale
+     \(1 + \left|\sen(\pi\tau/T)\right|/(\pi\tau/T)\), e interprete os casos
+     \(\tau \to 0\) e \(\tau = T\).''',
+     r'''<p><b>A montagem.</b> A força é
+     \(f(s) = f_0 s/\tau\) para \(0\le s\le\tau\) e \(f_0\) depois. Para
+     \(t &gt; \tau\), a integral de Green se parte em duas:</p>
+     <p>\[ x(t) = \frac{f_0}{\omega_0}\left[
+        \int_0^{\tau}\frac{s}{\tau}\sen\omega_0(t-s)\,ds
+        + \int_{\tau}^{t}\sen\omega_0(t-s)\,ds\right]. \]</p>
+     <p><b>A segunda integral</b> é a do degrau, já conhecida:</p>
+     <p>\[ \int_{\tau}^{t}\sen\omega_0(t-s)\,ds
+        = \frac{1-\cos\omega_0(t-\tau)}{\omega_0}. \]</p>
+     <p><b>A primeira</b> pede integração por partes, com \(u = s/\tau\) e
+     \(dv = \sen\omega_0(t-s)\,ds\):</p>
+     <p>\[ \int_0^{\tau}\frac{s}{\tau}\sen\omega_0(t-s)\,ds
+        = \frac{\cos\omega_0(t-\tau)}{\omega_0}
+        - \frac{\sen\omega_0 t - \sen\omega_0(t-\tau)}{\omega_0^2\tau}. \]</p>
+     <p><b>Somando</b> e usando \(x_{\text{est}} = f_0/\omega_0^2\), os dois
+     cossenos se cancelam e sobra</p>
+     <p>\[ x(t) = x_{\text{est}}\left[1
+        - \frac{\sen\omega_0 t - \sen\omega_0(t-\tau)}{\omega_0\tau}\right]. \]</p>
+     <p>A diferença de senos é
+     \(2\sen(\omega_0\tau/2)\cos[\omega_0(t-\tau/2)]\), de modo que</p>
+     <p>\[ x(t) = x_{\text{est}}\left\{1
+        - \frac{2\sen(\omega_0\tau/2)}{\omega_0\tau}
+          \cos\left[\omega_0\!\left(t-\frac{\tau}{2}\right)\right]\right\}. \]</p>
+     <p>O corpo oscila em torno de \(x_{\text{est}}\), que é onde ele deveria
+     estar, com amplitude residual
+     \(x_{\text{est}}\left|\sen(\pi\tau/T)\right|/(\pi\tau/T)\). O maior
+     deslocamento é a soma dos dois:</p>
+     <p>\[ \text{DAF} = 1
+        + \frac{\left|\sen(\pi\tau/T)\right|}{\pi\tau/T}. \]</p>
+     <p><b>Os dois limites.</b></p>
+     <ul>
+     <li>\(\tau \to 0\): o seno sobre o argumento tende a 1, e
+     \(\text{DAF} \to 2\). A rampa instantânea é o degrau, e o fator 2 do
+     exemplo resolvido volta.</li>
+     <li>\(\tau = T\) (ou \(2T\), \(3T\)…): o seno se anula e
+     \(\text{DAF} = 1\) <b>exatamente</b>. A carga chega ao valor final sem
+     deixar oscilação nenhuma.</li>
+     </ul>
+     <p><b>A verificação.</b> O programa integra a equação e mede o maior
+     deslocamento:</p>
+     <div class="tabela-rolavel">
+     <table>
+     <thead><tr><th>\(\tau/T\)</th><th>previsto</th><th>medido</th></tr></thead>
+     <tbody>
+     <tr><td>0,01</td><td>1,999836</td><td>1,999836</td></tr>
+     <tr><td>0,25</td><td>1,900316</td><td>1,900316</td></tr>
+     <tr><td>0,50</td><td>1,636620</td><td>1,636620</td></tr>
+     <tr><td>1,00</td><td>1,000000</td><td>1,000000</td></tr>
+     <tr><td>1,50</td><td>1,212207</td><td>1,212207</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p>Seis casas de acordo, inclusive o 1,000000 exato.</p>
+     <p><b>A resposta à pergunta.</b> "Devagar" não é vago: quer dizer
+     <em>comparado ao período próprio do sistema</em>. Uma rampa de um período
+     inteiro já basta para eliminar a oscilação, e meio período já derruba o
+     fator de 2 para 1,64. Um guindaste que levanta a carga em três segundos
+     está sendo brutal com uma estrutura de período 10 s e delicado com uma de
+     período 0,1 s, e a mesma manobra é as duas coisas ao mesmo tempo.</p>
+     <p><b>Um aviso.</b> Com amortecimento o cancelamento em \(\tau = T\)
+     deixa de ser exato, porque a amplitude do primeiro meio ciclo já decaiu
+     quando o segundo chega. Continua sendo um mínimo profundo, e continua
+     valendo a regra prática; só não vale a igualdade exata.</p>''' ),
 
     ('8.6  Tacoma: ressonância ou outra coisa?',
      r'''A queda da ponte de Tacoma Narrows, em 1940, ilustra o capítulo de

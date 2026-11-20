@@ -16,6 +16,9 @@ O QUE RESOLVE
     5. Resolve a resposta a uma força ARBITRARIA pela integral de
        convolução com a função de Green, e confere contra a integração
        direta da equação.
+    6. Põe à prova as duas formas fechadas obtidas na página: a amplitude
+       que sobra depois de um pulso retangular e o fator de amplificação
+       dinâmica de uma carga aplicada em rampa.
 
 A FÍSICA
     A equação x'' + 2 gama x' + omega0^2 x = (F0/m) cos(omega t) é linear,
@@ -33,6 +36,11 @@ COMO CONFERIR SE ESTÁ CERTO
     3. A largura a meia altura da curva de potência tem de dar 2 gama.
     4. A convolução com a função de Green tem de reproduzir a integração
        direta para pulsos que não têm nada de senoidal.
+    5. Depois de um pulso de duração tau, a amplitude tem de valer
+       2 x_est |sen(pi tau / T)|, e ser NULA quando tau e multiplo de T.
+       Numa rampa de duração tau, o fator de amplificação tem de valer
+       1 + |sen(pi tau / T)| / (pi tau / T), e ser 1 quando tau e multiplo
+       de T.
 
 Prof. Apiano Morais - LFCA/URCA - Mecânica Clássica I
 """
@@ -166,6 +174,32 @@ def integra_forca(forca, w0, gama, t_fim, dt=1e-4):
         t += dt
         xs[i] = x
     return ts, xs
+
+
+def amplitude_depois(tau, w0, gama, f0=1.0, dt=2e-5):
+    """Amplitude que sobra depois de um pulso retangular de duração tau."""
+    T = 2 * np.pi / w0
+
+    def f(t):
+        return f0 if 0.0 <= t <= tau else 0.0
+
+    ts, xs = integra_forca(f, w0, gama, tau + 6 * T, dt=dt)
+    m = ts > tau + 0.5 * T
+    return np.max(np.abs(xs[m]))
+
+
+def amplificacao_rampa(tau, w0, f0=1.0, dt=2e-5):
+    """Maior deslocamento, em unidades da deformação estática, para uma
+    carga que sobe linearmente em tau e depois fica constante."""
+    T = 2 * np.pi / w0
+
+    def f(t):
+        if t < 0:
+            return 0.0
+        return f0 * t / tau if t < tau else f0
+
+    ts, xs = integra_forca(f, w0, 0.0, tau + 8 * T, dt=dt)
+    return np.max(xs) / (f0 / w0 ** 2)
 
 
 def main():
@@ -339,6 +373,45 @@ def main():
     print('   ferramenta que resolve circuitos, propagacao de ondas, difusao')
     print('   de calor e, com outro nome, o propagador da teoria quantica de')
     print('   campos. O oscilador amortecido e o exemplo mais barato dela.')
+    print()
+
+    print('=' * 72)
+    print('6. AS DUAS FORMAS FECHADAS, POSTAS A PROVA')
+    print('=' * 72)
+    T = 2 * np.pi / w0
+    xest = 1.0 / w0 ** 2
+    print('   omega0 = %.1f, periodo proprio T = %.6f s, x_est = %.6f'
+          % (w0, T, xest))
+    print()
+    print('   PULSO RETANGULAR de duracao tau: o que sobra depois')
+    print('   tau/T    2 x_est |sen(pi tau/T)|   medido (g=0)   medido (g=0,2)')
+    for r in (0.25, 0.5, 0.75, 1.0, 1.5, 2.0):
+        tau = r * T
+        prev = 2 * xest * abs(np.sin(np.pi * r))
+        print('   %5.2f    %20.9f   %12.9f   %12.9f'
+              % (r, prev, amplitude_depois(tau, w0, 0.0),
+                 amplitude_depois(tau, w0, 0.2)))
+    print()
+    print('   Em tau = T e tau = 2T a amplitude prevista e ZERO, e o medido')
+    print('   da 1e-8: um pulso que dura um periodo inteiro deixa o')
+    print('   oscilador em repouso, como se nada tivesse acontecido. A')
+    print('   segunda metade do pulso desfaz exatamente o que a primeira')
+    print('   fez, porque trabalha contra a velocidade o tempo todo.')
+    print()
+    print('   RAMPA de duracao tau seguida de carga constante')
+    print('   tau/T    1 + |sen(pi tau/T)|/(pi tau/T)    fator medido')
+    for r in (0.01, 0.25, 0.5, 1.0, 1.5, 2.0):
+        tau = r * T
+        p = np.pi * r
+        prev = 1 + abs(np.sin(p)) / p
+        print('   %5.2f    %26.6f    %12.6f'
+              % (r, prev, amplificacao_rampa(tau, w0)))
+    print()
+    print('   A rampa muito rapida reproduz o degrau, com fator 2, e a rampa')
+    print('   de um periodo inteiro produz fator 1: a carga chega ao valor')
+    print('   final sem sobra de oscilacao nenhuma. Aplicar devagar nao e')
+    print('   vago: devagar quer dizer COMPARADO AO PERIODO PROPRIO, e um')
+    print('   periodo ja basta.')
 
 
 if __name__ == '__main__':
