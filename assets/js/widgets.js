@@ -1563,9 +1563,15 @@
      forma fechada que o foguete.py confere contra uma busca numérica.
      ================================================================= */
   REGISTRO.foguete = function (raiz) {
-    var est = { ve: 2942, razao: 5, taxa: 400, eps: 0.10, vista: 'equacao' };
+    var est = { ve: 2942, razao: 5, taxa: 400, eps: 0.10, tq: 120,
+                vista: 'equacao' };
 
     var G0 = 9.80665;
+    /* Tudo o que envolve altura sai de GM e R, e nunca da gravidade
+       padrao: GM/R^2 vale 9,8203 e difere de 9,80665 por 0,14 %, o que
+       basta para a conferencia por energia discordar na terceira casa. */
+    var R_TERRA = 6.371e6, MU_TERRA = 3.986004418e14;
+    var G_SUP = MU_TERRA / (R_TERRA * R_TERRA);
     var ORBITA = 9400;        // delta-v típico para a órbita baixa, com perdas
     var M0 = 50000, MF = 10000;
 
@@ -1585,7 +1591,8 @@
     opcoes(c0, [
       { rot: 'A equação', v: 'equacao' },
       { rot: 'Durante a queima', v: 'queima' },
-      { rot: 'Estágios', v: 'estagios' }
+      { rot: 'Estágios', v: 'estagios' },
+      { rot: 'Subindo, com g(h)', v: 'subida' }
     ], 0, function (v) { est.vista = v; montar(); desenhar(); });
 
     var c1 = el('div', { class: 'controles' });
@@ -1645,10 +1652,17 @@
         deslizante(c1, 'Taxa de queima', 100, 1600, 10, est.taxa,
           function (v) { est.taxa = v; desenhar(); },
           function (v) { return fmt(v) + ' kg/s'; });
-      } else {
+      } else if (est.vista === 'estagios') {
         deslizante(c1, 'Fração estrutural \\(\\epsilon\\)', 0.04, 0.25, 0.005,
           est.eps, function (v) { est.eps = v; desenhar(); },
           function (v) { return fmt(100 * v, 1) + ' %'; });
+      } else {
+        deslizante(c1, 'Tempo de queima \\(t_q\\)', 20, 480, 5, est.tq,
+          function (v) { est.tq = v; desenhar(); },
+          function (v) { return fmt(v) + ' s'; });
+        deslizante(c1, 'Razão de massas \\(m_0/m_f\\)', 2, 12, 0.1, est.razao,
+          function (v) { est.razao = v; desenhar(); },
+          function (v) { return fmt(v, 1); });
       }
       tipografar(c1);
     }
@@ -1878,10 +1892,155 @@
       tipografar(texto);
     }
 
+    /* ---------------- vista 4: subindo, com g(h) ---------------- */
+
+    function gAltura(h) { return MU_TERRA / ((R_TERRA + h) * (R_TERRA + h)); }
+
+    /* Sobe na vertical com empuxo constante e segue em voo livre ate o
+       apogeu. A trava da plataforma e essencial: enquanto o empuxo nao
+       vence o peso o foguete nao se move, e sem ela o integrador devolve
+       altura negativa com cara de resultado. */
+    function subir(ve, m0, mf, tq) {
+      var taxa = (m0 - mf) / tq, empuxo = ve * taxa;
+      var dt = tq / 4000;
+      var t = 0, v = 0, h = 0, perda = 0, decolou = false, mDec = m0;
+      var pts = [[0, 0, 0]];
+      function acel(t, v, h) {
+        var m = Math.max(m0 - taxa * t, mf);
+        var a = (t < tq ? empuxo / m : 0) - gAltura(h);
+        if (h <= 0 && a <= 0) return [0, 0];
+        return [a, v];
+      }
+      while (t < tq - 1e-12) {
+        var p = Math.min(dt, tq - t);
+        var k1 = acel(t, v, h);
+        var k2 = acel(t + p / 2, v + p * k1[0] / 2, h + p * k1[1] / 2);
+        var k3 = acel(t + p / 2, v + p * k2[0] / 2, h + p * k2[1] / 2);
+        var k4 = acel(t + p, v + p * k3[0], h + p * k3[1]);
+        v += p / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]);
+        h += p / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+        if (h > 0 && !decolou) { decolou = true; mDec = Math.max(m0 - taxa * t, mf); }
+        if (decolou) perda += p * gAltura(h);
+        t += p;
+        pts.push([t, h, v]);
+      }
+      var vb = v, hb = h, tb = t;
+      var dtc = Math.max(0.05, v / gAltura(h) / 2000);
+      while (v > 0 && t < 1e5) {
+        var g1 = -gAltura(h);
+        var g2 = -gAltura(h + dtc * v / 2);
+        var g3 = -gAltura(h + dtc * (v + dtc * g1 / 2) / 2);
+        var g4 = -gAltura(h + dtc * (v + dtc * g2 / 2));
+        var vn = v + dtc / 6 * (g1 + 2 * g2 + 2 * g3 + g4);
+        h += dtc * (v + (dtc / 6) * (g1 + g2 + g3));
+        v = vn; t += dtc;
+        pts.push([t, h, v]);
+      }
+      return { pts: pts, vb: vb, hb: hb, tb: tb, apogeu: h, tTotal: t,
+               perda: perda, plataforma: ve * Math.log(m0 / mDec),
+               decolou: decolou, empuxo: empuxo, peso0: m0 * G_SUP };
+    }
+
+    function vistaSubida() {
+      var m0 = 1.0e5, mf = m0 / est.razao;
+      var r = subir(est.ve, m0, mf, est.tq);
+      var dvIdeal = est.ve * Math.log(est.razao);
+      var rt = R_TERRA + r.hb;
+      var e = r.vb * r.vb / 2 - MU_TERRA / rt;
+      var apoE = e >= 0 ? Infinity : -MU_TERRA / e - R_TERRA;
+      var apoIng = r.hb + r.vb * r.vb / (2 * G_SUP);
+
+      var hmax = Math.max(r.apogeu, 1e3);
+      var g = G.eixos(cv, {
+        altura: 300, xmin: 0, xmax: r.tTotal, ymin: 0, ymax: hmax * 1.08,
+        divY: 5, marcasX: G.marcasLineares(0, r.tTotal, 5, 0),
+        rotX: 'tempo (s)', rotY: 'altura (km)',
+        formataY: function (y) { return fmt(y / 1000); }
+      });
+      var ct = g.ct;
+
+      /* a altura */
+      ct.save();
+      ct.strokeStyle = G.COR.mestra; ct.lineWidth = 2.4;
+      ct.beginPath();
+      r.pts.forEach(function (w, i) {
+        var x = g.X(w[0]), y = g.Y(Math.max(0, Math.min(w[1], g.ymax)));
+        if (i === 0) ct.moveTo(x, y); else ct.lineTo(x, y);
+      });
+      ct.stroke(); ct.restore();
+
+      /* a velocidade, na mesma caixa, reescalada */
+      var vmax = 0;
+      r.pts.forEach(function (w) { if (w[2] > vmax) vmax = w[2]; });
+      if (vmax > 0) {
+        ct.save();
+        ct.strokeStyle = G.COR.bronze; ct.lineWidth = 1.8;
+        ct.setLineDash([5, 4]);
+        ct.beginPath();
+        r.pts.forEach(function (w, i) {
+          var x = g.X(w[0]), y = g.Y(Math.max(0, w[2]) / vmax * g.ymax * 0.92);
+          if (i === 0) ct.moveTo(x, y); else ct.lineTo(x, y);
+        });
+        ct.stroke(); ct.restore();
+        rotulo(ct, 'v, até ' + fmt(vmax) + ' m/s',
+               g.X(r.tb * 0.55), g.Y(g.ymax * 0.55), G.COR.bronze);
+      }
+
+      /* fim da queima e apogeu */
+      ct.save();
+      ct.strokeStyle = G.COR.vinho; ct.lineWidth = 1.2; ct.setLineDash([4, 3]);
+      ct.beginPath(); ct.moveTo(g.X(r.tb), g.Y(0));
+      ct.lineTo(g.X(r.tb), g.Y(g.ymax)); ct.stroke();
+      ct.restore();
+      rotulo(ct, 'fim da queima', g.X(r.tb), g.Y(g.ymax) + 12, G.COR.vinho);
+      ct.fillStyle = G.COR.mestra;
+      ct.beginPath();
+      ct.arc(g.X(r.tTotal), g.Y(Math.min(r.apogeu, g.ymax)), 4, 0, 6.2832);
+      ct.fill();
+
+      rotulos(['Apogeu, integrado', 'Apogeu, por energia',
+               'Apogeu, com mgh', 'Onde foi o delta-v']);
+      painel({
+        a: fmt(r.apogeu / 1000, 1) + ' km',
+        b: (isFinite(apoE) ? fmt(apoE / 1000, 1) + ' km' : 'escapa')
+           + (isFinite(apoE) ? '  (razão ' + fmt(r.apogeu / apoE, 4) + ')' : ''),
+        c: fmt(apoIng / 1000, 1) + ' km  ('
+           + fmt(100 * (apoIng / apoE - 1), 1) + ' %)',
+        d: fmt(r.vb) + ' + ' + fmt(r.perda) + ' + ' + fmt(r.plataforma)
+           + ' = ' + fmt(r.vb + r.perda + r.plataforma)
+           + ' de ' + fmt(dvIdeal) + ' m/s'
+      });
+
+      texto.innerHTML =
+        '<p>Subida vertical com \\(g(h)=GM/(R+h)^2\\), empuxo constante e '
+        + 'sem arrasto. A linha cheia é a altura; a tracejada, a velocidade, '
+        + 'reescalada para caber no mesmo quadro.</p>'
+        + '<p>O último cartão é a conferência que importa. O \\(\\Delta v\\) '
+        + 'ideal de Tsiolkovsky se reparte em três: o que sobra como '
+        + 'velocidade, o que a gravidade cobra durante o voo, e o propelente '
+        + 'queimado na plataforma antes de o empuxo vencer o peso. A soma '
+        + 'fecha porque a terceira parcela é calculada por '
+        + '\\(v_e\\ln(m_0/m_{\\rm dec})\\), e não por subtração.</p>'
+        + (r.empuxo < r.peso0
+           ? '<p><b>Este caso não decola de imediato.</b> O empuxo vale '
+             + fmt(r.empuxo / r.peso0, 2) + ' do peso inicial, de modo que o '
+             + 'foguete fica no chão queimando propelente até emagrecer o '
+             + 'bastante. Tudo o que ele gasta até ali está perdido.</p>'
+           : '')
+        + '<p>Os dois primeiros cartões são caminhos independentes para o '
+        + 'apogeu, e coincidem em quatro casas. O terceiro usa \\(v^2/2g\\) '
+        + 'com \\(g\\) fixo e erra sempre para menos, porque supõe que a '
+        + 'gravidade lá em cima continua valendo a da superfície. Para '
+        + 'apogeu de poucos quilômetros os três coincidem, e é por isso que '
+        + 'a fórmula de colégio sobrevive.</p>';
+      tipografar(texto);
+    }
+
     function desenhar() {
       if (est.vista === 'equacao') vistaEquacao();
       else if (est.vista === 'queima') vistaQueima();
-      else vistaEstagios();
+      else if (est.vista === 'estagios') vistaEstagios();
+      else vistaSubida();
     }
 
     montar();

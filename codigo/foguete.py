@@ -175,6 +175,121 @@ def corrente_na_mesa(L=1.0, mu=1.0, n=200001):
     return x, N, 3 * mu * G0 * x
 
 
+
+# ============================================ 6. gravidade que varia com h
+R_TERRA = 6.371e6          # raio médio da Terra, m
+MU_TERRA = 3.986004418e14  # GM da Terra, m^3/s^2
+G_SUP = MU_TERRA / R_TERRA ** 2
+
+# Repare que G_SUP = 9,8201 m/s^2 NAO e o 9,80665 usado ate aqui. A
+# diferenca, de 0,14 %, nao e erro de arredondamento: 9,80665 e a gravidade
+# padrao, um valor convencionado que ja desconta a rotacao da Terra e vale
+# perto da latitude 45, enquanto GM/R^2 e o valor newtoniano puro para uma
+# Terra esferica de raio medio. Misturar os dois faz a conferencia por
+# energia desta secao discordar da integracao na terceira casa, que foi
+# exatamente o que aconteceu na primeira versao deste codigo. Daqui em
+# diante tudo vem de GM e R, e so.
+
+
+def g_altura(h, R=R_TERRA, mu=MU_TERRA):
+    """Aceleração da gravidade a uma altura h acima da superfície."""
+    return mu / (R + h) ** 2
+
+
+def integra_subida(ve, m0, mf, tq, dt=0.002, variavel=True, coast=True):
+    """Sobe na vertical com empuxo constante e devolve o voo inteiro.
+
+    Integra, com RK4 em (v, h):
+
+        dv/dt = ve * taxa / m - g(h),    dh/dt = v,    dm/dt = -taxa
+
+    com taxa = (m0 - mf) / tq. Depois do fim do propelente segue em queda
+    livre até o apogeu, que é onde a velocidade troca de sinal.
+
+    O cuidado que o problema exige está no começo: enquanto o empuxo não
+    vence o peso, o foguete fica NA PLATAFORMA. Sem essa trava o
+    integrador devolve velocidade negativa e altura negativa, e o
+    resultado parece razoável até alguém olhar o sinal. Veja a seção 6 da
+    saída: com tempo de queima longo demais o veículo não decola, e o
+    programa tem de dizer isso em vez de inventar um voo subterrâneo.
+
+    Devolve um dicionário com o estado no fim da queima, o apogeu e a
+    perda gravitacional medida por integração, que é o que se compara com
+    g0 * tq.
+    """
+    taxa = (m0 - mf) / tq
+    empuxo = ve * taxa
+
+    def gg(h):
+        return g_altura(h) if variavel else G_SUP
+
+    def deriv(t, v, h):
+        m = max(m0 - taxa * t, mf)
+        a = (empuxo / m if t < tq else 0.0) - gg(h)
+        # na plataforma: enquanto o empuxo não vence o peso, nada acontece
+        if h <= 0.0 and a <= 0.0:
+            return 0.0, 0.0
+        return a, v
+
+    t, v, h = 0.0, 0.0, 0.0
+    perda = 0.0            # integral de g(h) dt DEPOIS de sair do chao
+    decolou = False
+    m_decolagem = m0       # massa no instante em que o empuxo vence o peso
+    while t < tq - 1e-12:
+        passo = min(dt, tq - t)
+        k1 = deriv(t, v, h)
+        k2 = deriv(t + passo / 2, v + passo * k1[0] / 2, h + passo * k1[1] / 2)
+        k3 = deriv(t + passo / 2, v + passo * k2[0] / 2, h + passo * k2[1] / 2)
+        k4 = deriv(t + passo, v + passo * k3[0], h + passo * k3[1])
+        v += passo / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+        h += passo / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+        if h > 0.0 and not decolou:
+            decolou = True
+            m_decolagem = max(m0 - taxa * t, mf)
+        if decolou:
+            perda += passo * gg(h)
+        t += passo
+    v_fim, h_fim = v, h
+
+    h_apo = h
+    if coast and v > 0:
+        while v > 0:
+            k1 = (-gg(h), v)
+            k2 = (-gg(h + dt * k1[1] / 2), v + dt * k1[0] / 2)
+            k3 = (-gg(h + dt * k2[1] / 2), v + dt * k2[0] / 2)
+            k4 = (-gg(h + dt * k3[1]), v + dt * k3[0])
+            v += dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+            h += dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+        h_apo = h
+
+    # O propelente queimado antes de sair do chao e perda tambem, e de
+    # outra especie: nao e arrasto gravitacional, e combustivel gasto
+    # empurrando a plataforma. Vale o delta-v que ele teria dado.
+    plataforma = ve * np.log(m0 / m_decolagem)
+    return {'v': v_fim, 'h': h_fim, 'perda': perda, 'apogeu': h_apo,
+            'decolou': decolou, 'taxa': taxa, 'empuxo': empuxo,
+            'plataforma': plataforma, 'm_decolagem': m_decolagem,
+            'peso0': m0 * G_SUP}
+
+
+def apogeu_por_energia(v, h, R=R_TERRA, mu=MU_TERRA):
+    """Apogeu do voo livre pela conservação de energia, com U = -mu/r.
+
+    É a conferência independente da integração: a energia específica
+    vale v^2/2 - mu/r e no apogeu a velocidade é nula.
+    """
+    r = R + h
+    e = v * v / 2 - mu / r
+    if e >= 0:
+        return float('inf')          # escapa
+    return -mu / e - R
+
+
+def apogeu_ingenuo(v, h):
+    """O mesmo apogeu com mgh, isto é, supondo g constante."""
+    return h + v * v / (2 * G_SUP)
+
+
 def main():
     print('=' * 72)
     print('1. IMPULSO: A FORCA QUE IMPORTA E A MEDIA NO TEMPO')
@@ -310,6 +425,106 @@ def main():
     print('   F = m a com m variavel, sem perguntar com que velocidade a')
     print('   massa chega, perde os outros dois tercos. A pergunta certa e')
     print('   sempre F = dp/dt, com o cuidado de dizer de qual sistema.')
+
+    print()
+    print('=' * 72)
+    print('6. A GRAVIDADE QUE DIMINUI COM A ALTURA')
+    print('=' * 72)
+    ve6, m06, mf6 = 3000.0, 1.0e5, 2.0e4
+    dv_ideal = tsiolkovsky(ve6, m06, mf6)
+    print('   Subida vertical. ve = %.0f m/s, m0 = %.0f t, mf = %.0f t,'
+          % (ve6, m06 / 1e3, mf6 / 1e3))
+    print('   razao de massas %.1f, delta-v ideal %.1f m/s.'
+          % (m06 / mf6, dv_ideal))
+    print()
+    print('   g na superficie, por GM/R^2:   %.4f m/s^2' % G_SUP)
+    print('   gravidade padrao convencionada: %.5f m/s^2' % G0)
+    print('   A diferenca de 0,14 por cento nao e arredondamento: a padrao')
+    print('   ja desconta a rotacao da Terra e vale perto da latitude 45,')
+    print('   enquanto GM/R^2 e o valor newtoniano puro. Misturar as duas')
+    print('   fazia a conferencia por energia discordar na terceira casa.')
+    print()
+    print('   CONFERENCIA 1. Com g fixo, a perda tem de dar g vezes o tempo')
+    print('   de queima, que e o resultado da secao 3:')
+    print()
+    print('      tq      perda medida      G_SUP * tq      diferenca')
+    for tq in (30.0, 60.0, 120.0):
+        r = integra_subida(ve6, m06, mf6, tq, variavel=False, coast=False)
+        print('   %6.0f s   %10.4f m/s   %10.4f m/s   %9.2e'
+              % (tq, r['perda'], G_SUP * tq, abs(r['perda'] - G_SUP * tq)))
+    print()
+    print('   Agora com g(h) = GM/(R+h)^2:')
+    print()
+    print('      tq   v na queima  altura   perda g(h)  perda g fixo  economia')
+    for tq in (30.0, 60.0, 120.0, 180.0, 240.0):
+        r = integra_subida(ve6, m06, mf6, tq)
+        print('   %6.0f s  %8.1f m/s %7.1f km %9.1f m/s %9.1f m/s   %5.2f %%'
+              % (tq, r['v'], r['h'] / 1e3, r['perda'], G_SUP * tq,
+                 100 * (1 - r['perda'] / (G_SUP * tq))))
+    print()
+    print('   A perda e MENOR que g vezes o tempo de queima, porque o')
+    print('   foguete passa boa parte dela onde a gravidade ja e mais fraca.')
+    print('   A economia vai de 0,45 por cento numa queima de 30 s a 1,3 por')
+    print('   cento numa de 180 s, e depois volta a cair, porque a queima')
+    print('   lenta nao consegue mais subir. Repare que a economia NAO salva')
+    print('   a queima lenta: a perda em si cresce de 293 para 2334 m/s no')
+    print('   mesmo intervalo, e engole metade do delta-v ideal.')
+    print()
+    print('   CONFERENCIA 2. Nas queimas muito lentas o empuxo nao vence o')
+    print('   peso e o foguete fica na plataforma, queimando propelente sem')
+    print('   sair do lugar, ate a massa cair o bastante. Esse propelente e')
+    print('   perda de outra especie, e vale o delta-v que ele teria dado.')
+    print('   A soma das tres parcelas tem de reproduzir Tsiolkovsky:')
+    print()
+    print('      tq    decola em   v final   perda grav   plataforma'
+          '     soma      ideal')
+    for tq in (240.0, 300.0, 360.0, 480.0):
+        r = integra_subida(ve6, m06, mf6, tq)
+        soma = r['v'] + r['perda'] + r['plataforma']
+        quando = (m06 - r['m_decolagem']) / r['taxa']
+        print('   %6.0f s  %7.1f s  %8.1f  %10.1f  %10.1f  %9.2f  %9.2f'
+              % (tq, quando, r['v'], r['perda'], r['plataforma'],
+                 soma, dv_ideal))
+    print()
+    print('   As duas ultimas colunas coincidem em seis algarismos. Como a')
+    print('   parcela da plataforma e calculada por ve ln(m0/m_decolagem), e')
+    print('   nao por subtracao, o fechamento e uma verificacao de verdade.')
+    print('   Na queima de 480 s o foguete passa 294 s preso ao chao e')
+    print('   desperdica 2025 m/s, quase metade do delta-v ideal, antes de')
+    print('   se mover um centimetro.')
+    print()
+    print('   O APOGEU, POR TRES CAMINHOS. Depois da queima o voo e livre, e')
+    print('   a altura maxima sai da integracao, da conservacao de energia')
+    print('   com U = -GM/r, ou da formula de colegio v^2/2g:')
+    print()
+    print('      tq     integrado     por energia      razao     com mgh   erro')
+    for tq in (30.0, 60.0, 120.0, 240.0):
+        r = integra_subida(ve6, m06, mf6, tq)
+        ae = apogeu_por_energia(r['v'], r['h'])
+        ai = apogeu_ingenuo(r['v'], r['h'])
+        print('   %6.0f s  %9.2f km  %9.2f km  %.8f  %8.2f km  %+5.1f %%'
+              % (tq, r['apogeu'] / 1e3, ae / 1e3, r['apogeu'] / ae,
+                 ai / 1e3, 100 * (ai / ae - 1)))
+    print()
+    print('   CONFERENCIA 3. As duas primeiras colunas coincidem em oito')
+    print('   casas, e sao caminhos independentes: uma integra a equacao de')
+    print('   movimento, a outra so usa que a energia se conserva. A terceira')
+    print('   erra de 7 a 17 por cento, sempre para menos, porque mgh supoe')
+    print('   que a gravidade continua valendo %.2f la em cima. A 1200 km'
+          % G_SUP)
+    print('   ela ja caiu para %.2f m/s^2, isto e, %.0f por cento do valor da'
+          % (g_altura(1.2e6), 100 * g_altura(1.2e6) / G_SUP))
+    print('   superficie.')
+    print()
+    r_baixo = integra_subida(ve6, 1.0e5, 9.5e4, 3.0)
+    ae = apogeu_por_energia(r_baixo['v'], r_baixo['h'])
+    ai = apogeu_ingenuo(r_baixo['v'], r_baixo['h'])
+    print('   E a formula de colegio nao esta errada, esta fora de faixa. Um')
+    print('   foguete com 5 por cento da massa em propelente e 3 s de queima')
+    print('   sobe %.2f km por energia e %.2f km com mgh, uma diferenca de'
+          % (ae / 1e3, ai / 1e3))
+    print('   %.3f por cento. Abaixo de alguns quilometros, g e constante.'
+          % (100 * abs(ai / ae - 1)))
 
 
 if __name__ == '__main__':

@@ -195,6 +195,135 @@ parado. A razão empuxo/peso na partida precisa passar de 1, e na prática fica
 entre 1,2 e 1,5, porque empuxo demais também custa motor.</p>
 '''
 
+S4B = r"""
+<p>A conta acima tem um defeito que só aparece quando o foguete sobe alto:
+ela supõe que \(g\) é o mesmo lá em cima. Não é. A gravidade cai com o
+quadrado da distância ao centro da Terra,</p>
+
+\[ g(h) = \frac{GM}{\left(R+h\right)^2}, \]
+
+<p>e um veículo que termina a queima a 150 km de altitude já está onde
+\(g\) vale 95,5 % do valor da superfície. A equação do movimento deixa de
+se integrar numa linha e vira um sistema de duas equações acopladas,</p>
+
+\[ \der{v}{t} = \frac{v_e\,\dot m}{m} - g(h), \qquad \der{h}{t} = v, \]
+
+<p>que é o que o programa integra na seção 6.</p>
+
+<div class="bloco alerta">
+<p class="rotulo">Duas gravidades que não são a mesma</p>
+<p>A gravidade padrão, \(9{,}80665\) m/s², é um valor <em>convencionado</em>,
+que já desconta a rotação da Terra e corresponde a algo perto da latitude
+45°. O valor newtoniano puro é \(GM/R^2 = 9{,}8203\) m/s². A diferença é de
+0,14 %, e parece desprezível até que alguém compare a integração numérica
+com a conservação de energia: as duas passam a discordar na terceira casa,
+e a tentação é culpar o integrador. Foi o que aconteceu na primeira versão
+do programa. Numa conta só pode entrar uma das duas.</p>
+</div>
+
+<h3>A perda, agora que ela é integral</h3>
+
+<p>Com \(g\) variável a perda deixa de ser \(g\,t_q\) e passa a ser
+\(\int g(h)\,dt\), que só se conhece depois de integrar. O programa mede:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(t_q\)</th><th>\(v\) no fim da queima</th><th>altura</th>
+<th>perda com \(g(h)\)</th><th>perda com \(g\) fixo</th><th>economia</th></tr></thead>
+<tbody>
+<tr><td>30 s</td><td>4535,0 m/s</td><td>49,4 km</td><td>293,3 m/s</td><td>294,6 m/s</td><td>0,45 %</td></tr>
+<tr><td>60 s</td><td>4243,7 m/s</td><td>90,0 km</td><td>584,5 m/s</td><td>589,2 m/s</td><td>0,80 %</td></tr>
+<tr><td>120 s</td><td>3664,3 m/s</td><td>144,8 km</td><td>1164,1 m/s</td><td>1178,4 m/s</td><td>1,22 %</td></tr>
+<tr><td>180 s</td><td>3083,4 m/s</td><td>164,5 km</td><td>1744,9 m/s</td><td>1767,6 m/s</td><td>1,28 %</td></tr>
+<tr><td>240 s</td><td>2494,7 m/s</td><td>148,5 km</td><td>2333,5 m/s</td><td>2356,9 m/s</td><td>0,99 %</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A perda é sempre <em>menor</em> do que \(g\,t_q\), e a razão é fácil de
+ver: o foguete passa boa parte da queima onde a gravidade já é mais fraca.
+A economia cresce até cerca de 1,3 % numa queima de 180 s e depois volta a
+cair, porque a queima mais lenta não consegue mais subir rápido o bastante
+para se beneficiar. E ela não salva ninguém: no mesmo intervalo a perda
+absoluta vai de 293 para 2334 m/s, isto é, engole metade do \(\Delta v\)
+ideal. A conclusão da seção anterior continua de pé, e a correção só a
+suaviza na segunda casa.</p>
+
+<h3>O foguete que não sai do chão</h3>
+
+<p>Há um regime que a conta de \(g\) constante não enxerga de jeito nenhum.
+Se o empuxo não vence o peso inicial, o veículo fica na plataforma
+queimando propelente, e só decola quando tiver emagrecido o bastante. O que
+ele gastou até ali está perdido, e não é perda gravitacional: é combustível
+empurrando o chão.</p>
+
+<p>Essa parcela se calcula sozinha. Se a decolagem acontece com massa
+\(m_{\rm dec}\), o propelente queimado antes dela valia
+\(v_e\ln(m_0/m_{\rm dec})\) de \(\Delta v\). E aí o balanço tem de
+fechar:</p>
+
+<div class="destaque">
+\[ \underbrace{v_e\ln\frac{m_0}{m_f}}_{\text{ideal}}
+ = \underbrace{v_{\rm final}}_{\text{o que sobra}}
+ + \underbrace{\int g(h)\,dt}_{\text{gravidade em voo}}
+ + \underbrace{v_e\ln\frac{m_0}{m_{\rm dec}}}_{\text{queimado no chão}}. \]
+</div>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(t_q\)</th><th>decola em</th><th>\(v\) final</th>
+<th>perda em voo</th><th>na plataforma</th><th>soma</th><th>ideal</th></tr></thead>
+<tbody>
+<tr><td>240 s</td><td>imediato</td><td>2494,7</td><td>2333,5</td><td>0,0</td><td>4828,30</td><td>4828,31</td></tr>
+<tr><td>300 s</td><td>69,5 s</td><td>1967,3</td><td>2246,0</td><td>615,0</td><td>4828,30</td><td>4828,31</td></tr>
+<tr><td>360 s</td><td>144,5 s</td><td>1563,0</td><td>2103,3</td><td>1162,0</td><td>4828,30</td><td>4828,31</td></tr>
+<tr><td>480 s</td><td>294,5 s</td><td>988,3</td><td>1815,0</td><td>2025,0</td><td>4828,31</td><td>4828,31</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>As duas últimas colunas coincidem em seis algarismos, e isso é uma
+verificação de verdade, não uma identidade: a parcela da plataforma vem de
+\(v_e\ln(m_0/m_{\rm dec})\), e não de subtrair as outras duas. Na queima de
+480 s o veículo passa 294 s preso ao chão e desperdiça 2025 m/s, quase
+metade do \(\Delta v\) ideal, antes de se mover um centímetro.</p>
+
+<h3>O apogeu, por três caminhos</h3>
+
+<p>Depois do fim da queima o voo é livre, e a altura máxima pode ser obtida
+de três maneiras. Integrando; conservando energia com o potencial certo,
+\(U = -GM m/r\); ou com a fórmula de colégio \(h = v^2/2g\). As duas
+primeiras são equivalentes e a terceira não:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>\(t_q\)</th><th>integrado</th><th>por energia</th><th>razão</th>
+<th>com \(mgh\)</th><th>erro</th></tr></thead>
+<tbody>
+<tr><td>30 s</td><td>1323,92 km</td><td>1323,92 km</td><td>1,00000000</td><td>1096,52 km</td><td>−17,2 %</td></tr>
+<tr><td>60 s</td><td>1194,15 km</td><td>1194,15 km</td><td>1,00000000</td><td>1006,91 km</td><td>−15,7 %</td></tr>
+<tr><td>120 s</td><td>948,05 km</td><td>948,05 km</td><td>1,00000000</td><td>828,46 km</td><td>−12,6 %</td></tr>
+<tr><td>240 s</td><td>498,15 km</td><td>498,15 km</td><td>1,00000000</td><td>465,41 km</td><td>−6,6 %</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Oito casas de acordo entre integrar e conservar energia, e um erro de 7 %
+a 17 % na fórmula de colégio, sempre para menos. O motivo é o de sempre:
+\(mgh\) supõe que a gravidade continua valendo 9,82 lá em cima, e a 1200 km
+ela já caiu para 6,95 m/s², isto é, 71 % do valor da superfície.</p>
+
+<div class="bloco fisica">
+<p class="rotulo">Fora de faixa, e não errada</p>
+<p>A fórmula \(v^2/2g\) não está incorreta: ela é o primeiro termo de uma
+expansão, e vale enquanto \(h \ll R\). Um foguete de festa junina com 5 % da
+massa em propelente e 3 s de queima sobe 0,97 km pelos dois caminhos, com
+diferença de 0,015 %. O erro de 17 % na tabela acima não é um defeito da
+fórmula: é o aviso de que o problema saiu da escala em que ela foi
+deduzida.</p>
+</div>
+"""
+
 S5 = r'''
 <p>Um estágio só tem um teto, e ele é fácil de ver. Chame de
 \(\epsilon\) a <strong>fração estrutural</strong>: a massa de tanques, motores
@@ -310,6 +439,9 @@ todas as casas.</li>
 idênticos discordam em 0,002 m/s.</li>
 <li>A normal da corrente calculada por \(dp/dt\) e a fórmula \(3\mu g x\)
 coincidem em \(3\times10^{-10}\) N.</li>
+<li>Com \(g(h)\), o apogeu integrado e o apogeu por conservação de energia
+coincidem em oito casas, e a soma das três parcelas do \(\Delta v\) fecha
+com Tsiolkovsky em seis algarismos.</li>
 </ul>
 
 <div class="bloco ex">
@@ -318,7 +450,7 @@ coincidem em \(3\times10^{-10}\) N.</li>
 3 \(g\), e veja o que acontece com o tempo de queima e com a perda por
 gravidade. Depois refaça a tabela de estágios com \(\epsilon = 0{,}06\), que é
 o que tanques de alumínio-lítio modernos alcançam, e descubra se um estágio só
-chega à órbita nesse caso.</p>
+chega à órbita nesse caso. Depois acrescente o arrasto, \(-\tfrac12\rho(h)C_dAv^2/m\) com a densidade do ar caindo exponencialmente, e veja a segunda perda aparecer: ela é máxima perto do Mach 1 e é a razão de os foguetes reais inclinarem cedo em vez de subir na vertical.</p>
 </div>
 '''
 
@@ -327,6 +459,7 @@ SECOES = [
     ('Impulso: a força média que de fato importa', S2),
     ('A equação do foguete, com o sistema certo', S3),
     ('O que a gravidade cobra durante a queima', S4),
+    ('A gravidade que diminui com a altura', S4B),
     ('Por que todo foguete tem estágios', S5),
     ('Massa variável mal contada: a corrente', S6),
     ('No Spyder', S7),
