@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forças que dependem do tempo, da velocidade e da posição | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611192234">
+<script src="assets/js/comum.js?v=202611192234"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <span class="num pendente" title="Módulo 1: Vetores, matrizes e cálculo vetorial · em preparação">1</span>
+      <span class="grupo">Newton</span>
+      <span class="num pendente" title="Módulo 2: As leis de Newton e os referenciais inerciais · em preparação">2</span>
+      <a href="aula03.html" class="num ativo" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <span class="num pendente" title="Módulo 4: Trabalho, energia e forças conservativas · em preparação">4</span>
+      <span class="num pendente" title="Módulo 5: Momento linear, impulso e o movimento de foguetes · em preparação">5</span>
+      <span class="grupo">Oscilações</span>
+      <span class="num pendente" title="Módulo 6: O oscilador harmônico simples · em preparação">6</span>
+      <span class="num pendente" title="Módulo 7: Oscilações amortecidas · em preparação">7</span>
+      <span class="num pendente" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer · em preparação">8</span>
+      <span class="grupo">Caos</span>
+      <span class="num pendente" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase · em preparação">9</span>
+      <span class="num pendente" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores · em preparação">10</span>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. A segunda lei como equação diferencial</a></li>
+    <li><a href="#s2">2. Quanto o ar atrapalha</a></li>
+    <li><a href="#s3">3. O método de Euler, e o sistema de quatro equações</a></li>
+    <li><a href="#s4">4. Mexendo no simulador</a></li>
+    <li><a href="#s5">5. No Spyder</a></li>
+    <li><a href="#s6">6. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 3 · Mecânica newtoniana</p>
+  <h1>Forças que dependem do tempo, da velocidade e da posição</h1>
+  <p class="subtitulo">A equação de movimento é uma equação diferencial, e a maior parte delas não tem solução em fórmula fechada. Este módulo troca a busca pela fórmula pela construção da solução, passo a passo, e mostra que resolver quatro equações acopladas custa o mesmo que resolver uma.</p>
+  <h2 id="s1">1. A segunda lei como equação diferencial</h2>
+
+<p>A segunda lei não é uma fórmula para calcular força. Lida com cuidado, ela
+é uma <em>equação diferencial</em>: dada a força, ela determina a aceleração,
+que é a segunda derivada da posição, e o que se quer é a posição em função do
+tempo. Escrita assim fica claro o que há para fazer:</p>
+
+\[ m\dder{\vet{r}}{t} = \vet{F}\left(\vet{r},\dot{\vet{r}},t\right). \]
+
+<p>O lado direito mostra os três tipos de dependência que este módulo trata.
+A força pode depender do <strong>tempo</strong>, como a de um motor que é
+ligado e desligado; da <strong>velocidade</strong>, como o arrasto do ar; e da
+<strong>posição</strong>, como a de uma mola ou a gravitação. Cada caso pede um
+tratamento, e só os mais simples têm solução que se escreve.</p>
+
+<div class="bloco def">
+<span class="rotulo">O que é resolver</span>
+<p>Resolver a equação de movimento é achar \(\vet{r}(t)\) para todo \(t\),
+dadas a posição e a velocidade num instante. Essas duas condições iniciais são
+necessárias porque a equação é de segunda ordem, e são <em>suficientes</em>:
+nada mais sobre o passado do sistema importa. É essa propriedade que faz da
+mecânica newtoniana uma teoria determinista.</p>
+</div>
+
+<h3>Os casos que se resolvem no papel</h3>
+
+<p><strong>Força constante.</strong> Duas integrações e acabou, e o resultado é
+a cinemática do ensino médio.</p>
+
+<p><strong>Força só do tempo.</strong> Também duas integrações,
+\(v(t) = v_0 + \frac1m\int F\,dt\), e nenhuma dificuldade conceitual.</p>
+
+<p><strong>Força só da velocidade.</strong> Separa-se e integra-se:</p>
+
+\[ m\der{v}{t} = F(v)
+   \;\Longrightarrow\;
+   t = m\int_{v_0}^{v}\frac{dv'}{F(v')}. \]
+
+<p>Repare no que saiu: \(t(v)\), e não \(v(t)\). Para inverter é preciso ter
+sorte com a integral, e com frequência não se tem.</p>
+
+<p><strong>Força só da posição.</strong> O truque é multiplicar por \(v\) e
+reconhecer a derivada da energia cinética, o que leva à conservação de energia
+e a uma quadratura. O módulo 4 faz isso com cuidado.</p>
+
+<h3>E o caso que não se resolve</h3>
+
+<p>Basta sair um pouco desses moldes para a solução fechada desaparecer. Um
+projétil com arrasto é o exemplo mais próximo da experiência de todo mundo: a
+força depende da velocidade, as duas componentes do movimento ficam acopladas
+pelo módulo da velocidade, e não existe fórmula para a trajetória. Ela existe
+no mundo, e é fácil de observar, mas não em termos de funções elementares.</p>
+
+<p>A resposta desta disciplina para esse fato não é desviar do problema, e sim
+trocar de ferramenta.</p>
+
+  <h2 id="s2">2. Quanto o ar atrapalha</h2>
+
+<p>Antes de integrar, vale saber quanta força o ar faz. Para um corpo que se
+move num fluido, há dois regimes.</p>
+
+<p><strong>Arrasto linear</strong>, \(F = -bv\), vale quando o escoamento é
+laminar, isto é, para objetos pequenos ou velocidades baixas. É o caso de uma
+gota de névoa ou de uma bolinha caindo em óleo. A conta fica fácil, e é por isso
+que os livros gostam dele.</p>
+
+<p><strong>Arrasto quadrático</strong>, \(F = -\frac12\rho C_D A v^2\), vale
+quando o escoamento é turbulento, que é o caso de quase tudo que interessa no
+ar: uma bola, um ciclista, um carro, um paraquedista. É o caso realista, e é o
+que este módulo usa.</p>
+
+<p>Por comodidade, escrevemos a aceleração do arrasto quadrático como</p>
+
+\[ \vet{a}_{\text{arr}} = -k\left|\vet{v}\right|\vet{v},
+   \qquad k = \frac{\rho C_D A}{2m}, \]
+
+<p>com \(k\) medido em inverso de metro. O módulo do vetor aparece porque o
+arrasto é sempre contrário à velocidade, seja qual for a direção dela, e essa
+é exatamente a razão de as duas componentes do movimento ficarem
+acopladas.</p>
+
+<div class="bloco alerta">
+<span class="rotulo">Onde o acoplamento mora</span>
+<p>Sem ar, o movimento horizontal e o vertical são independentes, e é isso que
+permite tratar cada um por vez. Com arrasto quadrático,
+\(\left|\vet{v}\right| = \sqrt{v_x^2+v_y^2}\) aparece nas <em>duas</em>
+equações, de modo que o que acontece na vertical muda a desaceleração
+horizontal e vice-versa. Separar deixa de ser possível, e esse é o
+motivo técnico de a fórmula fechada não existir.</p>
+</div>
+
+<h3>Velocidade terminal</h3>
+
+<p>Para a queda vertical a partir do repouso há um resultado simples e útil.
+Quando o arrasto iguala o peso, a aceleração zera e a velocidade para de
+crescer:</p>
+
+\[ mg = \frac12\rho C_DAv_t^2
+   \;\Longrightarrow\;
+   v_t = \sqrt{\frac{g}{k}}. \]
+
+<p>Com \(k = 0{,}004\ \mathrm{m^{-1}}\), que é o valor usado no simulador e no
+programa deste módulo, isso dá \(v_t = 49{,}5\ \mathrm{m/s}\), ou 178 km/h, da
+ordem do que se mede num paraquedista de bruços, cerca de 54 m/s. Uma bola de
+tênis, bem mais leve para o seu tamanho, tem \(k\) quatro vezes maior e cai a
+23 m/s; uma gota de chuva de 2 mm tem \(k = 0{,}21\ \mathrm{m^{-1}}\) e desce a
+apenas 6,8 m/s, que é a razão de a chuva não machucar. O exercício 3.1 monta
+essa tabela, e o programa do módulo confere o valor integrando a queda e
+comparando com \(\sqrt{g/k}\).</p>
+
+  <h2 id="s3">3. O método de Euler, e o sistema de quatro equações</h2>
+
+<p>O método numérico mais simples que existe nasce de uma ideia de uma linha:
+se eu sei onde estou e sei a derivada, sei aproximadamente onde estarei daqui a
+pouco.</p>
+
+<p>Para uma equação de primeira ordem \(\dot y = f(y,t)\), isso se escreve</p>
+
+\[ y_{n+1} = y_n + \Delta t\,f(y_n,t_n), \]
+
+<p>que é o <strong>método de Euler</strong>. Geometricamente, ele troca a curva
+verdadeira pela reta tangente a ela no ponto em que estamos, e anda sobre essa
+reta durante \(\Delta t\). Como a curva entorta dentro do passo e a tangente
+não, cada passo deixa um resto, e os restos se acumulam.</p>
+
+<h3>O que fazer com uma equação de segunda ordem</h3>
+
+<p>A equação de movimento é de segunda ordem, e o método acima é para
+primeira. A ponte é um truque que vale a pena guardar para o resto do curso:
+toda equação de ordem \(n\) vira um <em>sistema</em> de \(n\) equações de
+primeira ordem, bastando dar nome às derivadas.</p>
+
+<p>Para o projétil em duas dimensões, chame de estado o vetor de quatro
+números</p>
+
+\[ \vet{u} = \left(x,\;y,\;v_x,\;v_y\right), \]
+
+<p>e escreva a derivada de cada um deles:</p>
+
+\[ \der{}{t}
+   \begin{pmatrix} x \\ y \\ v_x \\ v_y \end{pmatrix}
+   =
+   \begin{pmatrix}
+     v_x \\
+     v_y \\
+     -k\left|\vet{v}\right|v_x \\
+     -g - k\left|\vet{v}\right|v_y
+   \end{pmatrix},
+   \qquad \left|\vet{v}\right| = \sqrt{v_x^2+v_y^2}. \]
+
+<p>São quatro equações, todas de primeira ordem, todas acopladas. E o passo de
+Euler é o mesmo de antes, aplicado ao vetor inteiro:</p>
+
+\[ \vet{u}_{n+1} = \vet{u}_n + \Delta t\,\vet{f}\!\left(\vet{u}_n\right). \]
+
+<div class="bloco def">
+<span class="rotulo">A ideia que mais rende neste curso</span>
+<p>Nada no passo de Euler sabe que são quatro equações. Trocar quatro por
+quarenta, ou por quatro mil, não muda uma linha do método: muda o tamanho do
+vetor. É por isso que o mesmo programa de dez linhas resolve o projétil deste
+módulo, o oscilador do módulo 7, o pêndulo do módulo 9 e o problema de dois
+corpos do módulo 12.</p>
+</div>
+
+<h3>Em Python, honestamente</h3>
+
+<p>A tradução do sistema para código é quase literal, e é esse o ponto:</p>
+
+<pre><code>def derivada(u, k):
+    x, y, vx, vy = u
+    v = np.hypot(vx, vy)
+    return np.array([vx, vy, -k*v*vx, -g - k*v*vy])
+
+def passo_euler(u, dt, k):
+    return u + dt * derivada(u, k)</code></pre>
+
+<p>Repare que <code>passo_euler</code> não menciona projétil, arrasto nem
+gravidade. Ele recebe um vetor e uma função, e devolve o vetor seguinte. É
+genérico porque o método é genérico.</p>
+
+<div class="bloco alerta">
+<span class="rotulo">Uma armadilha de ordem</span>
+<p>As quatro linhas são atualizadas <em>juntas</em>, todas a partir dos valores
+antigos. Quem escreve o código em quatro linhas separadas, e usa na linha do
+\(x\) o \(v_x\) que acabou de calcular, não está mais fazendo Euler: está
+fazendo <strong>Euler-Cromer</strong>, que é outro método. Não é erro, e em
+problemas oscilatórios chega a ser melhor, mas é preciso saber qual dos dois se
+está usando.</p>
+</div>
+
+  <h2 id="s4">4. Mexendo no simulador</h2>
+
+<p>O widget abaixo integra o sistema das quatro equações com o passo que você
+escolher. Vale mexer nele antes de ler o resto.</p>
+
+<div data-widget="projetil"></div>
+
+<p>Três coisas aparecem nas três vistas, e as três são o conteúdo deste
+módulo.</p>
+
+<p><strong>Na primeira</strong>, a trajetória com arrasto não é parábola: a
+subida é mais longa que a descida e a queda é mais íngreme. Com os valores
+iniciais do widget, o alcance cai de 255 m para 149 m, isto é, o ar leva
+41 % do alcance. Nenhuma fórmula fechada descreve essa curva, e mesmo assim o
+computador a produz sem esforço.</p>
+
+<p><strong>Na segunda</strong>, cada passo é uma seta reta, tangente à
+trajetória no ponto de partida. Fica visível por que o erro existe e por que
+ele diminui com o passo: o pedaço de curva que a reta ignora encolhe quando
+\(\Delta t\) encolhe.</p>
+
+<p><strong>Na terceira</strong>, o erro do alcance é posto contra \(\Delta t\)
+em escala logarítmica nos dois eixos, de modo que uma lei de potência vira uma
+reta e o expoente vira a inclinação. Euler dá inclinação 1; o Runge-Kutta de
+quarta ordem, que faz quatro avaliações da derivada por passo, dá 4.</p>
+
+<div class="bloco def">
+<span class="rotulo">O que significa ser de primeira ordem</span>
+<p>Para ganhar um algarismo decimal de precisão, Euler precisa de
+<em>dez vezes</em> mais passos. O RK4 precisa de menos de duas vezes
+(\(10^{1/4} = 1{,}78\)). É por isso que ninguém usa Euler em produção, e é por
+isso que todo mundo aprende Euler primeiro: ele é a ideia, e o resto é
+refinamento dela.</p>
+</div>
+
+  <h2 id="s5">5. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/projetil_euler.py">
+    <span class="numero">Programa</span>
+    <h3>projetil_euler.py</h3>
+    <p>Integra o sistema das quatro equações por Euler, por Euler-Cromer e por
+    Runge-Kutta de quarta ordem, mede os expoentes de convergência e varre o
+    ângulo de lançamento.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>Sem arrasto, o alcance converge para \(v_0^2\sen 2\theta/g = 254{,}842\)
+m, e o expoente medido do erro é <strong>1,000</strong>, que é a ordem de
+Euler.</li>
+<li>Com \(k = 0{,}004\ \mathrm{m^{-1}}\), os expoentes medidos são
+<strong>0,993</strong> para Euler, <strong>1,002</strong> para Euler-Cromer e
+<strong>3,928</strong> para o RK4.</li>
+<li>A velocidade terminal medida bate com \(\sqrt{g/k}\) em
+\(2\times10^{-13}\).</li>
+<li>O ângulo de alcance máximo cai de 45° sem ar para 41° com
+\(k = 0{,}004\) e 35° com \(k = 0{,}020\).</li>
+</ul>
+
+<div class="bloco alerta">
+<span class="rotulo">Uma lição que custou caro</span>
+<p>A primeira versão deste programa media expoente <strong>2,58</strong> para o
+RK4, e o método parecia pior do que é. O defeito não estava no integrador, e
+sim em como o programa achava o ponto de pouso: interpolando \(y\)
+<em>linearmente</em> entre os dois últimos passos. Essa interpolação erra em
+\(\left(\Delta t\right)^2\), e o erro dela passou a dominar o erro do método.</p>
+<p>A correção é usar interpolação de Hermite, que aproveita as velocidades, já
+disponíveis, como derivadas nas pontas, e erra em \(\left(\Delta t\right)^4\).
+Com ela, o expoente medido subiu para 3,93. A moral vale para qualquer trabalho
+numérico: <em>a medida do erro também tem erro</em>, e um detalhe de
+pós-processamento pode esconder a qualidade do método.</p>
+</div>
+
+  <h2 id="s6">6. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">3.1  A tabela das velocidades terminais</span>
+  <p>Calcule \(k = \rho C_DA/2m\) e a velocidade terminal
+     \(v_t = \sqrt{g/k}\) para uma bola de tênis (57 g, 6,7 cm,
+     \(C_D = 0{,}50\)), uma bola de golfe (45,9 g, 4,27 cm, \(C_D = 0{,}25\)
+     pelas covinhas), uma bola de futebol (430 g, 22 cm, \(C_D = 0{,}25\)) e
+     uma gota de chuva de 2 mm de diâmetro (\(C_D = 0{,}47\)). Use
+     \(\rho = 1{,}2\ \mathrm{kg/m^3}\). Depois explique por que a gota, que é a
+     mais leve de todas, é a que tem o maior \(k\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<div class="tabela-rolavel">
+     <table>
+     <thead><tr><th>objeto</th><th>\(k\) (m⁻¹)</th><th>\(v_t\) (m/s)</th>
+     <th>km/h</th></tr></thead>
+     <tbody>
+     <tr><td>bola de tênis</td><td>0,0186</td><td>23,0</td><td>83</td></tr>
+     <tr><td>bola de golfe</td><td>0,0047</td><td>45,8</td><td>165</td></tr>
+     <tr><td>bola de futebol</td><td>0,0133</td><td>27,2</td><td>98</td></tr>
+     <tr><td>gota de 2 mm</td><td>0,2114</td><td>6,8</td><td>25</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p><b>Por que a gota ganha.</b> O que importa não é a massa, e sim a razão
+     entre área e massa. A área vai com \(d^2\) e a massa com \(d^3\), de modo
+     que</p>
+     <p>\[ k = \frac{\rho C_DA}{2m} \propto \frac{d^2}{d^3} = \frac{1}{d}. \]</p>
+     <p>Objeto pequeno tem \(k\) grande. É a mesma razão pela qual um inseto
+     cai de qualquer altura sem se machucar e um elefante não, e pela qual a
+     poeira fica suspensa no ar enquanto a pedra não fica.</p>
+     <p><b>E a chuva.</b> Os 6,8 m/s da gota são a razão de a chuva ser
+     inofensiva. Sem ar, caindo de uma nuvem a 2 km, ela chegaria a
+     \(\sqrt{2gh} = 198\ \mathrm{m/s}\), e cada gota seria um projétil.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">3.2  Três passos de Euler na mão</span>
+  <p>Uma pedra é lançada verticalmente para cima com
+     \(v_0 = 20\ \mathrm{m/s}\), sujeita a \(g = 9{,}81\ \mathrm{m/s^2}\) e a
+     arrasto \(a_{\text{arr}} = -k|v|v\) com \(k = 0{,}01\ \mathrm{m^{-1}}\).
+     Dê três passos de Euler com \(\Delta t = 0{,}5\ \mathrm{s}\), montando a
+     tabela de \(y\) e \(v\). Compare a altura obtida com a do caso sem
+     arrasto.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O sistema</b> tem duas equações:</p>
+     <p>\[ \der{y}{t} = v, \qquad \der{v}{t} = -g - k|v|v. \]</p>
+     <p><b>Os passos</b>, sempre com os valores antigos do lado direito:</p>
+     <div class="tabela-rolavel">
+     <table>
+     <thead><tr><th>\(n\)</th><th>\(t\) (s)</th><th>\(y\) (m)</th>
+     <th>\(v\) (m/s)</th><th>\(dv/dt\) (m/s²)</th></tr></thead>
+     <tbody>
+     <tr><td>0</td><td>0,0</td><td>0,00</td><td>20,00</td><td>-13,81</td></tr>
+     <tr><td>1</td><td>0,5</td><td>10,00</td><td>13,09</td><td>-11,52</td></tr>
+     <tr><td>2</td><td>1,0</td><td>16,55</td><td>7,33</td><td>-10,35</td></tr>
+     <tr><td>3</td><td>1,5</td><td>20,21</td><td>2,16</td><td>-9,86</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p>A primeira linha sai assim: \(dv/dt = -9{,}81 - 0{,}01\times20\times20
+     = -13{,}81\); daí \(y_1 = 0 + 0{,}5\times20 = 10{,}00\) e
+     \(v_1 = 20 - 0{,}5\times13{,}81 = 13{,}09\).</p>
+     <p><b>Comparação.</b> Sem arrasto, a altura máxima seria
+     \(v_0^2/2g = 20{,}39\ \mathrm{m}\), atingida em 2,04 s. Com arrasto, a
+     integração fina dá <b>17,10 m</b>: o ar tira 16 % da altura. E a tabela
+     acima, feita com \(\Delta t = 0{,}5\) s, chega a <b>21,29 m</b>, isto é,
+     erra 24 % e para o lado errado, dando mais altura do que o caso
+     <em>sem</em> ar nenhum.</p>
+     <p><b>A lição.</b> Esse é o ponto do exercício. Um passo grande não
+     apenas erra: erra tanto que inverte a conclusão física, sugerindo que o ar
+     <em>ajuda</em> a subir. A tabela feita à mão serve para entender o método,
+     e nunca para produzir número confiável. É exatamente o que a terceira vista do widget
+     mostra: dividir o passo por dez divide o erro por dez.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">3.3  Por que o ângulo ótimo deixa de ser 45°</span>
+  <p>Sem arrasto, o alcance máximo acontece a 45°. Rode o programa do
+     módulo e verifique que, com arrasto, o ângulo ótimo cai. Explique o
+     mecanismo físico, sem fórmula.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O que o programa dá:</b></p>
+     <div class="tabela-rolavel">
+     <table>
+     <thead><tr><th>\(k\) (m⁻¹)</th><th>ângulo ótimo</th>
+     <th>alcance (m)</th></tr></thead>
+     <tbody>
+     <tr><td>0</td><td>45°</td><td>254,8</td></tr>
+     <tr><td>0,001</td><td>44°</td><td>213,9</td></tr>
+     <tr><td>0,004</td><td>41°</td><td>150,2</td></tr>
+     <tr><td>0,010</td><td>38°</td><td>99,5</td></tr>
+     <tr><td>0,020</td><td>35°</td><td>66,8</td></tr>
+     </tbody>
+     </table>
+     </div>
+     <p><b>O mecanismo.</b> Sem ar, o alcance é o produto da velocidade
+     horizontal pelo tempo de voo, e 45° é o meio-termo exato entre os dois:
+     subir mais aumenta o tempo e diminui a velocidade horizontal, na mesma
+     proporção.</p>
+     <p>Com ar, o tempo de voo deixa de ser gratuito. Cada segundo no ar é um
+     segundo em que o arrasto come velocidade, e a trajetória alta, que
+     demora mais, paga mais caro. O equilíbrio se desloca para lançamentos mais
+     rasos, que trocam tempo de voo por velocidade preservada.</p>
+     <p><b>Onde isso aparece.</b> Lançadores de peso usam cerca de 42°, e não
+     45°, e parte da diferença é arrasto (a outra parte é que a mão não larga o
+     peso no chão, e sim a dois metros de altura, o que também baixa o ângulo
+     ótimo). Em balística de longo alcance, com velocidades muito maiores, o
+     efeito é enorme.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">3.4  Arrasto linear, e o limite de estabilidade de Euler</span>
+  <p>Para arrasto <em>linear</em>, a queda vertical obedece a
+     \(\dot v = -(v - v_t)/\tau\), com solução exata
+     \(v(t) = v_t\left(1-e^{-t/\tau}\right)\) partindo do repouso. Mostre que o
+     método de Euler aplicado a essa equação só é estável se
+     \(\Delta t \lt 2\tau\), e diga o que acontece acima disso.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>O passo de Euler</b> para essa equação é</p>
+     <p>\[ v_{n+1} = v_n + \Delta t\left(-\frac{v_n-v_t}{\tau}\right)
+        = v_t + \left(1-\frac{\Delta t}{\tau}\right)\left(v_n-v_t\right). \]</p>
+     <p>Chamando de \(e_n = v_n - v_t\) o afastamento do valor final,</p>
+     <p>\[ e_{n+1} = \left(1-\frac{\Delta t}{\tau}\right)e_n
+        \;\Longrightarrow\;
+        e_n = \left(1-\frac{\Delta t}{\tau}\right)^{n}e_0. \]</p>
+     <p><b>A condição.</b> O erro só encolhe se o fator for menor que 1 em
+     módulo:</p>
+     <p>\[ \left|1-\frac{\Delta t}{\tau}\right| \lt 1
+        \;\Longleftrightarrow\;
+        0 \lt \Delta t \lt 2\tau. \]</p>
+     <p><b>O que acontece acima.</b> Para \(\Delta t = 2\tau\) o fator vale
+     \(-1\) e a solução fica oscilando entre dois valores para sempre, sem
+     convergir. Acima disso o fator é menor que \(-1\) e a solução
+     <em>explode</em>, alternando de sinal e crescendo sem limite. Com
+     \(\tau = 5\) s e \(\Delta t = 12\) s, quarenta passos levam a velocidade a
+     \(-3{,}5\times10^{7}\) m/s, o que é absurdo em todos os sentidos.</p>
+     <p><b>A lição.</b> Instabilidade não é falta de precisão: é o método
+     produzindo lixo com aparência de número. E repare que o resultado não
+     depende de quanto se quer de precisão, e sim do tempo característico do
+     problema. Todo sistema com um tempo curto escondido, como uma mola muito
+     rígida, impõe um passo curto a métodos explícitos, mesmo que o movimento
+     interessante seja lento. É o que se chama de problema rígido, e é por isso
+     que existem métodos implícitos.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">3.5  Quanto custa cada algarismo</span>
+  <p>Pelo widget, com os valores iniciais, Euler com
+     \(\Delta t = 0{,}2\) s erra cerca de 2,4 m no alcance de 149 m. Estime
+     quantos passos Euler precisa para errar menos de 1 cm, e quantos o RK4
+     precisa. Compare o custo em avaliações da derivada.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Euler.</b> O erro é proporcional a \(\Delta t\), de modo que
+     para cair de 2,4 m a 0,01 m é preciso dividir o passo por 240:</p>
+     <p>\[ \Delta t = \frac{0{,}2}{240} = 8{,}3\times10^{-4}\ \mathrm{s}. \]</p>
+     <p>Com um voo de cerca de 7 s, isso dá <b>8400 passos</b>, e como Euler faz
+     uma avaliação da derivada por passo, <b>8400 avaliações</b>.</p>
+     <p><b>RK4.</b> O erro do RK4 com \(\Delta t = 0{,}2\) s é de
+     \(2{,}0\times10^{-5}\) m, pela tabela do programa, portanto já está
+     <em>mil vezes</em> melhor que o alvo. Mesmo com \(\Delta t = 0{,}2\) s
+     bastam 35 passos, isto é, <b>140 avaliações</b>, porque o RK4 faz quatro
+     por passo.</p>
+     <p><b>A conta final.</b> 8400 contra 140: o RK4 é sessenta vezes mais
+     barato para a mesma precisão, apesar de custar quatro vezes mais por
+     passo. A vantagem cresce com a precisão exigida, porque os expoentes são
+     diferentes.</p>
+     <p><b>Então por que aprender Euler?</b> Porque o RK4 é Euler aplicado
+     quatro vezes com pesos escolhidos, e quem não entendeu a ideia de andar na
+     direção da derivada não entende o refinamento. E porque, para muitos
+     problemas de sala, Euler com passo pequeno resolve, e o tempo do aluno é
+     mais caro que o do computador.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">3.6  Um sistema maior, sem mudar o método</span>
+  <p>Escreva o vetor de estado e a função derivada para <em>dois</em>
+     projéteis que não interagem, lançados ao mesmo tempo com ângulos
+     diferentes. Quantas equações são? O que muda no passo de Euler? Depois
+     repita para \(N\) projéteis.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Dois projéteis.</b> O estado é</p>
+     <p>\[ \vet{u} = \left(x_1,y_1,v_{x1},v_{y1},
+        x_2,y_2,v_{x2},v_{y2}\right), \]</p>
+     <p>com oito componentes, e a derivada é a mesma receita repetida duas
+     vezes:</p>
+     <p><code>return np.array([vx1, vy1, -k*v1*vx1, -g-k*v1*vy1,<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+     vx2, vy2, -k*v2*vx2, -g-k*v2*vy2])</code></p>
+     <p><b>O que muda no passo de Euler:</b> nada. A linha
+     <code>u + dt*derivada(u, k)</code> continua idêntica, porque ela opera
+     sobre o vetor inteiro e não sabe quantas componentes ele tem.</p>
+     <p><b>Para \(N\) projéteis</b> são \(4N\) equações, e o código mais limpo
+     guarda o estado como um arranjo de forma \((N,4)\), ou como quatro
+     arranjos de tamanho \(N\). O método segue o mesmo.</p>
+     <p><b>Por que isso importa.</b> É essa indiferença ao tamanho que torna o
+     método utilizável no resto do curso e fora dele. Com \(N\) partículas que
+     <em>interagem</em>, a única mudança está na função derivada, que passa a
+     somar as forças de todos sobre todos; o integrador não muda. Simulações de
+     dinâmica molecular com milhões de partículas e simulações de galáxias com
+     bilhões usam exatamente essa estrutura, com integradores melhores que
+     Euler, mas com a mesma arquitetura.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="index.html"><small>Voltar</small>← Início</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611192234"></script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mecânica Clássica I | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611192234">
+<script src="assets/js/comum.js?v=202611192234"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html" class="ativo">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <span class="num pendente" title="Módulo 1: Vetores, matrizes e cálculo vetorial · em preparação">1</span>
+      <span class="grupo">Newton</span>
+      <span class="num pendente" title="Módulo 2: As leis de Newton e os referenciais inerciais · em preparação">2</span>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <span class="num pendente" title="Módulo 4: Trabalho, energia e forças conservativas · em preparação">4</span>
+      <span class="num pendente" title="Módulo 5: Momento linear, impulso e o movimento de foguetes · em preparação">5</span>
+      <span class="grupo">Oscilações</span>
+      <span class="num pendente" title="Módulo 6: O oscilador harmônico simples · em preparação">6</span>
+      <span class="num pendente" title="Módulo 7: Oscilações amortecidas · em preparação">7</span>
+      <span class="num pendente" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer · em preparação">8</span>
+      <span class="grupo">Caos</span>
+      <span class="num pendente" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase · em preparação">9</span>
+      <span class="num pendente" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores · em preparação">10</span>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. Duas noites e uma ideia</a></li>
+    <li><a href="#s2">2. Os módulos</a></li>
+    <li><a href="#s3">3. O plano de ensino</a></li>
+    <li><a href="#s4">4. Bibliografia</a></li>
+    <li><a href="#s5">5. Outros sites</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">DF005 · Bacharelado em Física · LFCA/URCA</p>
+  <h1>Mecânica Clássica I</h1>
+  <p class="subtitulo">Material interativo da disciplina. Das leis de Newton às órbitas de Kepler, passando pelas oscilações e pelo ponto em que o determinismo deixa de ser previsão.</p>
+  <h2 id="s1">1. Duas noites e uma ideia</h2>
+
+  <p>Na noite de 23 de setembro de 1846, o astrônomo Johann Gottfried Galle
+  apontou o telescópio do Observatório de Berlim para um pedaço de céu que
+  ninguém tinha motivo para examinar. Ele seguia uma carta recebida naquele
+  mesmo dia, vinda de Paris, assinada por Urbain Le Verrier, e a carta não
+  trazia uma observação: trazia uma previsão. Em menos de uma hora, Galle e o
+  estudante Heinrich d'Arrest encontraram um objeto que não constava das
+  cartas celestes, a menos de um grau da posição anunciada.</p>
+
+  <p>O que Le Verrier tinha feito nos meses anteriores não envolveu telescópio
+  nenhum. Urano não andava exatamente onde deveria, e as discrepâncias eram
+  minúsculas, da ordem de um minuto de arco. Ele supôs que houvesse um planeta
+  ainda desconhecido puxando Urano, escreveu as equações de movimento com a lei
+  da gravitação, e resolveu o problema ao contrário: dada a perturbação, onde
+  está quem a causa? A resposta foi um ponto no céu, e o ponto estava certo.</p>
+
+  <p>Essa é a demonstração mais espetacular de uma ideia que esta disciplina
+  desenvolve do começo ao fim: conhecidas as forças e o estado inicial, o futuro
+  está determinado, e pode ser calculado. É uma ideia com pouco mais de trezentos
+  anos, e mudou o que se entende por explicar alguma coisa.</p>
+
+  <p>Há um segundo capítulo nessa história, e ele também cabe aqui. Em 1889, o
+  rei Óscar II da Suécia ofereceu um prêmio a quem demonstrasse que o Sistema
+  Solar é estável. Henri Poincaré ganhou, e depois, revisando as provas já
+  impressas do seu próprio trabalho, encontrou um erro. Ao consertá-lo,
+  descobriu o contrário do que pensara ter provado: há órbitas tão
+  emaranhadas que nenhuma fórmula as descreve, e diferenças mínimas nas
+  condições iniciais crescem sem limite. O determinismo continuava de pé; a
+  previsibilidade, não.</p>
+
+  <p>Entre esses dois resultados cabe o curso inteiro. Os cinco primeiros
+  módulos montam a máquina de Newton com cuidado, os quatro seguintes a aplicam
+  ao movimento mais comum da natureza, que é a oscilação, o décimo mostra onde a
+  máquina deixa de ser previsível, e os três últimos voltam ao céu para deduzir
+  as leis de Kepler em vez de decorá-las.</p>
+
+  <hr class="linha">
+
+  <h2 id="s2">2. Os módulos</h2>
+  <h3 class="unidade">Ferramentas</h3>
+  <div class="cartoes">
+    <div class="cartao pendente">
+      <span class="numero">Módulo 1</span>
+      <h3>Vetores, matrizes e cálculo vetorial</h3>
+      <p>Soma, produto escalar e vetorial, a matriz de rotação e o que faz de um trio de números um vetor. Gradiente, divergente e rotacional, e o teorema que diz quando uma força vem de um potencial.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Rotação e transformação</span>
+        <span class="etiqueta">Gradiente</span>
+        <span class="etiqueta">Campo conservativo</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+  </div>
+  <h3 class="unidade">Mecânica newtoniana</h3>
+  <div class="cartoes">
+    <div class="cartao pendente">
+      <span class="numero">Módulo 2</span>
+      <h3>As leis de Newton e os referenciais inerciais</h3>
+      <p>As três leis lidas com cuidado, o que cada uma afirma e o que cada uma define. Referencial inercial, massa inercial e a diferença entre uma lei e uma convenção.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">O que a primeira lei define</span>
+        <span class="etiqueta">Diagrama de corpo livre</span>
+        <span class="etiqueta">Inercial</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+    <a class="cartao" href="aula03.html">
+      <span class="numero">Módulo 3</span>
+      <h3>Forças que dependem do tempo, da velocidade e da posição</h3>
+      <p>A equação de movimento como equação diferencial. Força constante, força que depende do tempo, arrasto linear e quadrático, velocidade terminal e a queda que não é a da fórmula do ensino médio.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Arrasto</span>
+        <span class="etiqueta">Velocidade terminal</span>
+        <span class="etiqueta">Integração numérica</span>
+      </div>
+    </a>
+    <div class="cartao pendente">
+      <span class="numero">Módulo 4</span>
+      <h3>Trabalho, energia e forças conservativas</h3>
+      <p>Trabalho, energia cinética e o teorema que liga os dois. Quando a força é conservativa, o potencial existe, e o gráfico de \(U(x)\) conta a história inteira do movimento sem resolver equação nenhuma.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Teorema trabalho-energia</span>
+        <span class="etiqueta">Potencial</span>
+        <span class="etiqueta">Pontos de retorno</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+    <div class="cartao pendente">
+      <span class="numero">Módulo 5</span>
+      <h3>Momento linear, impulso e o movimento de foguetes</h3>
+      <p>Impulso, conservação do momento e a razão de ela ser mais funda que a conservação da energia. A equação do foguete, deduzida da massa variável, e o que ela diz sobre viagens espaciais.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Impulso</span>
+        <span class="etiqueta">Equação do foguete</span>
+        <span class="etiqueta">Massa variável</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+  </div>
+  <h3 class="unidade">Oscilações</h3>
+  <div class="cartoes">
+    <div class="cartao pendente">
+      <span class="numero">Módulo 6</span>
+      <h3>O oscilador harmônico simples</h3>
+      <p>O movimento que aparece em toda parte, porque todo mínimo de potencial é uma parábola de perto. Solução, espaço de fase, energia e os sistemas que obedecem à mesma equação.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Aproximação harmônica</span>
+        <span class="etiqueta">Espaço de fase</span>
+        <span class="etiqueta">Analogias</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+    <div class="cartao pendente">
+      <span class="numero">Módulo 7</span>
+      <h3>Oscilações amortecidas</h3>
+      <p>Atrito linear e os três regimes: subamortecido, crítico e superamortecido. Fator de qualidade, decremento logarítmico, e por que o amortecimento crítico é o que se quer numa porta e num amortecedor.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Três regimes</span>
+        <span class="etiqueta">Fator Q</span>
+        <span class="etiqueta">Amortecimento crítico</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+    <div class="cartao pendente">
+      <span class="numero">Módulo 8</span>
+      <h3>Oscilações forçadas, ressonância e a resposta a uma força qualquer</h3>
+      <p>Regime transiente e regime permanente, curva de ressonância, largura de banda e defasagem. Depois, a força qualquer: resposta a impulso, superposição e a série de Fourier como ferramenta de engenheiro.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Ressonância</span>
+        <span class="etiqueta">Defasagem</span>
+        <span class="etiqueta">Fourier</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+  </div>
+  <h3 class="unidade">Não linear e caos</h3>
+  <div class="cartoes">
+    <div class="cartao pendente">
+      <span class="numero">Módulo 9</span>
+      <h3>Além do linear: pêndulo, espaço de fase e retratos de fase</h3>
+      <p>O que acontece quando a aproximação harmônica não serve. Pêndulo completo, período que depende da amplitude, retratos de fase, pontos de sela e separatrizes.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Pêndulo completo</span>
+        <span class="etiqueta">Retrato de fase</span>
+        <span class="etiqueta">Separatriz</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+    <div class="cartao pendente">
+      <span class="numero">Módulo 10</span>
+      <h3>Caos determinístico: mapa logístico, Lyapunov e atratores</h3>
+      <p>Determinismo não é previsibilidade. Mapa logístico, duplicação de período e a constante de Feigenbaum, expoente de Lyapunov, o oscilador de Duffing e o atrator estranho.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Mapa logístico</span>
+        <span class="etiqueta">Feigenbaum</span>
+        <span class="etiqueta">Lyapunov</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+  </div>
+  <h3 class="unidade">Gravitação e forças centrais</h3>
+  <div class="cartoes">
+    <div class="cartao pendente">
+      <span class="numero">Módulo 11</span>
+      <h3>Gravitação: campo, potencial, cascas e marés</h3>
+      <p>A lei do inverso do quadrado, o campo e o potencial gravitacionais, o teorema das cascas provado de duas maneiras, e as marés como efeito de gradiente e não de atração.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Teorema das cascas</span>
+        <span class="etiqueta">Potencial</span>
+        <span class="etiqueta">Marés</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+    <div class="cartao pendente">
+      <span class="numero">Módulo 12</span>
+      <h3>Forças centrais: o problema de dois corpos e as órbitas de Kepler</h3>
+      <p>Redução a um corpo com massa reduzida, as duas constantes de movimento, o potencial efetivo e a classificação das órbitas. As três leis de Kepler deduzidas, e não postuladas.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Massa reduzida</span>
+        <span class="etiqueta">Potencial efetivo</span>
+        <span class="etiqueta">Kepler deduzido</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+    <div class="cartao pendente">
+      <span class="numero">Módulo 13</span>
+      <h3>Sistemas de partículas: centro de massa, colisões e espalhamento</h3>
+      <p>Centro de massa de um sistema qualquer, as três conservações, colisões elásticas e inelásticas, e o espalhamento visto do laboratório e do centro de massa.</p>
+      <div class="etiquetas">
+        <span class="etiqueta">Centro de massa</span>
+        <span class="etiqueta">Colisões</span>
+        <span class="etiqueta">Espalhamento</span>
+      </div>
+      <p class="aviso">Em preparação</p>
+    </div>
+  </div>
+
+  <h2 id="s3">3. O plano de ensino</h2>
+
+  <div class="bloco def">
+    <span class="rotulo">Identificação</span>
+    <p><strong>Curso:</strong> Bacharelado em Física<br>
+    <strong>Disciplina:</strong> Mecânica Clássica I (DF005), obrigatória<br>
+    <strong>Carga horária:</strong> 60 h teóricas, 4 h semanais, 4 créditos<br>
+    <strong>Segue:</strong> Mecânica Clássica II (DF006), que tem esta como
+    pré-requisito</p>
+  </div>
+
+  <p><strong>Ementa.</strong> Revisão de cálculo vetorial. Mecânica newtoniana
+  de uma partícula: leis de Newton, equações de movimento, trabalho, energia,
+  momento linear e sistemas de massa variável. Oscilações livres, amortecidas e
+  forçadas. Oscilações não lineares e introdução ao caos determinístico.
+  Gravitação. Movimento sob forças centrais e o problema de dois corpos.
+  Dinâmica de sistemas de partículas e colisões.</p>
+
+  <p><strong>Objetivos.</strong> Formular e resolver equações de movimento para
+  sistemas de uma e de várias partículas, analiticamente onde houver solução
+  fechada e numericamente onde não houver. Reconhecer o oscilador harmônico
+  como aproximação universal perto de um mínimo de potencial e saber quando ela
+  falha. Deduzir as leis de Kepler a partir da lei da gravitação. Distinguir
+  determinismo de previsibilidade.</p>
+
+  <p><strong>Avaliação.</strong> Três provas escritas e uma lista de problemas
+  computacionais, em que cada estudante resolve numericamente um problema sem
+  solução fechada e confere o resultado contra um caso limite conhecido.</p>
+
+  <div class="bloco alerta">
+    <span class="rotulo">Sobre os programas</span>
+    <p>Boa parte do que esta disciplina pede não tem solução em fórmula fechada:
+    a queda com arrasto quadrático, o pêndulo de amplitude grande, o oscilador
+    forçado não linear, a órbita perturbada. Cada módulo que precisa disso traz
+    um programa em Python, comentado, que roda no Spyder sem configuração, e
+    que sempre inclui uma maneira de conferir se o resultado está certo: um
+    caso limite com solução conhecida, uma quantidade que tem de se conservar,
+    ou a ordem de convergência esperada.</p>
+  </div>
+
+  <h2 id="s4">4. Bibliografia</h2>
+
+  <p><strong>Bibliografia básica</strong></p>
+  <ul>
+    <li>THORNTON, S. T.; MARION, J. B. <em>Classical Dynamics of Particles and
+    Systems</em>. 5. ed. Cengage Learning, 2003. A referência de ordem desta
+    disciplina: os capítulos 1 a 5, 8 e 9.</li>
+    <li>TAYLOR, J. R. <em>Classical Mechanics</em>. University Science Books,
+    2005. Mais conversado, excelente nos capítulos de oscilações e de caos.</li>
+    <li>SYMON, K. R. <em>Mecânica</em>. 3. ed. Rio de Janeiro: Campus, 1982.
+    Clássico em português, forte em sistemas de partículas.</li>
+  </ul>
+
+  <p><strong>Complementar</strong></p>
+  <ul>
+    <li>STROGATZ, S. H. <em>Nonlinear Dynamics and Chaos</em>. 2. ed. Westview,
+    2015. Para os módulos 9 e 10, é a melhor porta de entrada que existe.</li>
+    <li>KIBBLE, T. W. B.; BERKSHIRE, F. H. <em>Classical Mechanics</em>. 5. ed.
+    Imperial College Press, 2004.</li>
+  </ul>
+
+  <div class="bloco def">
+    <span class="rotulo">Disciplinas vizinhas</span>
+    <p>O que vem depois, em
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/">Mecânica
+    Clássica II</a> (DF006), é corpo rígido, referenciais em rotação, cálculo
+    variacional e os formalismos de Lagrange e de Hamilton. O espaço de fase
+    que aparece aqui nos módulos 6 e 9 é o mesmo que reaparece lá no teorema de
+    Liouville, e depois em
+    <a href="https://apianomorais.github.io/fisica-estatistica/">Física
+    Estatística</a> como ponto de partida.</p>
+  </div>
+
+  <h2 id="s5">5. Outros sites</h2>
+<!--SITES-->
+  <p>As demais disciplinas que ministro na URCA, e a pesquisa do laboratório. Tudo reunido em <a href="https://apianomorais.github.io/">apianomorais.github.io</a>.</p>
+
+  <div class="cartoes">
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/eletromagnetismo/">Eletromagnetismo</a></h3>
+      <p><small>DF032 · DF033 · DF053</small></p>
+      <p>Doze capítulos, do cálculo vetorial à radiação, com exercícios resolvidos e programas em Python que conferem cada conta.</p>
+    </article>
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/fisica-estatistica/">Física Estatística</a></h3>
+      <p><small>Dez módulos</small></p>
+      <p>De Boltzmann aos gases quânticos e à supercondutividade, com widgets interativos em cada módulo.</p>
+    </article>
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/mecanica-classica-ii/">Mecânica Clássica II</a></h3>
+      <p><small>DF006</small></p>
+      <p>Corpo rígido, referenciais em rotação, cálculo variacional, Lagrange, Hamilton e o espaço de fase.</p>
+    </article>
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/mecanica-classica-iii/">Mecânica Clássica III</a></h3>
+      <p><small>DF007</small></p>
+      <p>Tensor de inércia, equações de Euler, o pião simétrico, modos normais e a equação de onda.</p>
+    </article>
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/fenomenos-transporte/">Fenômenos de Transporte</a></h3>
+      <p><small>DF065</small></p>
+      <p>Calor, massa e momento transportados pela mesma equação, de Navier-Stokes à lei de Fick.</p>
+    </article>
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/probabilidade-estatistica/">Probabilidade e Estatística</a></h3>
+      <p><small>Licenciatura EAD</small></p>
+      <p>Erros de medida, propagação de incertezas, mínimos quadrados e testes de hipóteses.</p>
+    </article>
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/informatica-fisica/">Informática para Física</a></h3>
+      <p><small>DF050</small></p>
+      <p>Planilha, LaTeX e Python num fluxo de trabalho único, da tabela de medidas ao relatório final.</p>
+    </article>
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/deformacao/">Da kalimba à viga</a></h3>
+      <p><small>Minicurso</small></p>
+      <p>Vibração, frequências naturais e elementos finitos em Python, na Semana Universitária da URCA.</p>
+    </article>
+  </div>
+
+  <div class="cartoes">
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/urbanicity-gradient-index-ugi/">IGU · Índice de Gradiente de Urbanicidade</a></h3>
+      <p><small>Pesquisa</small></p>
+      <p>Calculadora aberta do índice publicado em Frontiers of Urban and Rural Planning 4, 18 (2026), com a metodologia e os dados do artigo.</p>
+    </article>
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/reticulado/">Dinâmica em potenciais de rede</a></h3>
+      <p><small>Pesquisa</small></p>
+      <p>Geometria, caos e transporte em potenciais periódicos: reticulados, anisotropia, forma normal e difusão, com os programas do projeto.</p>
+    </article>
+  </div>
+
+  <div class="cartoes">
+    <article class="cartao">
+      <h3><a href="https://apianomorais.github.io/jaguarete/">Jaguaretê</a></h3>
+      <p><small>Jogo</small></p>
+      <p>Jogo de estratégia sobre pecuária e grandes felinos no Pantanal, na Amazônia, no Cerrado, na Caatinga e na Chapada do Araripe, com dinâmica de presa e predador.</p>
+    </article>
+  </div>
+
+<!--/SITES-->
+
+  <nav class="nav-aulas">
+    <a class="prox" href="aula03.html"><small>Próximo</small>3. Forças e arrasto →</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611192234"></script>
+</body>
+</html>
