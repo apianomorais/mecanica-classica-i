@@ -92,16 +92,16 @@ def cartoes():
 
 
 ABERTURA = r'''
-  <p>Na noite de 23 de setembro de 1846, o astrônomo Johann Gottfried Galle
+  <p>Na noite de 23 de setembro de 1846, o astrônomo <a href="https://pt.wikipedia.org/wiki/Johann_Gottfried_Galle">Johann Gottfried Galle</a>
   apontou o telescópio do Observatório de Berlim para um pedaço de céu que
   ninguém tinha motivo para examinar. Ele seguia uma carta recebida naquele
-  mesmo dia, vinda de Paris, assinada por Urbain Le Verrier, e a carta não
+  mesmo dia, vinda de Paris, assinada por <a href="https://pt.wikipedia.org/wiki/Urbain_Le_Verrier">Urbain Le Verrier</a>, e a carta não
   trazia uma observação: trazia uma previsão. Em menos de uma hora, Galle e o
-  estudante Heinrich d'Arrest encontraram um objeto que não constava das
+  estudante <a href="https://en.wikipedia.org/wiki/Heinrich_Louis_d%27Arrest">Heinrich d'Arrest</a> encontraram um objeto que não constava das
   cartas celestes, a menos de um grau da posição anunciada.</p>
 
   <p>O que Le Verrier tinha feito nos meses anteriores não envolveu telescópio
-  nenhum. Urano não andava exatamente onde deveria, e as discrepâncias eram
+  nenhum. <a href="https://pt.wikipedia.org/wiki/Urano_(planeta)">Urano</a> não andava exatamente onde deveria, e as discrepâncias eram
   minúsculas, da ordem de um minuto de arco. Ele supôs que houvesse um planeta
   ainda desconhecido puxando Urano, escreveu as equações de movimento com a lei
   da gravitação, e resolveu o problema ao contrário: dada a perturbação, onde
@@ -113,8 +113,8 @@ ABERTURA = r'''
   anos, e mudou o que se entende por explicar alguma coisa.</p>
 
   <p>Há um segundo capítulo nessa história, e ele também cabe aqui. Em 1889, o
-  rei Óscar II da Suécia ofereceu um prêmio a quem demonstrasse que o Sistema
-  Solar é estável. Henri Poincaré ganhou, e depois, revisando as provas já
+  rei <a href="https://pt.wikipedia.org/wiki/Oscar_II_da_Su%C3%A9cia">Óscar II da Suécia</a> ofereceu um prêmio a quem demonstrasse que o Sistema
+  Solar é estável. <a href="https://pt.wikipedia.org/wiki/Jules_Henri_Poincar%C3%A9">Henri Poincaré</a> ganhou, e depois, revisando as provas já
   impressas do seu próprio trabalho, encontrou um erro. Ao consertá-lo,
   descobriu o contrário do que pensara ter provado: há órbitas tão
   emaranhadas que nenhuma fórmula as descreve, e diferenças mínimas nas

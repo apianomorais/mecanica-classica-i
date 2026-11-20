@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vetores, matrizes e cálculo vetorial | Mecânica Clássica I</title>
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200016">
+<script src="assets/js/comum.js?v=202611200016"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="index.html">Mecânica Clássica I <span>· LFCA/URCA</span></a>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <span class="grupo">Ferramentas</span>
+      <a href="aula01.html" class="num ativo" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
+      <span class="grupo">Newton</span>
+      <span class="num pendente" title="Módulo 2: As leis de Newton e os referenciais inerciais · em preparação">2</span>
+      <a href="aula03.html" class="num" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
+      <span class="num pendente" title="Módulo 4: Trabalho, energia e forças conservativas · em preparação">4</span>
+      <span class="num pendente" title="Módulo 5: Momento linear, impulso e o movimento de foguetes · em preparação">5</span>
+      <span class="grupo">Oscilações</span>
+      <span class="num pendente" title="Módulo 6: O oscilador harmônico simples · em preparação">6</span>
+      <span class="num pendente" title="Módulo 7: Oscilações amortecidas · em preparação">7</span>
+      <span class="num pendente" title="Módulo 8: Oscilações forçadas, ressonância e a resposta a uma força qualquer · em preparação">8</span>
+      <span class="grupo">Caos</span>
+      <span class="num pendente" title="Módulo 9: Além do linear: pêndulo, espaço de fase e retratos de fase · em preparação">9</span>
+      <span class="num pendente" title="Módulo 10: Caos determinístico: mapa logístico, Lyapunov e atratores · em preparação">10</span>
+      <span class="grupo">Gravitação</span>
+      <span class="num pendente" title="Módulo 11: Gravitação: campo, potencial, cascas e marés · em preparação">11</span>
+      <span class="num pendente" title="Módulo 12: Forças centrais: o problema de dois corpos e as órbitas de Kepler · em preparação">12</span>
+      <span class="num pendente" title="Módulo 13: Sistemas de partículas: centro de massa, colisões e espalhamento · em preparação">13</span>
+    </nav>
+  </div>
+</header>
+
+<!--SEQ-->
+<div class="sequencia">
+  <div class="sequencia-interno">
+    <span class="rot">Sequência de três semestres</span>
+    <span class="aqui" title="Newton, oscilações e forças centrais">Mecânica Clássica I</span>
+    <a href="https://apianomorais.github.io/mecanica-classica-ii/" title="Corpo rígido, Lagrange e Hamilton">Mecânica Clássica II</a>
+    <a href="https://apianomorais.github.io/mecanica-classica-iii/" title="Tensores, modos normais e ondas">Mecânica Clássica III</a>
+  </div>
+</div>
+<!--/SEQ-->
+
+<div class="envoltorio">
+
+<aside class="lateral">
+  <h4>Neste módulo</h4>
+  <ol>
+    <li><a href="#s1">1. O que faz de um trio de números um vetor</a></li>
+    <li><a href="#s2">2. Os dois produtos, e o que eles medem</a></li>
+    <li><a href="#s3">3. Mexendo com vetores</a></li>
+    <li><a href="#s4">4. Campos e as três derivadas</a></li>
+    <li><a href="#s5">5. O teste da força conservativa</a></li>
+    <li><a href="#s6">6. No Spyder</a></li>
+    <li><a href="#s7">7. Exercícios propostos</a></li>
+  </ol>
+</aside>
+
+<main class="conteudo">
+
+  <p class="chapeu">Módulo 1 · Ferramentas</p>
+  <h1>Vetores, matrizes e cálculo vetorial</h1>
+  <p class="subtitulo">A definição de vetor que a física usa não é a do segmento orientado: é a lei de transformação. Deste módulo saem as ferramentas que o curso inteiro usa, e uma delas, o teste do rotacional, decide se existe energia potencial.</p>
+  <h2 id="s1">1. O que faz de um trio de números um vetor</h2>
+
+<p>Todo mundo chega a esta disciplina sabendo que vetor é "um segmento
+orientado, com módulo, direção e sentido". Essa definição serve para desenhar,
+e não serve para quase mais nada. Ela não diz o que fazer quando alguém
+pergunta se a corrente elétrica é vetor, se a velocidade angular é vetor, ou
+se o trio formado por duas coordenadas e uma temperatura é vetor.</p>
+
+<p>A definição que a física usa é outra, e começa com uma pergunta diferente:
+o que acontece com os números quando se gira o sistema de coordenadas?</p>
+
+<h3>A rotação, primeiro</h3>
+
+<p>Girar os eixos de um ângulo \(\varphi\) em torno de \(z\) leva as
+coordenadas de um ponto de \((x,y,z)\) para</p>
+
+\[ \begin{pmatrix} x' \\ y' \\ z' \end{pmatrix}
+   =
+   \begin{pmatrix}
+     \cos\varphi & \sen\varphi & 0 \\
+     -\sen\varphi & \cos\varphi & 0 \\
+     0 & 0 & 1
+   \end{pmatrix}
+   \begin{pmatrix} x \\ y \\ z \end{pmatrix}, \]
+
+<p>ou, em notação compacta, \(x'_i = R_{ij}x_j\), com a soma sobre o índice
+repetido subentendida.</p>
+
+<p>A matriz \(R\) tem duas propriedades que a caracterizam:</p>
+
+\[ R^{\mathsf T}R = \mathbb{1}, \qquad \det R = +1. \]
+
+<p>A primeira é a <strong>ortogonalidade</strong>, e é ela que garante que
+distâncias não mudem ao girar. A segunda separa as rotações das reflexões:
+uma matriz ortogonal com determinante \(-1\) também preserva distâncias, mas
+troca a mão direita pela esquerda, e nenhum movimento rígido faz isso.</p>
+
+<div class="bloco def">
+<span class="rotulo">A definição de vetor</span>
+<p>Um trio de números \((A_1,A_2,A_3)\) é um <strong>vetor</strong> quando,
+sob rotação dos eixos, as suas componentes se transformam exatamente como as
+coordenadas:</p>
+\[ A'_i = R_{ij}A_j. \]
+<p>Um único número que não muda sob rotação, \(s' = s\), é um
+<strong>escalar</strong>. Nove números com duas leis de transformação,
+\(T'_{ij} = R_{ik}R_{jl}T_{kl}\), formam um <strong>tensor</strong> de segunda
+ordem, que é o assunto da <a href="https://apianomorais.github.io/mecanica-classica-iii/">Mecânica Clássica III</a>.</p>
+</div>
+
+<h3>Por que essa definição, e não a outra</h3>
+
+<p>A exigência parece burocrática, e é a coisa mais útil do módulo. Se os dois
+lados de uma equação são vetores, a equação vale em qualquer sistema de
+coordenadas girado, sem refazer conta nenhuma. É o que permite escrever
+\(\vet{F} = m\vet{a}\) uma vez só e usar em qualquer orientação de eixos. Uma
+equação escrita componente por componente, sem essa garantia, pode ser
+verdadeira num sistema e falsa no vizinho.</p>
+
+<div class="destaque">
+<p><strong>Exemplo trabalhado: um trio que não é vetor.</strong> Tome um ponto
+do plano, em \((3, 4, 0)\) metros, e a temperatura ali medida,
+\(T = 25\ \mathrm{K}\). Junte os três números no trio \((3, 4, 25)\) e gire os
+eixos de 40° em torno de \(x\).</p>
+
+<p><strong>O vetor posição</strong> vai para</p>
+
+\[ (3{,}000;\ 3{,}064;\ 2{,}571)\ \mathrm{m}, \]
+
+<p>com as três componentes ainda em metros e com o módulo intacto, 5,000 m.</p>
+
+<p><strong>O trio</strong>, tratado como se fosse vetor, vai para</p>
+
+\[ (3{,}000;\ -13{,}006;\ 21{,}722), \]
+
+<p>e a segunda componente vale \(4\cos 40^\circ - 25\sen 40^\circ\), isto é,
+uma soma de metros com kelvin. O resultado não é grandeza nenhuma.</p>
+
+<p><strong>A moral.</strong> Não existe "a transformação correta do trio",
+porque o trio não é um objeto geométrico: é uma lista. O que se transforma é a
+posição, que é vetor, e o que fica quieto é a temperatura, que é escalar. Ter
+três números não basta.</p>
+</div>
+
+<div class="bloco alerta">
+<span class="rotulo">E os que quase são vetores</span>
+<p>O produto vetorial de dois vetores transforma-se como vetor sob rotação,
+mas não troca de sinal sob reflexão, ao contrário de um vetor de verdade. Esses
+objetos são chamados de <strong>pseudovetores</strong> ou vetores axiais, e a
+lista inclui o torque, o momento angular, a velocidade angular e o campo
+magnético. A distinção só aparece quando há reflexão no problema, e é por isso
+que ela passa despercebida em quase todo o curso. Em física de partículas, onde
+há processos que distinguem esquerda de direita, ela se torna central.</p>
+</div>
+
+  <h2 id="s2">2. Os dois produtos, e o que eles medem</h2>
+
+<p>Há duas maneiras de multiplicar vetores, e cada uma responde a uma pergunta
+geométrica diferente.</p>
+
+<h3>O produto escalar: quanto um avança na direção do outro</h3>
+
+\[ \vet{a}\cdot\vet{b} = a_ib_i = ab\cos\theta. \]
+
+<p>O resultado é um escalar, no sentido técnico da seção 1: o mesmo número em
+qualquer sistema girado. Ele zera quando os vetores são perpendiculares, e é
+máximo quando são paralelos.</p>
+
+<p>No curso, ele aparece no trabalho, \(W = \vet{F}\cdot\vet{d}\), onde mede
+exatamente a parte da força que acompanha o deslocamento, e na energia
+cinética, \(T = \frac12m\,\vet{v}\cdot\vet{v}\).</p>
+
+<h3>O produto vetorial: a área que os dois cercam</h3>
+
+\[ \vet{a}\cruz\vet{b} = \varepsilon_{ijk}a_jb_k\vers{e}_i
+   = \begin{vmatrix}
+       \vers{x} & \vers{y} & \vers{z} \\
+       a_1 & a_2 & a_3 \\
+       b_1 & b_2 & b_3
+     \end{vmatrix}, \]
+
+<p>O símbolo \(\varepsilon_{ijk}\) é o <a href="https://pt.wikipedia.org/wiki/S%C3%ADmbolo_de_Levi-Civita">símbolo de Levi-Civita</a>, que vale \(+1\) para índices em ordem cíclica, \(-1\) para a ordem trocada e zero quando há índice repetido.</p>
+
+<p>com módulo \(ab\sen\theta\), que é a área do paralelogramo formado pelos
+dois, e direção perpendicular ao plano deles. Ele zera quando os vetores são
+paralelos, isto é, exatamente onde o escalar é máximo.</p>
+
+<p>No curso, ele aparece no torque, \(\vet{\tau} = \vet{r}\cruz\vet{F}\), e no
+momento angular, \(\vet{L} = \vet{r}\cruz\vet{p}\), os dois assuntos do módulo
+13 e de toda a Mecânica Clássica II.</p>
+
+<h3>Os produtos triplos</h3>
+
+<p><strong>O misto</strong>, \(\vet{a}\cdot\left(\vet{b}\cruz\vet{c}\right)\),
+é o volume do paralelepípedo construído sobre os três, com sinal positivo se
+eles formam uma mão direita. Ele é igual ao determinante da matriz que tem os
+três como linhas, e por isso não muda sob permutação cíclica.</p>
+
+<p><strong>O duplo vetorial</strong> obedece à identidade mais útil da
+disciplina, conhecida pelo apelido BAC-CAB:</p>
+
+\[ \vet{a}\cruz\left(\vet{b}\cruz\vet{c}\right)
+   = \vet{b}\left(\vet{a}\cdot\vet{c}\right)
+   - \vet{c}\left(\vet{a}\cdot\vet{b}\right). \]
+
+<div class="bloco fisica">
+<span class="rotulo">Onde o BAC-CAB paga o aluguel</span>
+<p>A aceleração centrípeta de um ponto que gira com velocidade angular
+\(\vet{\omega}\) é \(\vet{\omega}\cruz\left(\vet{\omega}\cruz\vet{r}\right)\).
+Aplicando a identidade,</p>
+\[ \vet{\omega}\cruz\left(\vet{\omega}\cruz\vet{r}\right)
+   = \vet{\omega}\left(\vet{\omega}\cdot\vet{r}\right) - \omega^2\vet{r}, \]
+<p>e, para \(\vet{r}\) perpendicular ao eixo, sobra \(-\omega^2\vet{r}\): o
+resultado aponta para dentro e tem módulo \(\omega^2r\), que é a fórmula
+decorada no ensino médio, agora deduzida. O exercício 1.4 faz a conta
+completa.</p>
+</div>
+
+  <h2 id="s3">3. Mexendo com vetores</h2>
+
+<p>As três vistas do simulador tratam os três pontos deste módulo que nenhuma
+fórmula resolve sozinha.</p>
+
+<div data-widget="vetores"></div>
+
+<p>Na primeira, gire os eixos e repare no que acontece: a seta verde não se
+mexe, os números mudam, e o módulo não muda nunca. É a seção 1 inteira numa
+figura.</p>
+
+<p>Na segunda, leve o ângulo de 0° a 90° e compare os dois produtos. Onde um é
+máximo o outro é nulo, e a área sombreada é literalmente o módulo do produto
+vetorial.</p>
+
+<p>Na terceira, mova o ponto pela paisagem e confira duas afirmações: o
+gradiente é sempre perpendicular à curva de nível, e ele aponta para a
+<em>subida</em>, de modo que a força, \(\vet{F} = -\nabla U\), aponta para o
+fundo do poço.</p>
+
+  <h2 id="s4">4. Campos e as três derivadas</h2>
+
+<p>A segunda metade do módulo troca vetores constantes por <em>campos</em>:
+funções que atribuem um número ou um vetor a cada ponto do espaço. A
+temperatura numa sala é um campo escalar; a velocidade do ar na mesma sala é
+um campo vetorial. Há três derivadas que interessam, e vale entender o que cada
+uma mede antes de decorar a fórmula.</p>
+
+<h3>Gradiente: para onde cresce</h3>
+
+\[ \nabla f = \pder{f}{x}\vers{x} + \pder{f}{y}\vers{y}
+   + \pder{f}{z}\vers{z}. \]
+
+<p>O gradiente de um campo escalar é um campo vetorial que aponta na direção
+de crescimento mais rápido, com módulo igual à taxa de crescimento nessa
+direção. Duas consequências imediatas: ele é perpendicular às superfícies de
+nível, e ele se anula onde \(f\) tem máximo, mínimo ou sela.</p>
+
+<p>A variação de \(f\) ao andar um deslocamento \(d\vet{\ell}\) é</p>
+
+\[ df = \nabla f\cdot d\vet{\ell}, \]
+
+<p>e essa única equação contém tudo o que há para saber sobre o gradiente.</p>
+
+<h3>Divergente: o quanto brota</h3>
+
+\[ \divg{\vet{A}} = \pder{A_x}{x} + \pder{A_y}{y} + \pder{A_z}{z}. \]
+
+<p>O divergente mede o fluxo que sai de um volume pequeno, por unidade de
+volume. Onde ele é positivo há fonte; onde é negativo há sorvedouro; onde é
+nulo, tudo o que entra sai. Num fluido incompressível,
+\(\divg{\vet{v}} = 0\) em toda parte, e o módulo 2 de Fenômenos de Transporte
+vive dessa equação.</p>
+
+<h3>Rotacional: o quanto gira</h3>
+
+\[ \rot{\vet{A}} =
+   \begin{vmatrix}
+     \vers{x} & \vers{y} & \vers{z} \\
+     \partial_x & \partial_y & \partial_z \\
+     A_x & A_y & A_z
+   \end{vmatrix}. \]
+
+<p>O rotacional mede a circulação em torno de um laço pequeno, por unidade de
+área. A imagem clássica é a de uma rodinha de pás mergulhada no campo: se ela
+gira, o rotacional não é nulo, e o eixo de giro dá a direção.</p>
+
+<div class="bloco def">
+<span class="rotulo">Duas identidades que valem sempre</span>
+\[ \rot{\left(\nabla f\right)} = 0,
+   \qquad
+   \divg{\left(\rot{\vet{A}}\right)} = 0. \]
+<p>A primeira diz que gradiente não gira; a segunda, que rotacional não brota.
+As duas saem de as derivadas parciais comutarem, e são verificadas
+numericamente pelo programa do módulo. Elas são a razão de, no
+eletromagnetismo, existirem potenciais: \(\divg{\vet{B}} = 0\) permite escrever
+\(\vet{B} = \rot{\vet{A}}\), e \(\rot{\vet{E}} = 0\), na eletrostática, permite
+escrever \(\vet{E} = -\nabla V\).</p>
+</div>
+
+  <h2 id="s5">5. O teste da força conservativa</h2>
+
+<p>Aqui o cálculo vetorial deixa de ser ferramenta e vira física. A pergunta é
+antiga: dada uma força, existe uma energia potencial?</p>
+
+<p>Três afirmações são equivalentes, e a equivalência é o resultado central
+desta seção:</p>
+
+<div class="bloco def">
+<span class="rotulo">As três caras de uma força conservativa</span>
+<ol>
+<li>O trabalho de \(\vet{F}\) entre dois pontos não depende do caminho;</li>
+<li>a circulação \(\oint\vet{F}\cdot d\vet{\ell}\) é nula em todo caminho
+fechado;</li>
+<li>\(\rot{\vet{F}} = 0\) em toda a região, e então existe \(U\) com
+\(\vet{F} = -\nabla U\).</li>
+</ol>
+</div>
+
+<p>A ponte entre a segunda e a terceira é o <strong><a href="https://en.wikipedia.org/wiki/Sir_George_Stokes,_1st_Baronet">teorema de Stokes</a></strong>,
+que troca uma integral de linha por uma de superfície:</p>
+
+\[ \oint_{\partial S}\vet{F}\cdot d\vet{\ell}
+   = \int_S\left(\rot{\vet{F}}\right)\cdot d\vet{a}. \]
+
+<div class="destaque">
+<p><strong>Exemplo trabalhado: um campo que não é conservativo.</strong> Tome
+\(\vet{F} = -y\,\vers{x} + x\,\vers{y}\), que gira em torno da origem.</p>
+
+<p><strong>O rotacional</strong> sai direto do determinante:</p>
+
+\[ \rot{\vet{F}} = \left(\pder{F_y}{x}-\pder{F_x}{y}\right)\vers{z}
+   = \left(1-(-1)\right)\vers{z} = 2\vers{z}. \]
+
+<p><strong>A circulação</strong>, calculada pelo programa em três caminhos
+fechados diferentes:</p>
+
+<div class="tabela-rolavel">
+<table>
+<thead><tr><th>caminho</th><th>área cercada</th>
+<th>\(\oint\vet{F}\cdot d\vet{\ell}\)</th><th>razão</th></tr></thead>
+<tbody>
+<tr><td>círculo de raio 1</td><td>\(\pi\)</td><td>6,2832</td><td>2,000</td></tr>
+<tr><td>círculo de raio 2, deslocado</td><td>\(4\pi\)</td><td>25,1327</td>
+    <td>2,000</td></tr>
+<tr><td>quadrado de lado 1</td><td>1</td><td>2,0000</td><td>2,000</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>A leitura.</strong> A circulação vale sempre duas vezes a área
+cercada, e não depende da forma do caminho nem de onde ele está. É exatamente o
+que Stokes prevê, porque \(\rot{\vet{F}} = 2\vers{z}\) é constante: a integral
+de superfície vira \(2\times\text{área}\).</p>
+
+<p><strong>E o que isso significa fisicamente.</strong> Uma partícula levada
+por esse campo ao longo de um círculo volta ao ponto de partida tendo recebido
+energia. Não existe \(U\) para ele, e um campo assim não pode ser uma força
+fundamental conservativa. Forças de atrito e forças magnéticas sobre correntes
+têm esse caráter, e é por isso que elas não entram na conservação de energia
+mecânica.</p>
+</div>
+
+<p>O módulo 4 retoma esse resultado do outro lado, construindo \(U\) a partir
+de \(\vet{F}\) e lendo o movimento inteiro no gráfico de \(U(x)\).</p>
+
+  <h2 id="s6">6. No Spyder</h2>
+
+<div class="cartoes">
+  <a class="cartao" href="codigo/vetores.py">
+    <span class="numero">Programa</span>
+    <h3>vetores.py</h3>
+    <p>Põe à prova, por medida, tudo o que este módulo afirma: a ortogonalidade
+    da rotação, a invariância do módulo e do produto escalar, a geometria dos
+    dois produtos, as identidades do cálculo vetorial e o teste da força
+    conservativa.</p>
+  </a>
+</div>
+
+<p><strong>O que ele imprime, e o que conferir.</strong></p>
+
+<ul>
+<li>\(R^{\mathsf T}R - \mathbb{1}\) e \(\det R - 1\) dão zero de máquina, e
+trocar o sinal de uma coluna leva o determinante a \(-1\), que é a assinatura
+de uma reflexão.</li>
+<li>Rotação preserva \(|\vet{v}|\) e \(\vet{a}\cdot\vet{b}\) em \(10^{-16}\),
+enquanto o trio com a temperatura produz uma componente que soma metros com
+kelvin.</li>
+<li>\(\left|\vet{a}\cruz\vet{b}\right| = ab\sen\theta\) e o produto misto
+coincide com o determinante, os dois em \(10^{-15}\).</li>
+<li>A identidade BAC-CAB fecha <em>exatamente</em>, em zero de máquina, porque
+ali não há derivada nenhuma.</li>
+<li>\(\rot{\left(\nabla f\right)}\) e \(\divg{\left(\rot{\vet{A}}\right)}\)
+dão zero até o erro das diferenças finitas, e não zero de máquina.</li>
+<li>A circulação do campo giratório dá duas vezes a área em todos os caminhos
+testados.</li>
+</ul>
+
+<div class="bloco alerta">
+<span class="rotulo">Uma distinção que vale para o curso inteiro</span>
+<p>Repare na diferença entre os dois tipos de zero. O BAC-CAB sai em
+\(10^{-16}\), porque é identidade algébrica e o computador só faz somas e
+multiplicações. Já \(\rot{\left(\nabla f\right)}\) sai em \(10^{-7}\), porque
+ali há duas derivadas numéricas encadeadas, e cada diferença central divide o
+arredondamento pelo passo. Com \(h = 10^{-4}\), duas derivadas carregam
+\(10^{-16}/h^2 = 10^{-8}\) de ruído.</p>
+<p>Quem não souber distinguir esses dois zeros vai passar a vida achando que
+encontrou um erro quando encontrou apenas aritmética de ponto flutuante. E,
+pior, vai deixar passar erros de verdade escondidos atrás de um
+"\(10^{-7}\) é praticamente zero".</p>
+</div>
+
+  <h2 id="s7">7. Exercícios propostos</h2>
+<p>Os enunciados são nossos, e as soluções estão aqui mesmo, recolhidas. Resolva antes de abrir: ler solução pronta dá a sensação de ter entendido, que é diferente de ter entendido.</p>
+
+<div class="bloco ex">
+  <span class="rotulo">1.1  A rotação preserva o produto escalar</span>
+  <p>Mostre, usando apenas \(R^{\mathsf T}R = \mathbb{1}\), que a rotação
+     preserva o produto escalar de dois vetores quaisquer, e conclua daí que
+     preserva módulos e ângulos. Depois explique por que uma matriz ortogonal
+     com \(\det R = -1\) também preserva o produto escalar e, ainda assim, não
+     é uma rotação.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>A conta.</b> Com \(a'_i = R_{ij}a_j\) e \(b'_i = R_{ik}b_k\),</p>
+     <p>\[ \vet{a}'\cdot\vet{b}' = a'_ib'_i = R_{ij}a_jR_{ik}b_k
+        = \left(R^{\mathsf T}R\right)_{jk}a_jb_k
+        = \delta_{jk}a_jb_k = \vet{a}\cdot\vet{b}. \]</p>
+     <p><b>As consequências.</b> Tomando \(\vet{b} = \vet{a}\), o módulo não
+     muda. E como \(\cos\theta = \vet{a}\cdot\vet{b}/ab\) tem numerador e
+     denominador invariantes, o ângulo também não muda. Rotação é
+     exatamente isso: a transformação que preserva a geometria.</p>
+     <p><b>A reflexão.</b> A demonstração acima usou apenas a ortogonalidade,
+     e não o determinante, de modo que vale igualmente para
+     \(\det R = -1\). O que a reflexão estraga não é comprimento nem ângulo, e
+     sim a <em>orientação</em>: ela leva uma mão direita numa esquerda. Para
+     ver isso, basta aplicar a reflexão a três vetores com produto misto
+     positivo e notar que o produto misto fica negativo.</p>
+     <p><b>Por que isso importa.</b> O conjunto das matrizes ortogonais com
+     determinante \(+1\) é um grupo, chamado <a href="https://pt.wikipedia.org/wiki/Grupo_ortogonal">\(SO(3)\)</a>, e é ele que descreve
+     os movimentos rígidos possíveis de um corpo. A reflexão não está nele
+     porque nenhum corpo real consegue atravessar o espelho.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">1.2  Três números que não são vetor</span>
+  <p>Dê dois exemplos de trios de números que não formam vetor e justifique
+     em cada caso. Depois responda: a velocidade angular \(\vet{\omega}\) é
+     vetor? E um ângulo de rotação finito?</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Exemplo 1: duas coordenadas e uma temperatura.</b> O trio
+     \((x, y, T)\) tem três números, mas sob rotação dos eixos as duas
+     primeiras componentes se misturam e a terceira não tem como acompanhar,
+     porque \(T\) não é componente de nada. Tratar o trio como vetor produz
+     somas de metros com kelvin.</p>
+     <p><b>Exemplo 2: as três notas de um aluno em três provas.</b> O trio
+     \((n_1, n_2, n_3)\) é uma lista perfeitamente legítima, e nada nela se
+     transforma sob rotação de eixos, porque não há eixos. A soma das notas é
+     útil; o "módulo" \(\sqrt{n_1^2+n_2^2+n_3^2}\) não significa coisa
+     alguma.</p>
+     <p><b>A velocidade angular</b> é vetor, e isso não é óbvio. Velocidades
+     angulares somam-se como vetores, obedecem à lei de transformação e têm
+     direção bem definida. Tecnicamente ela é um <em>pseudovetor</em>, isto é,
+     comporta-se como vetor sob rotação mas não troca de sinal sob reflexão. A
+     Mecânica Clássica II dedica um módulo inteiro a esse ponto.</p>
+     <p><b>O ângulo de rotação finito não é vetor</b>, e a prova é
+     experimental: gire um livro 90° em torno de \(x\) e depois 90° em torno de
+     \(y\); depois refaça na ordem inversa. O livro termina em orientações
+     diferentes. Como a soma de vetores é comutativa e a composição de rotações
+     finitas não é, rotações finitas não podem ser vetores. Rotações
+     <em>infinitesimais</em>, por outro lado, comutam até primeira ordem, e é
+     por isso que \(\vet{\omega} = d\vet{\theta}/dt\) é vetor.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">1.3  Uma conta completa com os dois produtos</span>
+  <p>Dados \(\vet{a} = (2,1,-1)\), \(\vet{b} = (1,3,2)\) e
+     \(\vet{c} = (0,-2,4)\), calcule \(\vet{a}\cdot\vet{b}\),
+     \(\vet{a}\cruz\vet{b}\), o ângulo entre \(\vet{a}\) e \(\vet{b}\), a área
+     do paralelogramo que eles formam e o volume do paralelepípedo dos três.
+     Verifique que \(\vet{a}\cruz\vet{b}\) é perpendicular aos dois.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Produto escalar.</b></p>
+     <p>\[ \vet{a}\cdot\vet{b} = 2(1) + 1(3) + (-1)(2) = 3. \]</p>
+     <p><b>Produto vetorial.</b> Pelo determinante,</p>
+     <p>\[ \vet{a}\cruz\vet{b}
+        = \left(1\cdot2-(-1)\cdot3\right)\vers{x}
+        - \left(2\cdot2-(-1)\cdot1\right)\vers{y}
+        + \left(2\cdot3-1\cdot1\right)\vers{z}
+        = (5,\,-5,\,5). \]</p>
+     <p><b>Perpendicularidade.</b>
+     \((5,-5,5)\cdot(2,1,-1) = 10-5-5 = 0\) e
+     \((5,-5,5)\cdot(1,3,2) = 5-15+10 = 0\). Confere.</p>
+     <p><b>Ângulo.</b> Com \(a = \sqrt6 = 2{,}449\) e
+     \(b = \sqrt{14} = 3{,}742\),</p>
+     <p>\[ \cos\theta = \frac{3}{\sqrt6\sqrt{14}} = 0{,}3273
+        \;\Longrightarrow\;
+        \theta = 70{,}9^\circ. \]</p>
+     <p><b>Área.</b> \(\left|\vet{a}\cruz\vet{b}\right| = \sqrt{75} =
+     8{,}660\), e a conferência pelo seno:
+     \(ab\sen\theta = 9{,}165\times0{,}9449 = 8{,}660\).</p>
+     <p><b>Volume.</b></p>
+     <p>\[ \vet{a}\cdot\left(\vet{b}\cruz\vet{c}\right)
+        = \begin{vmatrix} 2 & 1 & -1 \\ 1 & 3 & 2 \\ 0 & -2 & 4\end{vmatrix}
+        = 30. \]</p>
+     <p>Positivo, de modo que os três formam uma mão direita, nessa ordem.</p>
+     <p><b>Fecha com o programa.</b> O <code>vetores.py</code> confere todos
+     esses números, inclusive a igualdade entre o produto misto e o
+     determinante, em \(10^{-15}\).</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">1.4  A aceleração centrípeta deduzida</span>
+  <p>Um ponto gira com velocidade angular \(\vet{\omega}\) constante em
+     torno de um eixo que passa pela origem. A sua aceleração é
+     \(\vet{a} = \vet{\omega}\cruz\left(\vet{\omega}\cruz\vet{r}\right)\).
+     Use a identidade BAC-CAB para mostrar que, quando \(\vet{r}\) é
+     perpendicular ao eixo, isso dá o resultado conhecido do ensino médio. E
+     quando \(\vet{r}\) não é perpendicular?</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Aplicando a identidade</b> com \(\vet{a}\to\vet{\omega}\),
+     \(\vet{b}\to\vet{\omega}\) e \(\vet{c}\to\vet{r}\):</p>
+     <p>\[ \vet{\omega}\cruz\left(\vet{\omega}\cruz\vet{r}\right)
+        = \vet{\omega}\left(\vet{\omega}\cdot\vet{r}\right)
+        - \vet{r}\left(\vet{\omega}\cdot\vet{\omega}\right)
+        = \vet{\omega}\left(\vet{\omega}\cdot\vet{r}\right) - \omega^2\vet{r}. \]</p>
+     <p><b>Caso perpendicular.</b> Se \(\vet{r}\perp\vet{\omega}\), o primeiro
+     termo some e</p>
+     <p>\[ \vet{a} = -\omega^2\vet{r}, \]</p>
+     <p>com módulo \(\omega^2r = v^2/r\), apontando para o eixo. É a
+     aceleração centrípeta, agora deduzida em vez de decorada.</p>
+     <p><b>Caso geral.</b> Decomponha
+     \(\vet{r} = \vet{r}_\parallel + \vet{r}_\perp\) em relação ao eixo. O
+     termo \(\vet{\omega}\left(\vet{\omega}\cdot\vet{r}\right)\) vale
+     \(\omega^2\vet{r}_\parallel\), de modo que</p>
+     <p>\[ \vet{a} = \omega^2\vet{r}_\parallel - \omega^2\vet{r}
+        = -\omega^2\vet{r}_\perp. \]</p>
+     <p>A aceleração continua apontando para o <em>eixo</em>, e não para a
+     origem, e o seu módulo é \(\omega^2\) vezes a distância ao eixo. É o
+     resultado correto, e é o que faz sentido: um ponto perto do polo de uma
+     esfera girante tem aceleração pequena, por mais longe do centro que
+     esteja.</p>
+     <p><b>Onde isso volta.</b> A aceleração centrífuga aparente, nos
+     referenciais em rotação da Mecânica Clássica II, é exatamente o negativo
+     desse termo.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">1.5  Do potencial gravitacional para a lei de Newton</span>
+  <p>A energia potencial gravitacional entre duas massas é
+     \(U(r) = -GMm/r\), com \(r = \left|\vet{r}\right|\). Calcule
+     \(\vet{F} = -\nabla U\) e verifique que o resultado é a lei da gravitação.
+     Use que \(\nabla r = \vers{r}\).</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Primeiro, o gradiente de \(r\).</b> Com
+     \(r = \sqrt{x^2+y^2+z^2}\),</p>
+     <p>\[ \pder{r}{x} = \frac{x}{r}
+        \;\Longrightarrow\;
+        \nabla r = \frac{\vet{r}}{r} = \vers{r}. \]</p>
+     <p><b>Agora a força.</b> Pela regra da cadeia, como \(U\) só depende de
+     \(r\),</p>
+     <p>\[ \nabla U = \der{U}{r}\nabla r
+        = \frac{GMm}{r^2}\vers{r}, \]</p>
+     <p>de onde</p>
+     <p>\[ \vet{F} = -\nabla U = -\frac{GMm}{r^2}\vers{r}. \]</p>
+     <p>O sinal negativo diz que a força aponta para a origem, isto é, é
+     atrativa, e o módulo vai com o inverso do quadrado. É a lei da
+     gravitação.</p>
+     <p><b>A verificação do rotacional.</b> Qualquer campo da forma
+     \(f(r)\vers{r}\) tem rotacional nulo, porque é gradiente de alguma coisa.
+     Isso garante que a gravitação é conservativa, que existe energia
+     potencial, e que o trabalho entre dois pontos não depende do caminho.
+     Todo o módulo 12, com as órbitas de Kepler, se apoia nisso.</p>
+     <p><b>Repare na economia.</b> A informação toda estava numa única função
+     escalar \(U(r)\). O gradiente extraiu dela as três componentes da força. É
+     por essa economia que a mecânica avançada, na Mecânica Clássica II, abandona
+     as forças e trabalha com funções escalares.</p>
+  </div>
+  </details>
+</div>
+
+<div class="bloco ex">
+  <span class="rotulo">1.6  Conservativa ou não, por dois caminhos</span>
+  <p>Considere \(\vet{F}_1 = (yz,\,xz,\,xy)\) e
+     \(\vet{F}_2 = (-y,\,x,\,0)\). Calcule o rotacional de cada uma. Para a
+     que não for conservativa, calcule a circulação num círculo de raio \(R\)
+     centrado na origem e verifique o teorema de Stokes. Para a outra, ache a
+     energia potencial.</p>
+  <details class="solucao"><summary>Ver solução</summary>
+  <div class="corpo-solucao">
+<p><b>Os rotacionais.</b> Para \(\vet{F}_1\),</p>
+     <p>\[ \left(\rot{\vet{F}_1}\right)_z
+        = \pder{(xz)}{x} - \pder{(yz)}{y} = z - z = 0, \]</p>
+     <p>e o mesmo acontece nas outras duas componentes: \(\rot{\vet{F}_1} =
+     0\). Para \(\vet{F}_2\),</p>
+     <p>\[ \rot{\vet{F}_2} = \left(1-(-1)\right)\vers{z} = 2\vers{z} \neq 0. \]</p>
+     <p><b>O potencial de \(\vet{F}_1\).</b> Procurando \(U\) com
+     \(\vet{F}_1 = -\nabla U\), a primeira componente dá
+     \(\partial U/\partial x = -yz\), isto é, \(U = -xyz + g(y,z)\). As outras
+     duas componentes mostram que \(g\) é constante, de modo que</p>
+     <p>\[ U = -xyz + \text{const}. \]</p>
+     <p><b>A circulação de \(\vet{F}_2\).</b> No círculo de raio \(R\),
+     parametrizado por \(\vet{r} = R(\cos\phi,\sen\phi,0)\), tem-se
+     \(\vet{F}_2 = R(-\sen\phi,\cos\phi,0)\) e
+     \(d\vet{\ell} = R(-\sen\phi,\cos\phi,0)d\phi\), de modo que
+     \(\vet{F}_2\cdot d\vet{\ell} = R^2d\phi\) e</p>
+     <p>\[ \oint\vet{F}_2\cdot d\vet{\ell} = 2\pi R^2. \]</p>
+     <p><b>Stokes confere:</b> a integral do rotacional sobre o disco é
+     \(2\vers{z}\cdot\vers{z}\times\pi R^2 = 2\pi R^2\). Igual.</p>
+     <p>Com \(R = 1\) isso dá 6,2832 e com \(R = 2\) dá 25,133, que são
+     exatamente os números que o programa do módulo imprime, inclusive para um
+     círculo deslocado da origem, porque o rotacional é constante e só a área
+     importa.</p>
+     <p><b>A moral.</b> Dois testes, duas respostas, mesma conclusão. O do
+     rotacional é local e barato; o da circulação é global e é a definição.
+     Quando os dois discordam, há um buraco na região, e aí a topologia entra
+     na física, o que acontece de fato no <a href="https://pt.wikipedia.org/wiki/Efeito_Aharonov-Bohm">efeito Aharonov-Bohm</a> e nos vórtices
+     de um superfluido.</p>
+  </div>
+  </details>
+</div>
+
+
+  <nav class="nav-aulas">
+    <a href="index.html"><small>Voltar</small>← Início</a>
+    <a class="prox" href="aula03.html"><small>Próximo</small>3. Forças e arrasto →</a>
+  </nav>
+
+</main>
+</div>
+
+<footer class="rodape">
+  <img class="logo-rodape" src="assets/img/logo-lfca.png" alt="LFCA | URCA">
+  <p><strong>Prof. Apiano Morais</strong> · <a href="mailto:apiano.morais@urca.br">apiano.morais@urca.br</a><br>
+  Laboratório de Física Computacional Aplicada (LFCA) · Universidade Regional do Cariri</p>
+  <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
+</footer>
+
+<script src="assets/js/widgets.js?v=202611200016"></script>
+</body>
+</html>

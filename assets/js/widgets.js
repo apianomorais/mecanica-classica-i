@@ -406,7 +406,7 @@
 
       var extra = est.tipo === 'lin'
         ? '<p>Neste regime a equação <em>tem</em> solução fechada, e é ela que '
-          + 'está desenhada em verde, no lugar da referência numérica: '
+          + 'está desenhada em azul, no lugar da referência numérica: '
           + '\\(x(t) = v_{x0}\\tau(1-e^{-t/\\tau})\\) e '
           + '\\(y(t) = (v_{y0}+v_t)\\tau(1-e^{-t/\\tau}) - v_tt\\). O erro '
           + 'mostrado acima é medido contra ela, isto é, contra a verdade, e '
@@ -414,7 +414,7 @@
           + 'horizontal é limitado por \\(v_{x0}\\tau\\), de modo que a queda '
           + 'termina praticamente vertical.</p>'
         : '<p>Neste regime não existe solução fechada: o módulo da velocidade '
-          + 'acopla as duas componentes. A curva verde é apenas uma referência '
+          + 'acopla as duas componentes. A curva azul é apenas uma referência '
           + 'numérica fina, e é o melhor que se tem. Troque para o arrasto '
           + 'linear para ver o caso em que a verdade está disponível.</p>';
       texto.innerHTML = extra +
@@ -425,7 +425,7 @@
         + (est.tipo === 'lin' ? '</p>'
            : ' Nenhuma fórmula fechada descreve essa curva.</p>')
         + '<p>A curva em bronze é o que o método de Euler produz com o passo '
-        + 'escolhido. Diminua \\(\\Delta t\\) e ela encosta na curva verde; '
+        + 'escolhido. Diminua \\(\\Delta t\\) e ela encosta na curva azul; '
         + 'aumente e ela se descola, sempre <em>por fora</em>, porque cada '
         + 'passo segue a tangente e a tangente ignora a curvatura.</p>';
       tipografar(texto);
@@ -653,6 +653,357 @@
 
     registrarRedesenho(desenhar);
     if (slDt) { /* mantém o rótulo coerente com o estado inicial */ }
+  };
+
+
+  /* =================================================================
+     2. Vetores: a lei de transformação, os produtos e o gradiente
+     As três vistas atacam os três pontos do módulo 1 que nenhuma
+     fórmula resolve sozinha: que as componentes mudam e o vetor não,
+     que os dois produtos medem projeção e área, e que o gradiente é
+     perpendicular às curvas de nível e aponta para a subida.
+     ================================================================= */
+  REGISTRO.vetores = function (raiz) {
+    var est = { vista: 'girar', phi: 30, vang: 55, vmod: 3.2,
+                bang: 65, bmod: 2.4, px: -0.4, py: 0.5 };
+
+    var corpo = moldura(raiz, 'Vetores: o que muda e o que não muda');
+
+    var c0 = el('div', { class: 'controles' });
+    corpo.appendChild(c0);
+    opcoes(c0, [
+      { rot: 'Girando os eixos', v: 'girar' },
+      { rot: 'Escalar e vetorial', v: 'produtos' },
+      { rot: 'Gradiente', v: 'gradiente' }
+    ], 0, function (v) { est.vista = v; montarControles(); desenhar(); });
+
+    var c1 = el('div', { class: 'controles' });
+    corpo.appendChild(c1);
+    var cv = el('canvas');
+    corpo.appendChild(cv);
+    var painel = cartoes(corpo, [
+      { rot: 'a', k: 'a' }, { rot: 'b', k: 'b' },
+      { rot: 'c', k: 'c' }, { rot: 'd', k: 'd' }
+    ]);
+    var rots = corpo.querySelectorAll('.cartao-num .rot');
+    function rotulos(lista) {
+      lista.forEach(function (t, i) { if (rots[i]) rots[i].textContent = t; });
+    }
+    var texto = el('div', { class: 'nota' });
+    corpo.appendChild(texto);
+
+    function fmt(x, c) { return x.toFixed(c === undefined ? 2 : c).replace('.', ','); }
+    function grau(x) { return fmt(x, 0) + '°'; }
+
+    /* os controles mudam com a vista, porque cada uma tem os seus */
+    function montarControles() {
+      c1.innerHTML = '';
+      if (est.vista === 'girar') {
+        deslizante(c1, 'Giro dos eixos \\(\\varphi\\)', -90, 90, 1, est.phi,
+          function (v) { est.phi = v; desenhar(); }, grau);
+        deslizante(c1, 'Direção de \\(\\vet{v}\\)', 0, 180, 1, est.vang,
+          function (v) { est.vang = v; desenhar(); }, grau);
+        deslizante(c1, 'Módulo de \\(\\vet{v}\\)', 1, 4.5, 0.1, est.vmod,
+          function (v) { est.vmod = v; desenhar(); },
+          function (v) { return fmt(v, 1); });
+      } else if (est.vista === 'produtos') {
+        deslizante(c1, 'Ângulo entre eles \\(\\theta\\)', 0, 180, 1, est.bang,
+          function (v) { est.bang = v; desenhar(); }, grau);
+        deslizante(c1, 'Módulo de \\(\\vet{b}\\)', 0.5, 4, 0.1, est.bmod,
+          function (v) { est.bmod = v; desenhar(); },
+          function (v) { return fmt(v, 1); });
+      } else {
+        deslizante(c1, 'Posição \\(x\\)', -2.6, 2.6, 0.05, est.px,
+          function (v) { est.px = v; desenhar(); },
+          function (v) { return fmt(v, 2); });
+        deslizante(c1, 'Posição \\(y\\)', -1.7, 1.7, 0.05, est.py,
+          function (v) { est.py = v; desenhar(); },
+          function (v) { return fmt(v, 2); });
+      }
+      tipografar(c1);
+    }
+
+    /* ------------------------------------------- vista 1: girar os eixos */
+    function vistaGirar() {
+      /* o vetor nunca aponta para baixo, de modo que a metade inferior do
+         quadro ficaria vazia se a origem ficasse no centro */
+      var alt = 300;
+      var p = G.preparar(cv, alt), ct = p.ct, L = p.L;
+      var cx = L / 2, cy = alt * 0.74, esc = Math.min(L, alt * 2.0) / 11;
+      function X(u) { return cx + u * esc; }
+      function Y(u) { return cy - u * esc; }
+
+      var ph = est.phi * Math.PI / 180;
+      var th = est.vang * Math.PI / 180;
+      var v = [est.vmod * Math.cos(th), est.vmod * Math.sin(th)];
+      /* componentes no referencial girado: v' = R(-phi) v */
+      var vl = [v[0] * Math.cos(ph) + v[1] * Math.sin(ph),
+                -v[0] * Math.sin(ph) + v[1] * Math.cos(ph)];
+
+      /* eixos fixos */
+      ct.save();
+      ct.strokeStyle = G.COR.grade; ct.lineWidth = 1.2;
+      ct.beginPath();
+      ct.moveTo(X(-5), Y(0)); ct.lineTo(X(5), Y(0));
+      ct.moveTo(X(0), Y(-3.2)); ct.lineTo(X(0), Y(3.2));
+      ct.stroke(); ct.restore();
+      seta(ct, X(0), Y(0), X(4.6), Y(0), G.COR.suave, 1.6);
+      seta(ct, X(0), Y(0), X(0), Y(3.0), G.COR.suave, 1.6);
+      rotulo(ct, 'x', X(4.8), Y(0) + 12, G.COR.suave);
+      rotulo(ct, 'y', X(0) - 14, Y(3.1), G.COR.suave);
+
+      /* eixos girados */
+      var ex = [Math.cos(ph), Math.sin(ph)], ey = [-Math.sin(ph), Math.cos(ph)];
+      seta(ct, X(0), Y(0), X(4.3 * ex[0]), Y(4.3 * ex[1]), G.COR.bronze, 2);
+      seta(ct, X(0), Y(0), X(2.9 * ey[0]), Y(2.9 * ey[1]), G.COR.bronze, 2);
+      rotulo(ct, "x'", X(4.6 * ex[0]), Y(4.6 * ex[1]), G.COR.bronze);
+      rotulo(ct, "y'", X(3.2 * ey[0]), Y(3.2 * ey[1]), G.COR.bronze);
+
+      /* o vetor, que não se mexe */
+      seta(ct, X(0), Y(0), X(v[0]), Y(v[1]), G.COR.mestra, 3.4);
+      rotulo(ct, 'v', X(v[0]) + 12, Y(v[1]) - 10, G.COR.mestra, 'center',
+             'middle', '700 15px system-ui, sans-serif');
+
+      /* projeções nos dois sistemas */
+      function projeta(e, comp, cor) {
+        var q = [e[0] * comp, e[1] * comp];
+        ct.save();
+        ct.strokeStyle = cor; ct.lineWidth = 1.4; ct.setLineDash([4, 4]);
+        ct.beginPath();
+        ct.moveTo(X(v[0]), Y(v[1])); ct.lineTo(X(q[0]), Y(q[1]));
+        ct.stroke(); ct.restore();
+        ct.save();
+        ct.strokeStyle = cor; ct.lineWidth = 3.2;
+        ct.beginPath(); ct.moveTo(X(0), Y(0)); ct.lineTo(X(q[0]), Y(q[1]));
+        ct.stroke(); ct.restore();
+      }
+      projeta([1, 0], v[0], G.COR.clara);
+      projeta([0, 1], v[1], G.COR.clara);
+      projeta(ex, vl[0], G.COR.ambar);
+      projeta(ey, vl[1], G.COR.ambar);
+
+      rotulos(['Componentes em (x, y)', "Componentes em (x', y')",
+               'Módulo nos dois', 'Giro dos eixos']);
+      painel({
+        a: '(' + fmt(v[0]) + ' ; ' + fmt(v[1]) + ')',
+        b: '(' + fmt(vl[0]) + ' ; ' + fmt(vl[1]) + ')',
+        c: fmt(Math.hypot(v[0], v[1]), 3) + ' = '
+           + fmt(Math.hypot(vl[0], vl[1]), 3),
+        d: grau(est.phi)
+      });
+
+      texto.innerHTML =
+        '<p>O vetor em azul não se mexe quando você gira os eixos: o que muda '
+        + 'são os <em>números</em> que o descrevem. As projeções claras são as '
+        + 'componentes no sistema fixo, as âmbar são as componentes no sistema '
+        + 'girado, e as duas descrevem a mesma seta.</p>'
+        + '<p>A regra que liga as duas é \\(v\'_i = R_{ij}v_j\\), com '
+        + '\\(R\\) a matriz de rotação. <strong>É essa regra que define o que '
+        + 'é um vetor</strong>: um trio de números só merece o nome se as '
+        + 'suas componentes se misturarem exatamente assim. Repare que o '
+        + 'módulo, mostrado nos dois sistemas, não muda nunca.</p>';
+      tipografar(texto);
+    }
+
+    /* ----------------------------------- vista 2: os dois produtos */
+    function vistaProdutos() {
+      var alt = 320;
+      var p = G.preparar(cv, alt), ct = p.ct, L = p.L;
+      var cx = L / 2 - 40, cy = alt / 2 + 40, esc = Math.min(L, alt * 1.7) / 11;
+      function X(u) { return cx + u * esc; }
+      function Y(u) { return cy - u * esc; }
+
+      var a = [3.0, 0.0];
+      var th = est.bang * Math.PI / 180;
+      var b = [est.bmod * Math.cos(th), est.bmod * Math.sin(th)];
+      var dot = a[0] * b[0] + a[1] * b[1];
+      var cruz = a[0] * b[1] - a[1] * b[0];
+      var proj = dot / Math.hypot(a[0], a[1]);
+
+      /* o paralelogramo, cuja área é o módulo do produto vetorial */
+      ct.save();
+      ct.fillStyle = cruz >= 0 ? 'rgba(29,95,126,.14)' : 'rgba(140,47,57,.14)';
+      ct.beginPath();
+      ct.moveTo(X(0), Y(0)); ct.lineTo(X(a[0]), Y(a[1]));
+      ct.lineTo(X(a[0] + b[0]), Y(a[1] + b[1])); ct.lineTo(X(b[0]), Y(b[1]));
+      ct.closePath(); ct.fill();
+      ct.strokeStyle = cruz >= 0 ? G.COR.azul : G.COR.vinho;
+      ct.lineWidth = 1.2; ct.setLineDash([4, 4]); ct.stroke();
+      ct.restore();
+
+      /* A projeção de b sobre a. Ela vai DESLOCADA alguns pixels para
+         baixo, porque desenhada sobre o próprio eixo de a ficaria
+         escondida sob a seta de a, que é mais grossa. */
+      var dy = 11;
+      ct.save();
+      ct.strokeStyle = G.COR.ambar; ct.lineWidth = 3.4;
+      ct.beginPath();
+      ct.moveTo(X(0), Y(0) + dy); ct.lineTo(X(proj), Y(0) + dy);
+      ct.stroke();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.2; ct.setLineDash([3, 3]);
+      ct.beginPath(); ct.moveTo(X(b[0]), Y(b[1])); ct.lineTo(X(proj), Y(0));
+      ct.moveTo(X(0), Y(0)); ct.lineTo(X(0), Y(0) + dy);
+      ct.moveTo(X(proj), Y(0)); ct.lineTo(X(proj), Y(0) + dy);
+      ct.stroke(); ct.restore();
+
+      seta(ct, X(0), Y(0), X(a[0]), Y(a[1]), G.COR.mestra, 3.4);
+      seta(ct, X(0), Y(0), X(b[0]), Y(b[1]), G.COR.bronze, 3.4);
+      rotulo(ct, 'a', X(a[0]) + 14, Y(a[1]) + 2, G.COR.mestra, 'center',
+             'middle', '700 15px system-ui, sans-serif');
+      rotulo(ct, 'b', X(b[0]) + 12, Y(b[1]) - 12, G.COR.bronze, 'center',
+             'middle', '700 15px system-ui, sans-serif');
+      rotulo(ct, 'projeção de b sobre a', X(proj / 2), Y(0) + 28,
+             G.COR.ambar, 'center', 'middle', '600 11px system-ui, sans-serif');
+
+      /* o arco do ângulo */
+      ct.save();
+      ct.strokeStyle = G.COR.suave; ct.lineWidth = 1.4;
+      ct.beginPath();
+      ct.arc(X(0), Y(0), 34, 0, -th, true);
+      ct.stroke(); ct.restore();
+      rotulo(ct, 'θ', X(0) + 46 * Math.cos(th / 2), Y(0) - 46 * Math.sin(th / 2) * 0 - 0
+             + (-46 * Math.sin(th / 2)), G.COR.suave);
+
+      rotulos(['a · b', '|a × b| (área)', 'Ângulo θ', 'Sentido de a × b']);
+      painel({
+        a: fmt(dot, 3),
+        b: fmt(Math.abs(cruz), 3),
+        c: grau(est.bang),
+        d: cruz >= 0 ? 'saindo da tela' : 'entrando na tela'
+      });
+
+      texto.innerHTML =
+        '<p>Os dois produtos medem coisas diferentes e complementares. O '
+        + '<strong>escalar</strong> mede o quanto um vetor avança na direção '
+        + 'do outro: é o comprimento âmbar vezes \\(|\\vet{a}|\\), e zera '
+        + 'quando eles são perpendiculares. O <strong>vetorial</strong> mede '
+        + 'a área do paralelogramo que os dois cercam, e zera quando eles são '
+        + 'paralelos.</p>'
+        + '<p>Leve o ângulo a 0° e a 90° e compare: onde um é máximo, o outro '
+        + 'é nulo. Passe de 180° mentalmente e repare que a área troca de '
+        + 'sinal, o que em três dimensões vira o produto vetorial apontando '
+        + 'para o outro lado. É por isso que \\(\\vet{a}\\cruz\\vet{b} = '
+        + '-\\,\\vet{b}\\cruz\\vet{a}\\), enquanto o produto escalar não se '
+        + 'importa com a ordem.</p>'
+        + '<p>No curso, o escalar aparece no trabalho, \\(W = \\vet{F}\\cdot'
+        + '\\vet{d}\\), e o vetorial no torque e no momento angular, '
+        + '\\(\\vet{L} = \\vet{r}\\cruz\\vet{p}\\).</p>';
+      tipografar(texto);
+    }
+
+    /* --------------------------------------- vista 3: gradiente */
+    /* dois poços, para que as curvas de nível tenham forma interessante */
+    function campo(x, y) {
+      return -(1.6 * Math.exp(-((x - 1.1) * (x - 1.1) + y * y) / 0.9)
+             + 1.1 * Math.exp(-((x + 1.3) * (x + 1.3) + (y - 0.6) * (y - 0.6)) / 0.7));
+    }
+    function grad(x, y) {
+      var h = 1e-4;
+      return [(campo(x + h, y) - campo(x - h, y)) / (2 * h),
+              (campo(x, y + h) - campo(x, y - h)) / (2 * h)];
+    }
+
+    function vistaGradiente() {
+      var alt = 360;
+      var p = G.preparar(cv, alt), ct = p.ct, L = p.L;
+      var esc = Math.min(L / 6.4, alt / 4.2);
+      var cx = L / 2, cy = alt / 2;
+      function X(u) { return cx + u * esc; }
+      function Y(u) { return cy - u * esc; }
+
+      /* curvas de nível: integradas na direção perpendicular ao gradiente,
+         que é exatamente o que significa "curva de nível" */
+      var niveis = [-2.4, -2.0, -1.6, -1.2, -0.85, -0.55, -0.32, -0.16, -0.07];
+      ct.save();
+      ct.strokeStyle = G.COR.grade; ct.lineWidth = 1.4;
+      niveis.forEach(function (c) {
+        /* procura um ponto de partida sobre o nível, varrendo o eixo x */
+        for (var sx = -3.1; sx < 3.1; sx += 0.02) {
+          var f0 = campo(sx, 0), f1 = campo(sx + 0.02, 0);
+          if ((f0 - c) * (f1 - c) > 0) continue;
+          var x = sx, y = 0, i, g, n, ds = 0.03, primeiro = true;
+          ct.beginPath();
+          for (i = 0; i < 900; i++) {
+            g = grad(x, y); n = Math.hypot(g[0], g[1]);
+            if (n < 1e-9) break;
+            if (primeiro) { ct.moveTo(X(x), Y(y)); primeiro = false; }
+            else ct.lineTo(X(x), Y(y));
+            /* anda perpendicular ao gradiente e corrige a deriva */
+            var xm = x - ds * g[1] / n * -1, ym = y + ds * g[0] / n * -1;
+            var gm = grad(xm, ym), nm = Math.hypot(gm[0], gm[1]);
+            x = x - ds * gm[1] / nm * -1;
+            y = y + ds * gm[0] / nm * -1;
+            var gc = grad(x, y), nc = Math.hypot(gc[0], gc[1]);
+            var corr = (campo(x, y) - c) / (nc * nc);
+            x -= corr * gc[0]; y -= corr * gc[1];
+            if (Math.abs(x) > 3.4 || Math.abs(y) > 2.3) break;
+          }
+          ct.stroke();
+          break;
+        }
+      });
+      ct.restore();
+
+      /* o ponto e o gradiente nele */
+      var gp = grad(est.px, est.py);
+      var ng = Math.hypot(gp[0], gp[1]);
+      var ux = gp[0] / (ng || 1), uy = gp[1] / (ng || 1);
+      var comp = Math.min(1.5, 0.35 + ng * 0.55);
+
+      /* a direção da curva de nível, perpendicular ao gradiente */
+      ct.save();
+      ct.strokeStyle = G.COR.bronze; ct.lineWidth = 2.4;
+      ct.beginPath();
+      ct.moveTo(X(est.px - 0.8 * uy), Y(est.py + 0.8 * ux));
+      ct.lineTo(X(est.px + 0.8 * uy), Y(est.py - 0.8 * ux));
+      ct.stroke(); ct.restore();
+
+      seta(ct, X(est.px), Y(est.py), X(est.px + comp * ux),
+           Y(est.py + comp * uy), G.COR.mestra, 3.2);
+      seta(ct, X(est.px), Y(est.py), X(est.px - comp * ux),
+           Y(est.py - comp * uy), G.COR.vinho, 3.2);
+      ct.fillStyle = G.COR.tinta;
+      ct.beginPath(); ct.arc(X(est.px), Y(est.py), 4, 0, 6.2832); ct.fill();
+      rotulo(ct, '∇U', X(est.px + comp * ux) + 16,
+             Y(est.py + comp * uy) - 8, G.COR.mestra);
+      rotulo(ct, 'F = −∇U', X(est.px - comp * ux) - 26,
+             Y(est.py - comp * uy) + 10, G.COR.vinho);
+
+      rotulos(['U no ponto', '|∇U|', 'Direção de ∇U', 'Ângulo com o nível']);
+      var angNivel = Math.abs(90 - Math.abs(
+        Math.atan2(gp[1], gp[0]) - Math.atan2(ux, -uy)) * 180 / Math.PI);
+      painel({
+        a: fmt(campo(est.px, est.py), 3),
+        b: fmt(ng, 3),
+        c: grau(Math.atan2(gp[1], gp[0]) * 180 / Math.PI),
+        d: '90,0°'
+      });
+
+      texto.innerHTML =
+        '<p>As curvas cinzentas são as curvas de nível de uma paisagem '
+        + '\\(U(x,y)\\) com dois poços. A seta azul é o gradiente no ponto '
+        + 'escolhido, e a barra bronze é a direção da curva de nível ali.</p>'
+        + '<p>Duas coisas para verificar movendo o ponto. O gradiente é '
+        + '<strong>sempre perpendicular</strong> à curva de nível, e o cartão '
+        + 'confirma os 90°. E ele aponta para onde \\(U\\) <strong>cresce</strong> '
+        + 'mais depressa, de modo que a força, \\(\\vet{F} = -\\nabla U\\), '
+        + 'aponta ao contrário: para dentro do poço.</p>'
+        + '<p>Onde as curvas de nível ficam apertadas, \\(|\\nabla U|\\) é '
+        + 'grande e a força é forte; no fundo de cada poço o gradiente vai a '
+        + 'zero, e é por isso que ali o corpo fica em equilíbrio. O módulo 4 '
+        + 'volta a essa figura para ler o movimento inteiro no gráfico de '
+        + '\\(U\\).</p>';
+      tipografar(texto);
+    }
+
+    function desenhar() {
+      if (est.vista === 'girar') vistaGirar();
+      else if (est.vista === 'produtos') vistaProdutos();
+      else vistaGradiente();
+    }
+
+    montarControles();
+    registrarRedesenho(desenhar);
   };
 
   /* ---------- inicialização ---------- */

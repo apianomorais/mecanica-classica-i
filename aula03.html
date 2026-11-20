@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Forças que dependem do tempo, da velocidade e da posição | Mecânica Clássica I</title>
 <link rel="icon" type="image/png" href="assets/img/favicon.png">
-<link rel="stylesheet" href="assets/css/estilo.css?v=202611192315">
-<script src="assets/js/comum.js?v=202611192315"></script>
+<link rel="stylesheet" href="assets/css/estilo.css?v=202611200016">
+<script src="assets/js/comum.js?v=202611200016"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </head>
 <body>
@@ -17,7 +17,7 @@
     <nav class="menu">
       <a href="index.html">Início</a>
       <span class="grupo">Ferramentas</span>
-      <span class="num pendente" title="Módulo 1: Vetores, matrizes e cálculo vetorial · em preparação">1</span>
+      <a href="aula01.html" class="num" title="Módulo 1: Vetores, matrizes e cálculo vetorial">1</a>
       <span class="grupo">Newton</span>
       <span class="num pendente" title="Módulo 2: As leis de Newton e os referenciais inerciais · em preparação">2</span>
       <a href="aula03.html" class="num ativo" title="Módulo 3: Forças que dependem do tempo, da velocidade e da posição">3</a>
@@ -120,9 +120,9 @@ onde a fórmula fechada acaba.</p>
 move num fluido, há dois regimes.</p>
 
 <p><strong>Arrasto linear</strong>, \(F = -bv\), vale quando o escoamento é
-laminar, isto é, para objetos pequenos ou velocidades baixas. É o caso de uma
+<a href="https://pt.wikipedia.org/wiki/Escoamento_laminar">laminar</a>, isto é, para objetos pequenos ou velocidades baixas. É o caso de uma
 gota de névoa, de uma bolinha caindo em óleo ou de uma partícula de poeira no
-ar. O número de Reynolds é pequeno, e a viscosidade domina.</p>
+ar. O <a href="https://pt.wikipedia.org/wiki/N%C3%BAmero_de_Reynolds">número de Reynolds</a> é pequeno, e a viscosidade domina.</p>
 
 <p><strong>Arrasto quadrático</strong>, \(F = -\frac12\rho C_DAv^2\), vale
 quando o escoamento é turbulento, que é o caso de quase tudo que interessa no
@@ -339,7 +339,7 @@ pouco.</p>
 
 \[ y_{n+1} = y_n + \Delta t\,f(y_n,t_n), \]
 
-<p>que é o <strong>método de Euler</strong>. Geometricamente, ele troca a curva
+<p>que é o <strong><a href="https://pt.wikipedia.org/wiki/M%C3%A9todo_de_Euler">método de Euler</a></strong>, publicado por <a href="https://pt.wikipedia.org/wiki/Leonhard_Euler">Leonhard Euler</a> em 1768. Geometricamente, ele troca a curva
 verdadeira pela reta tangente a ela no ponto em que estamos, e anda sobre essa
 reta durante \(\Delta t\). Como a curva entorta dentro do passo e a tangente
 não, cada passo deixa um resto, e os restos se acumulam.</p>
@@ -469,8 +469,8 @@ ele diminui com o passo.</p>
 
 <p><strong>Na terceira</strong>, o erro do alcance é posto contra \(\Delta t\)
 em escala logarítmica nos dois eixos, de modo que uma lei de potência vira uma
-reta e o expoente vira a inclinação. Euler dá inclinação 1; o Runge-Kutta de
-quarta ordem, que faz quatro avaliações da derivada por passo, dá 4.</p>
+reta e o expoente vira a inclinação. Euler dá inclinação 1; o <a href="https://pt.wikipedia.org/wiki/M%C3%A9todo_de_Runge-Kutta">Runge-Kutta de
+quarta ordem</a>, que faz quatro avaliações da derivada por passo, dá 4.</p>
 
 <div class="bloco def">
 <span class="rotulo">O que significa ser de primeira ordem</span>
@@ -533,7 +533,7 @@ sim em como o programa achava o ponto de pouso: interpolando \(y\)
 <em>linearmente</em> entre os dois últimos passos. Essa interpolação erra em
 \(\left(\Delta t\right)^2\), e o erro dela passou a dominar o erro do
 método.</p>
-<p>A correção é usar interpolação de Hermite, que aproveita as velocidades, já
+<p>A correção é usar <a href="https://pt.wikipedia.org/wiki/Interpola%C3%A7%C3%A3o_de_Hermite">interpolação de Hermite</a>, que aproveita as velocidades, já
 disponíveis, como derivadas nas pontas, e erra em \(\left(\Delta t\right)^4\).
 Com ela, o expoente medido subiu para 3,93. A moral vale para qualquer trabalho
 numérico: <em>a medida do erro também tem erro</em>, e um detalhe de
@@ -878,7 +878,7 @@ pós-processamento pode esconder a qualidade do método.</p>
 
 
   <nav class="nav-aulas">
-    <a href="index.html"><small>Voltar</small>← Início</a>
+    <a href="aula01.html"><small>Módulo anterior</small>← 1. Vetores e cálculo vetorial</a>
   </nav>
 
 </main>
@@ -891,6 +891,6 @@ pós-processamento pode esconder a qualidade do método.</p>
   <!--PORTAL--><p><small><a href="https://apianomorais.github.io/">Todas as disciplinas e a pesquisa em apianomorais.github.io</a></small></p><!--/PORTAL-->
 </footer>
 
-<script src="assets/js/widgets.js?v=202611192315"></script>
+<script src="assets/js/widgets.js?v=202611200016"></script>
 </body>
 </html>
